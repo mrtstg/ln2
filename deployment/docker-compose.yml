@@ -1,0 +1,32 @@
+version: '3'
+services:
+  dev-db:
+    profiles: ['dev']
+    image: postgres:16.1-alpine
+    container_name: ln2-dev-db
+    hostname: db
+    ports:
+      - 5432:5432
+    env_file:
+      - ../.env
+    volumes:
+      - ../pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+  dev-redis:
+    profiles: ['dev']
+    image: redis:7.2.1-alpine
+    container_name: ln2-dev-redis
+    hostname: redis
+    ports:
+      - 6379:6379
+    restart: unless-stopped
+  dev-rabbitmq:
+    profiles: ['dev']
+    image: rabbitmq:3.13-rc-alpine
+    container_name: ln2-dev-rabbitmq
+    hostname: rabbitmq
+    ports:
+      - 5672:5672
+    restart: unless-stopped
+    env_file:
+      - ../.env
