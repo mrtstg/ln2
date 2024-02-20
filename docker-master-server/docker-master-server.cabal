@@ -47,6 +47,7 @@ library
     , amqp ==0.22.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , containers ==0.6.7
     , directory ==1.3.7.1
     , filepath ==1.4.2.2
     , http-types ==0.12.3
@@ -78,6 +79,7 @@ executable docker-master-server-exe
     , amqp ==0.22.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , containers ==0.6.7
     , directory ==1.3.7.1
     , docker-master-server
     , filepath ==1.4.2.2
@@ -111,6 +113,7 @@ test-suite docker-master-server-test
     , amqp ==0.22.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , containers ==0.6.7
     , directory ==1.3.7.1
     , docker-master-server
     , filepath ==1.4.2.2

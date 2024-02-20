@@ -4,6 +4,7 @@
 module Data.Models.Stand (StandData(..), StandContainerData(..)) where
 
 import           Data.Aeson
+import           Data.Map
 import           GHC.Generics
 
 data StandData = StandData {
@@ -20,7 +21,7 @@ instance ToJSON StandData where
 data StandContainerData = ContainerData
   { getContainerName        :: !String
   , getContainerImage       :: !String
-  , getContainerEnvironment :: !(Maybe Object)
+  , getContainerEnvironment :: !(Maybe (Map String String))
   , getContainerCommand     :: !(Maybe String)
   , getContainerHostname    :: !(Maybe String)
   , getContainerVolumes     :: ![ContainerVolume]
