@@ -4,6 +4,8 @@
 module Data.Models.Stand (StandData(..), StandContainerData(..)) where
 
 import           Data.Aeson
+import qualified Data.Map     as M
+import           Data.Text
 import           GHC.Generics
 
 data StandData = StandData {
@@ -18,11 +20,11 @@ instance ToJSON StandData where
   toJSON (StandData containers) = object ["containers" .= containers]
 
 data StandContainerData = ContainerData
-  { getContainerName        :: !String
-  , getContainerImage       :: !String
-  , getContainerEnvironment :: !(Maybe Object)
-  , getContainerCommand     :: !(Maybe String)
-  , getContainerHostname    :: !(Maybe String)
+  { getContainerName        :: !Text
+  , getContainerImage       :: !Text
+  , getContainerEnvironment :: !(Maybe (M.Map String String))
+  , getContainerCommand     :: !(Maybe Text)
+  , getContainerHostname    :: !(Maybe Text)
   , getContainerVolumes     :: ![ContainerVolume]
   } deriving (Show, Generic)
 
