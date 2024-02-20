@@ -15,9 +15,12 @@ module Rabbit
 import           Control.Concurrent            (threadDelay)
 import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8    as BL
+import qualified Data.Either                   as E
 import           Data.Models.App               (App (..))
 import           Data.Models.QueueTask
 import           Data.Models.QueueTaskResponse
+import qualified Data.Text                     as T
+import           Deploy.Docker
 import           Network.AMQP
 import           System.Environment            (lookupEnv)
 import           Text.Read                     (readMaybe)
@@ -52,10 +55,26 @@ rabbitResultConsumer App { .. } (msg, env) = do
       putStrLn e
       ackEnv env
     (Right queueTask) -> do
-      putQueueTaskResponse rabbitConnection $ QueueTaskResponse (getTaskUUID queueTask) "taken" Nothing
+      let taskUUID = getTaskUUID queueTask
+      let taskUUID' = T.pack $ getTaskUUID queueTask
+      putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "taken" Nothing
       ackEnv env
-      threadDelay 3000000
-      putQueueTaskResponse rabbitConnection $ QueueTaskResponse (getTaskUUID queueTask) "finished" Nothing
+      (containerRess, networkId') <- defaultRunDocker $ deployStand taskUUID' taskUUID' (getStandData queueTask)
+      case networkId' of
+        Nothing -> do
+          putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "error" Nothing
+          putStrLn "Failed to create network!"
+        (Just networkId) -> do
+          putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "processing" Nothing
+          threadDelay 15000000
+          if not $ all E.isRight containerRess then do
+            putStrLn "Not all containers deployed:"
+            mapM_ print containerRess
+            putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "error" Nothing
+          else do
+            putStrLn "Everything deployed! Destroying..."
+            putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" Nothing
+          defaultRunDocker $ destroyStand (E.rights containerRess) networkId
 
 getEnvRabbitConnectionData :: IO (Maybe RabbitConnectionData)
 getEnvRabbitConnectionData = do
