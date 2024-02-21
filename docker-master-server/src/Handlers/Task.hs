@@ -5,28 +5,29 @@
 module Handlers.Task (postTaskCreateR) where
 
 import           Data.Aeson
-import           Data.Models.QueueTask (QueueTask (QueueTask))
+import           Data.Models.QueueTask  (QueueTask (QueueTask))
 import           Data.Models.Stand
-import qualified Data.Text             as T
-import           Data.UUID.V4          (nextRandom)
-import           Data.Yaml             (ParseException, decodeFileEither)
+import           Data.Models.StandCheck
+import qualified Data.Text              as T
+import           Data.UUID.V4           (nextRandom)
+import           Data.Yaml              (ParseException, decodeFileEither)
 import           Foundation
 import           GHC.Generics
 import           Network.HTTP.Types
-import           Rabbit                (putQueueRequest', putQueueTask)
+import           Rabbit                 (putQueueRequest', putQueueTask)
 import           Utils
 import           Yesod.Core
 import           Yesod.Persist
 
-newtype TaskRequest = TaskReq { getStandName :: String } deriving (Generic, Show)
+data TaskRequest = TaskReq { getStandName :: !String, getStandActions :: ![StandCheckStage] } deriving (Generic, Show)
 
 instance FromJSON TaskRequest where
-  parseJSON = withObject "TaskRequest" $ \v -> TaskReq <$> v .: "stand_name"
+  parseJSON = withObject "TaskRequest" $ \v -> TaskReq <$> v .: "stand_name" <*> v .: "actions"
 
 postTaskCreateR :: Handler Value
 postTaskCreateR = do
   App { .. } <- getYesod
-  TaskReq { getStandName = standName } <- requireCheckJsonBody :: Handler TaskRequest
+  TaskReq { getStandName = standName, getStandActions = standActions } <- requireCheckJsonBody :: Handler TaskRequest
   standYml <- liftIO $ findYMLByName standsFolder standName
   case standYml of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String (T.pack $ "Stand " ++ standName ++ " not found!") ]
@@ -42,5 +43,5 @@ postTaskCreateR = do
           runDB $ do
             _ <- insertKey (TaskKey taskUuid) (Task standName "queued")
             return ()
-          liftIO $ putQueueTask rabbitConnection $ QueueTask taskUuid standData
+          liftIO $ putQueueTask rabbitConnection $ QueueTask taskUuid standData standActions
           sendStatusJSON status200 $ object [ "uuid" .= taskUuid ]

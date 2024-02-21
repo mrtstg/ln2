@@ -30,6 +30,7 @@ library
       Data.Models.QueueTask
       Data.Models.QueueTaskResponse
       Data.Models.Stand
+      Data.Models.StandCheck
       Foundation
       Handlers.Stands
       Handlers.Task

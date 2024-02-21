@@ -1,5 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Deploy.Docker (deployStand, destroyStand, defaultRunDocker, DockerNetworkName) where
+{-# LANGUAGE RecordWildCards   #-}
+module Deploy.Docker
+  (deployStand
+  , destroyStand
+  , defaultRunDocker
+  , DockerNetworkName
+  , executeStandCheck
+  ) where
 
 import           Conduit                (MonadUnliftIO)
 import           Control.Monad.Catch    (MonadMask)
@@ -8,9 +15,13 @@ import           Data.Bifunctor         (bimap)
 import qualified Data.HashMap.Strict    as HM
 import qualified Data.Map               as M
 import           Data.Models.Stand
+import           Data.Models.StandCheck
 import qualified Data.Text              as T
+import           Data.Text.IO           (writeFile)
 import           Docker.Client
 import           Docker.Client.Http
+import           System.Command
+import           System.FilePath        (combine)
 
 type DockerNetworkName = T.Text
 type ContainerBaseName = T.Text
@@ -71,6 +82,22 @@ deployStand baseName networkName (StandData containers) = do
     (Right netId) -> do
       cIds'' <- mapM (deployContainer baseName networkName) containers
       return (cIds'', Just netId)
+
+executeStandCheck :: ContainerBaseName -> [StandCheckStage] -> IO [String]
+executeStandCheck baseName = helper [] where
+  helper :: [String] -> [StandCheckStage] -> IO [String]
+  helper acc []                   = return acc
+  helper acc (CopyFile { .. }:cs) = do
+    let tempPath = "/tmp" `combine` T.unpack (baseName <> getStageContainer)
+    Data.Text.IO.writeFile tempPath getStageFileContent
+    command_ [] "docker" ["cp", tempPath, T.unpack $ baseName <> "-" <> getStageContainer <> ":" <> T.pack getStageFilePath]
+    helper acc cs
+  helper acc (ExecuteCommand { .. }:cs) = do
+    Stdout cmdOut <- command [] "docker" $
+      [ "exec"
+      , T.unpack $ baseName <> "-" <> getStageContainer
+      ] ++ map T.unpack (T.splitOn " " getStageCommand)
+    helper (cmdOut:acc) cs
 
 destroyStand :: [ContainerID] -> NetworkID -> DockerT IO ()
 destroyStand cIds nId = do

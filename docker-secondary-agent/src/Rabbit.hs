@@ -66,13 +66,14 @@ rabbitResultConsumer App { .. } (msg, env) = do
           putStrLn "Failed to create network!"
         (Just networkId) -> do
           putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "processing" Nothing
-          threadDelay 15000000
           if not $ all E.isRight containerRess then do
             putStrLn "Not all containers deployed:"
             mapM_ print containerRess
             putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "error" Nothing
           else do
-            putStrLn "Everything deployed! Destroying..."
+            putStrLn "Everything deployed! Launching check..."
+            res <- executeStandCheck taskUUID' (getStandCheck queueTask)
+            print res
             putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" Nothing
           defaultRunDocker $ destroyStand (E.rights containerRess) networkId
 

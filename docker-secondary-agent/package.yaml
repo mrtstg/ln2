@@ -35,6 +35,7 @@ dependencies:
 - unordered-containers == 0.2.19.1
 - conduit == 1.3.4.2
 - exceptions == 0.10.7
+- filepath == 1.4.2.2
 
 ghc-options:
 - -Wall

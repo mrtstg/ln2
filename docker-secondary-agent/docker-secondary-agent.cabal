@@ -31,6 +31,7 @@ library
       Data.Models.QueueTask
       Data.Models.QueueTaskResponse
       Data.Models.Stand
+      Data.Models.StandCheck
       Deploy.Docker
       Rabbit
   other-modules:
@@ -51,6 +52,7 @@ library
     , directory ==1.3.7.1
     , docker ==0.7.0.1
     , exceptions ==0.10.7
+    , filepath ==1.4.2.2
     , load-env ==0.2.1.0
     , network ==3.1.4.0
     , optparse-applicative ==0.17.1.0
@@ -80,6 +82,7 @@ executable docker-secondary-agent-exe
     , docker ==0.7.0.1
     , docker-secondary-agent
     , exceptions ==0.10.7
+    , filepath ==1.4.2.2
     , load-env ==0.2.1.0
     , network ==3.1.4.0
     , optparse-applicative ==0.17.1.0
@@ -110,6 +113,7 @@ test-suite docker-secondary-agent-test
     , docker ==0.7.0.1
     , docker-secondary-agent
     , exceptions ==0.10.7
+    , filepath ==1.4.2.2
     , load-env ==0.2.1.0
     , network ==3.1.4.0
     , optparse-applicative ==0.17.1.0
