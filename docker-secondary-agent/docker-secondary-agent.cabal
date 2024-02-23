@@ -34,6 +34,7 @@ library
       Data.Models.StandCheck
       Deploy.Docker
       Rabbit
+      Utils
   other-modules:
       Paths_docker_secondary_agent
   autogen-modules:
@@ -42,7 +43,8 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      aeson ==2.1.2.1
+      MissingH ==1.6.0.1
+    , aeson ==2.1.2.1
     , amqp ==0.22.1
     , base >=4.7 && <5
     , bytestring ==0.12.3
@@ -71,7 +73,8 @@ executable docker-secondary-agent-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson ==2.1.2.1
+      MissingH ==1.6.0.1
+    , aeson ==2.1.2.1
     , amqp ==0.22.1
     , base >=4.7 && <5
     , bytestring ==0.12.3
@@ -102,7 +105,8 @@ test-suite docker-secondary-agent-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson ==2.1.2.1
+      MissingH ==1.6.0.1
+    , aeson ==2.1.2.1
     , amqp ==0.22.1
     , base >=4.7 && <5
     , bytestring ==0.12.3

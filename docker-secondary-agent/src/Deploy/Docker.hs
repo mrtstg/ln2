@@ -10,7 +10,6 @@ module Deploy.Docker
 
 import           Conduit                (MonadUnliftIO)
 import           Control.Monad.Catch    (MonadMask)
-import           Control.Monad.IO.Class (MonadIO)
 import           Data.Bifunctor         (bimap)
 import qualified Data.HashMap.Strict    as HM
 import qualified Data.Map               as M
@@ -19,9 +18,9 @@ import           Data.Models.StandCheck
 import qualified Data.Text              as T
 import           Data.Text.IO           (writeFile)
 import           Docker.Client
-import           Docker.Client.Http
 import           System.Command
 import           System.FilePath        (combine)
+import           Utils
 
 type DockerNetworkName = T.Text
 type ContainerBaseName = T.Text
@@ -97,7 +96,8 @@ executeStandCheck baseName = helper [] where
       [ "exec"
       , T.unpack $ baseName <> "-" <> getStageContainer
       ] ++ map T.unpack (T.splitOn " " getStageCommand)
-    helper (cmdOut:acc) cs
+    let cmdOut' = if not getStandFormattedOutput then cmdOut else formatString' cmdOut
+    helper (cmdOut':acc) cs
 
 destroyStand :: [ContainerID] -> NetworkID -> DockerT IO ()
 destroyStand cIds nId = do
