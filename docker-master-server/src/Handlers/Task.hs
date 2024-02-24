@@ -9,6 +9,7 @@ import           Data.Models.QueueTask  (QueueTask (QueueTask))
 import           Data.Models.Stand
 import           Data.Models.StandCheck
 import qualified Data.Text              as T
+import           Data.Time              (getCurrentTime)
 import           Data.UUID.V4           (nextRandom)
 import           Data.Yaml              (ParseException, decodeFileEither)
 import           Foundation
@@ -40,8 +41,9 @@ postTaskCreateR = do
         (Right standData) -> do
           taskUuid' <- liftIO nextRandom
           let taskUuid = show taskUuid'
+          nowTime <- liftIO $ getCurrentTime
           runDB $ do
-            _ <- insertKey (TaskKey taskUuid) (Task standName "queued" Nothing)
+            _ <- insertKey (TaskKey taskUuid) (Task standName "queued" Nothing nowTime)
             return ()
           liftIO $ putQueueTask rabbitConnection $ QueueTask taskUuid standData standActions
           sendStatusJSON status200 $ object [ "uuid" .= taskUuid ]

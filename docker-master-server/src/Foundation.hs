@@ -22,6 +22,7 @@ module Foundation where
 import           Data.ByteString
 import           Data.Pool                   (Pool)
 import           Data.Text
+import           Data.Time.Clock
 import           Database.Persist.Postgresql
 import qualified Network.AMQP                as R
 import           Yesod.Core
@@ -39,6 +40,7 @@ Task
   standIdentifier String
   state String
   result ByteString Maybe
+  executionTime UTCTime default=now()
 |]
 
 mkYesodData
