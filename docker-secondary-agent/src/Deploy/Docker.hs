@@ -103,8 +103,11 @@ executeStandCheck baseName = helper [] where
       [ "exec"
       , T.unpack $ baseName <> "-" <> getStageContainer
       ] ++ map T.unpack (T.splitOn " " getStageCommand)
-    let cmdOut' = if not getStandFormattedOutput then cmdOut else formatString' cmdOut
-    helper (cmdOut':acc) cs
+    case getStandRecordStdout of
+      False -> helper acc cs
+      True -> do
+        let cmdOut' = if not getStandFormattedOutput then cmdOut else formatString' cmdOut
+        helper (acc ++ [cmdOut']) cs
 
 destroyStand :: [ContainerID] -> NetworkID -> DockerT IO ()
 destroyStand cIds nId = do
