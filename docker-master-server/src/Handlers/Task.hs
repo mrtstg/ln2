@@ -2,9 +2,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
-module Handlers.Task (postTaskCreateR) where
+module Handlers.Task (postTaskCreateR, getTaskR, deleteTaskR) where
 
 import           Data.Aeson
+import qualified Data.ByteString        as BS
+import qualified Data.ByteString.Lazy   as LBS
 import           Data.Models.QueueTask  (QueueTask (QueueTask))
 import           Data.Models.Stand
 import           Data.Models.StandCheck
@@ -12,6 +14,7 @@ import qualified Data.Text              as T
 import           Data.Time              (getCurrentTime)
 import           Data.UUID.V4           (nextRandom)
 import           Data.Yaml              (ParseException, decodeFileEither)
+import           Database.Persist
 import           Foundation
 import           GHC.Generics
 import           Network.HTTP.Types
@@ -41,9 +44,29 @@ postTaskCreateR = do
         (Right standData) -> do
           taskUuid' <- liftIO nextRandom
           let taskUuid = show taskUuid'
-          nowTime <- liftIO $ getCurrentTime
+          nowTime <- liftIO getCurrentTime
           runDB $ do
             _ <- insertKey (TaskKey taskUuid) (Task standName "queued" Nothing nowTime)
             return ()
           liftIO $ putQueueTask rabbitConnection $ QueueTask taskUuid standData standActions
           sendStatusJSON status200 $ object [ "uuid" .= taskUuid ]
+
+taskResultToValue :: Maybe BS.ByteString -> Maybe Value
+taskResultToValue Nothing   = Nothing
+taskResultToValue (Just bs) = decode $ LBS.fromStrict bs
+
+getTaskR :: T.Text -> Handler Value
+getTaskR taskUuid = do
+  taskObj' <- runDB $ get $ (TaskKey . T.unpack) taskUuid
+  case taskObj' of
+    Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
+    (Just (Task { .. })) -> do
+      sendStatusJSON status200 $ object [ "result" .= taskResultToValue taskResult ]
+
+deleteTaskR :: T.Text -> Handler Value
+deleteTaskR taskUuid = do
+  let taskKey = (TaskKey . T.unpack) taskUuid
+  taskExists <- runDB $ exists [TaskId ==. taskKey]
+  if not taskExists then sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ] else do
+    runDB $ delete taskKey
+    sendResponseStatus status204 ()

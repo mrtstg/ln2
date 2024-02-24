@@ -49,6 +49,7 @@ mkYesodData
 /stands StandsR GET
 /stands/#Text StandsCreateR GET POST
 /task/  TaskCreateR POST
+/task/#Text TaskR GET DELETE
 |]
 
 instance Yesod App where
