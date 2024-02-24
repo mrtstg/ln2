@@ -100,6 +100,7 @@ test-suite docker-secondary-agent-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      UtilsSpec
       Paths_docker_secondary_agent
   autogen-modules:
       Paths_docker_secondary_agent
@@ -120,6 +121,8 @@ test-suite docker-secondary-agent-test
     , docker-secondary-agent
     , exceptions ==0.10.7
     , filepath ==1.4.2.2
+    , hspec >=2.0.0
+    , hspec-discover
     , load-env ==0.2.1.0
     , network ==3.1.4.0
     , optparse-applicative ==0.17.1.0
