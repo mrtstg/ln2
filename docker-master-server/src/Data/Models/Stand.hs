@@ -25,6 +25,7 @@ data StandContainerData = ContainerData
   , getContainerCommand     :: !(Maybe String)
   , getContainerHostname    :: !(Maybe String)
   , getContainerVolumes     :: ![ContainerVolume]
+  , getContainerTimeout     :: !(Maybe Int)
   } deriving (Show, Generic)
 
 instance FromJSON StandContainerData where
@@ -35,6 +36,7 @@ instance FromJSON StandContainerData where
     <*> v .:? "command"
     <*> v .:? "hostname"
     <*> v .:? "volumes" .!= []
+    <*> v .:? "timeout"
 
 instance ToJSON StandContainerData where
   toJSON (ContainerData { .. }) = object
@@ -44,6 +46,7 @@ instance ToJSON StandContainerData where
     , "command" .= getContainerCommand
     , "hostname" .= getContainerHostname
     , "volumes" .= getContainerVolumes
+    , "timeout" .= getContainerTimeout
     ]
 
 data ContainerVolume = ContainerVolume

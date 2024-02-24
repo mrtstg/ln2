@@ -8,7 +8,8 @@ module Deploy.Docker
   , executeStandCheck
   ) where
 
-import           Conduit                (MonadUnliftIO)
+import           Conduit                (MonadUnliftIO, liftIO)
+import           Control.Concurrent     (threadDelay)
 import           Control.Monad.Catch    (MonadMask)
 import           Data.Bifunctor         (bimap)
 import qualified Data.HashMap.Strict    as HM
@@ -51,6 +52,7 @@ deployContainer baseName networkName (
     , getContainerHostname = hostname'
     , getContainerCommand = cmd'
     , getContainerEnvironment = env'
+    , getContainerTimeout = timeout'
     }
   ) = do
     let containerOpts = (defaultCreateOpts image') {
@@ -71,7 +73,12 @@ deployContainer baseName networkName (
       e@(Left _) -> return e
       c@(Right cId) -> do
         _ <- startContainer defaultStartOpts cId
-        return c
+        -- TODO: stand delay ignore
+        case timeout' of
+          Nothing -> return c
+          (Just timeoutSecs) -> do
+            liftIO $ threadDelay $ 1000000 * timeoutSecs
+            return c
 
 deployStand :: ContainerBaseName -> DockerNetworkName -> StandData -> DockerT IO ([Either DockerError ContainerID], Maybe NetworkID)
 deployStand baseName networkName (StandData containers) = do
