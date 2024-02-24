@@ -41,7 +41,7 @@ postTaskCreateR = do
           taskUuid' <- liftIO nextRandom
           let taskUuid = show taskUuid'
           runDB $ do
-            _ <- insertKey (TaskKey taskUuid) (Task standName "queued")
+            _ <- insertKey (TaskKey taskUuid) (Task standName "queued" Nothing)
             return ()
           liftIO $ putQueueTask rabbitConnection $ QueueTask taskUuid standData standActions
           sendStatusJSON status200 $ object [ "uuid" .= taskUuid ]

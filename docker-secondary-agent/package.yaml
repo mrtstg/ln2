@@ -37,6 +37,7 @@ dependencies:
 - exceptions == 0.10.7
 - filepath == 1.4.2.2
 - MissingH == 1.6.0.1
+- vector == 0.13.1.0
 
 ghc-options:
 - -Wall

@@ -11,7 +11,7 @@ import           GHC.Generics
 data QueueTaskResponse = QueueTaskResponse
   { getTaskResponseUUID   :: !String
   , getTaskResponseStatus :: !String
-  , getTaskResult         :: !(Maybe Object)
+  , getTaskResult         :: !(Maybe Value)
   } deriving (Show, Generic)
 
 instance FromJSON QueueTaskResponse where

@@ -20,6 +20,7 @@ import           Data.Models.App               (App (..))
 import           Data.Models.QueueTask
 import           Data.Models.QueueTaskResponse
 import qualified Data.Text                     as T
+import qualified Data.Vector                   as V
 import           Deploy.Docker
 import           Network.AMQP
 import           System.Environment            (lookupEnv)
@@ -73,8 +74,8 @@ rabbitResultConsumer App { .. } (msg, env) = do
           else do
             putStrLn "Everything deployed! Launching check..."
             res <- executeStandCheck taskUUID' (getStandCheck queueTask)
-            print res
-            putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" Nothing
+            let jsonV = if null res then Nothing else (Just . Array . V.fromList) $ map (String . T.pack) res
+            putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" jsonV
           defaultRunDocker $ destroyStand (E.rights containerRess) networkId
 
 getEnvRabbitConnectionData :: IO (Maybe RabbitConnectionData)

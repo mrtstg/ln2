@@ -19,6 +19,7 @@
 
 module Foundation where
 
+import           Data.ByteString
 import           Data.Pool                   (Pool)
 import           Data.Text
 import           Database.Persist.Postgresql
@@ -37,6 +38,7 @@ Task
   Id String
   standIdentifier String
   state String
+  result ByteString Maybe
 |]
 
 mkYesodData

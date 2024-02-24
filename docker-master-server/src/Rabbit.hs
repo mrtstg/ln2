@@ -14,6 +14,7 @@ module Rabbit
   ) where
 
 import           Data.Aeson
+import qualified Data.ByteString               as BS
 import qualified Data.ByteString.Lazy.Char8    as BL
 import           Data.Models.QueueTask         (QueueTask)
 import           Data.Models.QueueTaskResponse
@@ -44,6 +45,10 @@ putQueueRequest' rCon messageBody = do
 putQueueRequest :: Connection -> String -> IO ()
 putQueueRequest rCon messageBody = putQueueRequest' rCon (BL.pack messageBody)
 
+jsonValueToBytestring :: Maybe Value -> Maybe BS.ByteString
+jsonValueToBytestring Nothing  = Nothing
+jsonValueToBytestring (Just v) = Just $ (BS.toStrict . encode) v
+
 rabbitResultConsumer :: App -> (Message, Envelope) -> IO ()
 rabbitResultConsumer App { .. } (msg, env) = do
   let msgBody' = msgBody msg
@@ -56,9 +61,9 @@ rabbitResultConsumer App { .. } (msg, env) = do
     (Right taskResp) -> do
       let taskUUID = getTaskResponseUUID taskResp
       let taskKey = TaskKey taskUUID
+      let taskResult = jsonValueToBytestring $ getTaskResult taskResp
       flip runSqlPool postgresqlPool $ do
-        -- TODO: add result save
-        update taskKey [ TaskState =. getTaskResponseStatus taskResp ]
+        update taskKey [ TaskState =. getTaskResponseStatus taskResp, TaskResult =. taskResult ]
       ackEnv env
 
 getEnvRabbitConnectionData :: IO (Maybe RabbitConnectionData)
