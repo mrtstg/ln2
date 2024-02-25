@@ -19,6 +19,7 @@ import qualified Data.Either                   as E
 import           Data.Models.App               (App (..))
 import           Data.Models.QueueTask
 import           Data.Models.QueueTaskResponse
+import           Data.Models.Stand
 import qualified Data.Text                     as T
 import qualified Data.Vector                   as V
 import           Deploy.Docker
@@ -73,7 +74,7 @@ rabbitResultConsumer App { .. } (msg, env) = do
             putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "error" Nothing
           else do
             putStrLn "Everything deployed! Launching check..."
-            res <- executeStandCheck taskUUID' (getStandCheck queueTask)
+            res <- executeStandCheck taskUUID' ((getStandDefaultActions . getStandData) queueTask ++ getStandCheck queueTask)
             let jsonV = if null res then Nothing else (Just . Array . V.fromList) $ map (String . T.pack) res
             putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" jsonV
           defaultRunDocker $ destroyStand (E.rights containerRess) networkId

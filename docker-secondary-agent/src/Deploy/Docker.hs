@@ -81,7 +81,7 @@ deployContainer baseName networkName (
             return c
 
 deployStand :: ContainerBaseName -> DockerNetworkName -> StandData -> DockerT IO ([Either DockerError ContainerID], Maybe NetworkID)
-deployStand baseName networkName (StandData containers) = do
+deployStand baseName networkName (StandData containers _) = do
   netId' <- createNetwork' networkName
   case netId' of
     (Left e) -> return ([Left e], Nothing)
