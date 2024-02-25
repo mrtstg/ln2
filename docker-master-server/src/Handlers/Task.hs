@@ -18,7 +18,7 @@ import           Database.Persist
 import           Foundation
 import           GHC.Generics
 import           Network.HTTP.Types
-import           Rabbit                 (putQueueRequest', putQueueTask)
+import           Rabbit                 (putQueueTask)
 import           Utils
 import           Yesod.Core
 import           Yesod.Persist
@@ -42,14 +42,18 @@ postTaskCreateR = do
           $logError $ (T.pack . show) e
           sendStatusJSON status500 $ object [ "error" .= String "Internal parse error!" ]
         (Right standData) -> do
-          taskUuid' <- liftIO nextRandom
-          let taskUuid = show taskUuid'
-          nowTime <- liftIO getCurrentTime
-          runDB $ do
-            _ <- insertKey (TaskKey taskUuid) (Task standName "queued" Nothing nowTime)
-            return ()
-          liftIO $ putQueueTask rabbitConnection $ QueueTask taskUuid standData standActions
-          sendStatusJSON status200 $ object [ "uuid" .= taskUuid ]
+          let validationResult = validateStandCheck standData standActions
+          case validationResult of
+            (Left e) -> sendStatusJSON status400 $ object [ "error" .= (String . T.pack) e ]
+            (Right _) -> do
+              taskUuid' <- liftIO nextRandom
+              let taskUuid = show taskUuid'
+              nowTime <- liftIO getCurrentTime
+              runDB $ do
+                _ <- insertKey (TaskKey taskUuid) (Task standName "queued" Nothing nowTime)
+                return ()
+              liftIO $ putQueueTask rabbitConnection $ QueueTask taskUuid standData standActions
+              sendStatusJSON status200 $ object [ "uuid" .= taskUuid ]
 
 taskResultToValue :: Maybe BS.ByteString -> Maybe Value
 taskResultToValue Nothing   = Nothing
