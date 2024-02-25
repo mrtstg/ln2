@@ -34,9 +34,12 @@ postStandsCreateR :: T.Text -> Handler Value
 postStandsCreateR standName = do
   App { .. } <- getYesod
   standInfo <- requireCheckJsonBody :: Handler StandData
-  findRes <- liftIO $ findYMLByName' standsFolder (T.unpack standName)
-  case findRes of
-    (Just _) -> sendStatusJSON badRequest400 $ object ["error" .= String "Already exists"]
-    Nothing -> do
-      _ <- liftIO $ Y.encodeFile (createYMLPath standsFolder (T.unpack standName)) standInfo
-      sendResponseStatus status204 ()
+  case validateStandCheck standInfo (getStandDefaultActions standInfo) of
+    (Left e) -> sendStatusJSON badRequest400 $ object ["error" .= (String . T.pack) e]
+    (Right ()) -> do
+      findRes <- liftIO $ findYMLByName' standsFolder (T.unpack standName)
+      case findRes of
+        (Just _) -> sendStatusJSON badRequest400 $ object ["error" .= String "Already exists"]
+        Nothing -> do
+          _ <- liftIO $ Y.encodeFile (createYMLPath standsFolder (T.unpack standName)) standInfo
+          sendResponseStatus status204 ()
