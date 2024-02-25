@@ -4,20 +4,26 @@
 module Data.Models.Stand (StandData(..), StandContainerData(..)) where
 
 import           Data.Aeson
-import qualified Data.Map     as M
+import qualified Data.Map               as M
+import           Data.Models.StandCheck
 import           Data.Text
 import           GHC.Generics
 
 data StandData = StandData {
-  getStandContainers :: [StandContainerData]
+  getStandContainers     :: ![StandContainerData],
+  getStandDefaultActions :: ![StandCheckStage]
   } deriving (Show, Generic)
 
 instance FromJSON StandData where
   parseJSON = withObject "StandData" $ \v -> StandData
     <$> v .: "containers"
+    <*> v .:? "actions" .!= []
 
 instance ToJSON StandData where
-  toJSON (StandData containers) = object ["containers" .= containers]
+  toJSON (StandData containers actions) = object [
+    "containers" .= containers,
+    "actions" .= actions
+    ]
 
 data StandContainerData = ContainerData
   { getContainerName        :: !Text
