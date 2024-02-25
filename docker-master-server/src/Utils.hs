@@ -1,14 +1,40 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Utils
   ( listYMLFiles
   , findYMLByName
   , findYMLByName'
   , createYMLPath
   , constructPostgreStringFromEnv
+  , validateStandCheck
 ) where
+import           Data.Models.Stand
+import           Data.Models.StandCheck
+import qualified Data.Text              as T
 import           System.Directory
-import           System.Environment (lookupEnv)
-import           System.FilePath    (addExtension, combine, dropExtension,
-                                     takeExtension, takeFileName)
+import           System.Environment     (lookupEnv)
+import           System.FilePath        (addExtension, combine, dropExtension,
+                                         takeExtension, takeFileName)
+
+standContainerExists :: StandData -> String -> Either String ()
+standContainerExists (StandData { getStandContainers = containers }) containerName =
+  case containerName `elem` map getContainerName containers of
+    True  -> return ()
+    False -> Left $ containerName ++ " not found in stand!"
+
+standFilePathValid :: FilePath -> Either String ()
+standFilePathValid "" = Left "File path must be specified!"
+standFilePathValid _  = Right ()
+
+standCommandValid :: T.Text -> Either String ()
+standCommandValid "" = Left "Command to container must be specified!"
+standCommandValid _  = Right()
+
+validateStandCheck :: StandData -> [StandCheckStage] -> Either String ()
+validateStandCheck d = helper where
+  helper :: [StandCheckStage] -> Either String ()
+  helper []                                        = Right ()
+  helper ((CopyFile containerName _ filePath):ls)  = standContainerExists d containerName >> standFilePathValid filePath >> helper ls
+  helper ((ExecuteCommand containerName cmd _ _):ls) = standContainerExists d containerName >> standCommandValid cmd >> helper ls
 
 constructPostgreStringFromEnv :: IO (Maybe String)
 constructPostgreStringFromEnv = do
