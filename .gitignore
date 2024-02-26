@@ -2,3 +2,6 @@
 pgdata
 docker-master-server/.env
 docker-master-server/stands
+
+logs
+pids
