@@ -26,7 +26,7 @@ createRedisConnectionFromEnv = do
   redisPort'' <- lookupEnv "REDIS_PORT"
   case (redisHost'', redisPort'') of
     (Just redisHost', Just redisPort') -> do
-      connection <- connect $ defaultConnectInfo { connectHost = redisHost', connectPort = (PortNumber . read . show) redisPort' }
+      connection <- connect $ defaultConnectInfo { connectHost = redisHost', connectPort = (PortNumber . read) redisPort' }
       return $ Just connection
     _anyOther -> return Nothing
 
