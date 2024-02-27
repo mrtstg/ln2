@@ -2,14 +2,13 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Handlers.User (deleteUserRouteR, postUserRouteR, getUserRouteR) where
 
-import           Crypto.Hash
-import           Crypto.Hash.SHA256
 import           Data.Aeson
 import qualified Data.ByteString.Char8       as BS
 import           Data.Models.UserAuthRequest
 import qualified Data.Text                   as T
 import           Foundation
 import           Network.HTTP.Types
+import           Utils                       (sha256Text)
 import           Yesod.Core
 import           Yesod.Persist
 
@@ -26,8 +25,7 @@ postUserRouteR = do
     let err = T.pack $ "User with login " ++ T.unpack getAuthRequestLogin ++ " already exists!"
     sendStatusJSON status400 $ object ["error" .= String err]
     else do
-      let pwdHash = (hash . BS.pack . T.unpack) getAuthRequestPassword :: SHA256
-      let pwdHashText = (T.pack . show) pwdHash
+      let pwdHashText = sha256Text getAuthRequestPassword
       (UserKey uid) <- runDB $ do
         insert $ User getAuthRequestLogin pwdHashText
       sendStatusJSON status200 $ object ["uid" .= uid]
