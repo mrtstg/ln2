@@ -16,6 +16,7 @@ import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.Auth
 import           Handlers.User
+import           Handlers.UserDetail
 import           Handlers.Validate
 import           System.Exit
 import           Utils
