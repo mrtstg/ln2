@@ -31,6 +31,7 @@ library
       Foundation
       Handlers.Auth
       Handlers.User
+      Redis
       Utils
   other-modules:
       Paths_auth_service
