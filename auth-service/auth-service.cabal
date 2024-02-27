@@ -27,10 +27,12 @@ library
       App.Commands
       App.Parser
       App.Types
+      Data.Models.User
       Data.Models.UserAuthRequest
       Foundation
       Handlers.Auth
       Handlers.User
+      Handlers.Validate
       Redis
       Utils
   other-modules:

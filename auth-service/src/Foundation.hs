@@ -34,9 +34,11 @@ data App = App
 mkYesodData
   "App"
   [parseRoutes|
-/user UserRouteR POST GET DELETE
+/user UserRouteR POST
 /auth AuthRouteR POST
+/validate ValidateTokenR POST
 |]
+
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 User
