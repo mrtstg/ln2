@@ -35,6 +35,7 @@ mkYesodData
   "App"
   [parseRoutes|
 /user UserRouteR POST
+/user/#Text UserIdDetailR GET DELETE
 /auth AuthRouteR POST
 /validate ValidateTokenR POST
 |]
