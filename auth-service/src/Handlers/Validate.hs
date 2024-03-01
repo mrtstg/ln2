@@ -2,6 +2,7 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Handlers.Validate (postValidateTokenR) where
 
+import           Crud                  (getUserAssignedRoles)
 import           Data.Aeson
 import           Data.ByteString.Char8 (unpack)
 import           Data.Models.User      (UserDetails (..), userDetailsFromModel)
@@ -13,7 +14,7 @@ import           Redis
 import           Yesod.Core
 import           Yesod.Persist
 
-data TokenRequest = TokenRequest { getTokenRequest :: String } deriving (Show)
+newtype TokenRequest = TokenRequest { getTokenRequest :: String } deriving (Show)
 
 instance FromJSON TokenRequest where
   parseJSON = withObject "TokenRequest" $ \v -> TokenRequest <$>
@@ -31,5 +32,6 @@ postValidateTokenR = do
       userObject' <- runDB $ selectFirst [UserLogin ==. userName] []
       case userObject' of
         Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Not found!" ]
-        (Just e) -> do
-          sendStatusJSON status200 $ (toJSON  . userDetailsFromModel) e
+        (Just e@(Entity uId _)) -> do
+          userRoles <- runDB $ getUserAssignedRoles uId
+          sendStatusJSON status200 $ (toJSON  . userDetailsFromModel e) userRoles

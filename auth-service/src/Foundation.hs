@@ -36,16 +36,28 @@ mkYesodData
   [parseRoutes|
 /user UserRouteR POST
 /user/#Text UserIdDetailR GET DELETE
+/role RoleR POST
+/role/#Text RoleNameDetailR GET DELETE
+/assign/#Text/#Text AssignRoleR POST
 /auth AuthRouteR POST
 /validate ValidateTokenR POST
 |]
-
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 User
   login Text
   passwordHash Text
   UniqueUser login
+  deriving Show
+Role
+  name Text
+  displayName Text
+  UniqueRole name
+  deriving Show
+RoleAssign
+  user UserId DeleteCascade
+  role RoleId DeleteCascade
+  deriving Show
 |]
 
 instance Yesod App where

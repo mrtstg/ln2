@@ -15,6 +15,7 @@ import qualified Data.ByteString.Char8       as BS
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.Auth
+import           Handlers.Role
 import           Handlers.User
 import           Handlers.UserDetail
 import           Handlers.Validate
