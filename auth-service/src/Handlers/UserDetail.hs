@@ -2,9 +2,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Handlers.UserDetail (getUserIdDetailR, deleteUserIdDetailR) where
 
+import           Crud                        (getUserAssignedRoles)
 import           Data.Aeson
 import           Data.Models.User            (userDetailsFromModel)
-import           Data.Text
+import           Data.Text                   (Text, pack, unpack)
 import           Database.Persist.Postgresql
 import           Foundation
 import           Network.HTTP.Types
@@ -21,7 +22,9 @@ getUserIdDetailR userLogin' = do
     userObj <- runDB $ selectFirst [ UserLogin ==. userLogin' ] []
     case userObj of
       Nothing  -> sendStatusJSON status404 notFoundErr
-      (Just e) -> sendStatusJSON status200 $ userDetailsFromModel e
+      (Just e@(Entity uId _)) -> do
+        userRoles <- runDB $ getUserAssignedRoles uId
+        sendStatusJSON status200 $ userDetailsFromModel e userRoles
 
 deleteUserIdDetailR :: Text -> Handler Value
 deleteUserIdDetailR userLogin' = do
@@ -31,5 +34,7 @@ deleteUserIdDetailR userLogin' = do
     case userObj of
       Nothing               -> sendStatusJSON status404 notFoundErr
       (Just (Entity uId _)) -> do
-        runDB $ delete uId
+        runDB $ do
+          deleteWhere [ RoleAssignUser ==. uId ]
+          delete uId
         sendResponseStatus status204 ()
