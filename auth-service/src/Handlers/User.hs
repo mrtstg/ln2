@@ -24,4 +24,4 @@ postUserRouteR = do
       let pwdHashText = sha256Text getAuthRequestPassword
       (UserKey uid) <- runDB $ do
         insert $ User getAuthRequestLogin pwdHashText
-      sendStatusJSON status200 $ object ["uid" .= uid]
+      sendStatusJSON status200 $ object ["id" .= uid]
