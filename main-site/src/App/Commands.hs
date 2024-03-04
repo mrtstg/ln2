@@ -15,6 +15,7 @@ import qualified Data.ByteString.Char8       as BS
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.Login
+import           Handlers.Profile
 import           System.Exit
 import           Utils
 import           Yesod.Core

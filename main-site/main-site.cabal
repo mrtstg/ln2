@@ -24,11 +24,16 @@ source-repository head
 
 library
   exposed-modules:
+      Api.Login
       App.Commands
       App.Parser
       App.Types
+      Data.Models.Role
+      Data.Models.User
+      Data.Models.UserAuthRequest
       Foundation
       Handlers.Login
+      Handlers.Profile
       Utils
   other-modules:
       Paths_main_site
@@ -41,8 +46,10 @@ library
       aeson ==2.1.2.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , cookie ==0.4.6
     , directory ==1.3.7.1
     , filepath ==1.4.2.2
+    , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , load-env ==0.2.1.0
     , monad-logger ==0.3.40
@@ -71,8 +78,10 @@ executable main-site-exe
       aeson ==2.1.2.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , cookie ==0.4.6
     , directory ==1.3.7.1
     , filepath ==1.4.2.2
+    , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , load-env ==0.2.1.0
     , main-site
@@ -103,8 +112,10 @@ test-suite main-site-test
       aeson ==2.1.2.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , cookie ==0.4.6
     , directory ==1.3.7.1
     , filepath ==1.4.2.2
+    , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , load-env ==0.2.1.0
     , main-site

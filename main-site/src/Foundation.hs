@@ -32,6 +32,7 @@ data App = App
 mkYesodData
   "App"
   [parseRoutes|
+/profile ProfileR GET
 /login LoginR GET POST
 |]
 
