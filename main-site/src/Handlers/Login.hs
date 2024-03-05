@@ -6,12 +6,14 @@ module Handlers.Login (getLoginR, postLoginR) where
 
 import           Api.Login
 import qualified Api.Login                   as L
+import           Control.Exception           (catch)
 import           Control.Monad.Trans.Except  (runExceptT)
 import           Data.Aeson
 import qualified Data.ByteString.Char8       as BS
 import           Data.Models.UserAuthRequest
 import           Data.Text                   (Text, pack, unpack)
 import           Foundation
+import           Network.HTTP.Simple         (HttpException)
 import           Network.HTTP.Types
 import           Web.Cookie
 import           Yesod.Core
@@ -39,21 +41,22 @@ loginForm = renderDivs $ LoginRequest
   <*> areq passwordField "Пароль" Nothing
 
 postLoginR :: Handler Value
-postLoginR = do
+postLoginR =
+  let
+  handler :: HttpException -> IO (Either HttpException (L.AuthResult Text))
+  handler _ = return $ Right L.InternalError -- MUST return Right
+  in do
   ((result, _), _) <- runFormPost loginForm
   case result of
     (FormSuccess (LoginRequest login password)) -> do
-      authRes' <- liftIO . runExceptT $ sendAuthRequest (UserAuthRequest login password)
-      -- TODO: reliable errors
+      authRes' <- liftIO $ runExceptT (sendAuthRequest (UserAuthRequest login password)) `catch` handler
       case authRes' of
-        (Left e) -> do
-          -- TODO: logging
-          sendStatusJSON status500 $ object [ "error" .= String "Internal error" ]
+        Left _ -> error "Unreachable pattern!" -- TODO: REPLACE
         (Right authRes) -> do
           case authRes of
             L.InvalidCredentials -> redirect LoginR
-            (AuthToken token) -> do
+            (AuthResult token) -> do
               setCookie $ defaultSetCookie { setCookieName = BS.pack "session", setCookieValue = BS.pack . unpack $ token }
               redirect ProfileR
-            _internalError -> sendStatusJSON status500 $ object [ "error" .= String "Internal error" ]
+            _internalError -> redirect LoginR
     _formError -> sendStatusJSON status400 $ object ["error" .= String "Failed to parse form!"]
