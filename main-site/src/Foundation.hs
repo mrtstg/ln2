@@ -19,7 +19,10 @@
 
 module Foundation where
 
+import           Data.ByteString.Char8
 import           Data.Pool                   (Pool)
+import           Data.Text
+import           Data.Time.Clock
 import           Database.Persist.Postgresql
 import           Yesod.Core
 import           Yesod.Form
@@ -34,10 +37,28 @@ mkYesodData
   [parseRoutes|
 /profile ProfileR GET
 /login LoginR GET POST
+/courses CoursesR GET
+/api/courses ApiCourseR GET POST
 |]
 
---share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
--- |]
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+Course
+  Id String
+  name Text
+  authorId Int
+  createdAt UTCTime default=now()
+  CourseUnique name
+  deriving Show
+CourseTask
+  Id Int
+  name Text
+  content Text
+  orderNumber Int default=0
+  course CourseId
+  standIdentifier Text
+  standActions ByteString
+  deriving Show
+|]
 
 instance Yesod App where
   makeSessionBackend _ = return Nothing
