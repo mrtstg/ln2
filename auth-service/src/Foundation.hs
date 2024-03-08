@@ -31,18 +31,6 @@ data App = App
   , redisPool      :: !R.Connection
   }
 
-mkYesodData
-  "App"
-  [parseRoutes|
-/user UserRouteR POST
-/user/#Text UserIdDetailR GET DELETE
-/role RoleR POST
-/role/#Text RoleNameDetailR GET DELETE
-/assign/#Text/#Text AssignRoleR POST
-/auth AuthRouteR POST
-/validate ValidateTokenR POST
-|]
-
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 User
   login Text
@@ -58,6 +46,19 @@ RoleAssign
   user UserId DeleteCascade
   role RoleId DeleteCascade
   deriving Show
+|]
+
+mkYesodData
+  "App"
+  [parseRoutes|
+/user UserRouteR POST
+/user/#Text UserNameDetailR GET DELETE
+/user/id/#UserId UserIdDetailR GET DELETE
+/role RoleR POST
+/role/#Text RoleNameDetailR GET DELETE
+/assign/#Text/#Text AssignRoleR POST
+/auth AuthRouteR POST
+/validate ValidateTokenR POST
 |]
 
 instance Yesod App where
