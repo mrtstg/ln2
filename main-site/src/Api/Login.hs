@@ -6,7 +6,7 @@ module Api.Login
   , requireApiAuth
   ) where
 
-import           Control.Exception           (try)
+import           Control.Exception           (catch, try)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.ByteString             (ByteString)
@@ -31,13 +31,17 @@ instance FromJSON AuthResponse where
 api403Error :: Value
 api403Error = object [ "error" .= String "Unauthorized!" ]
 
+
+authHandler :: HttpException -> IO (Either HttpException (AuthResult UserDetails))
+authHandler _ = return $ Right InternalError -- MUST return Right
+
 requireApiAuth :: Handler UserDetails
 requireApiAuth = do
   tokenValue' <- lookupCookie "session"
   case tokenValue' of
     Nothing -> sendStatusJSON status403 api403Error
     (Just tokenValue) -> do
-      validRes <- liftIO . runExceptT $ validateToken tokenValue
+      validRes <- liftIO $ runExceptT (validateToken tokenValue) `catch` authHandler
       case validRes of
         (Left _)     -> sendStatusJSON status403 api403Error
         (Right resp) -> case resp of
@@ -50,7 +54,7 @@ requireAuth = do
   case tokenValue' of
     Nothing -> redirect LoginR
     (Just tokenValue) -> do
-      validRes <- liftIO . runExceptT $ validateToken tokenValue
+      validRes <- liftIO $ runExceptT (validateToken tokenValue) `catch` authHandler
       case validRes of
         (Left _)     -> redirect LoginR
         (Right resp) -> case resp of
