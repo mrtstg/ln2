@@ -1,5 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Api.Login (sendAuthRequest, AuthResult(..), requireAuth) where
+module Api.Login
+  ( sendAuthRequest
+  , AuthResult(..)
+  , requireAuth
+  , requireApiAuth
+  ) where
 
 import           Control.Exception           (try)
 import           Control.Monad.Trans.Except
@@ -11,8 +16,10 @@ import           Data.Models.UserAuthRequest
 import           Data.Text                   (Text, pack, unpack)
 import           Foundation
 import           Network.HTTP.Simple
+import           Network.HTTP.Types
 import           System.Environment
-import           Yesod.Core                  (liftIO, lookupCookie, redirect)
+import           Yesod.Core                  (liftIO, lookupCookie, redirect,
+                                              sendStatusJSON)
 
 data AuthResult a = AuthResult !a | NoAuthURL | InternalError | InvalidCredentials deriving (Show, Eq)
 
@@ -20,6 +27,22 @@ newtype AuthResponse = AuthResponse Text deriving (Show, Eq)
 
 instance FromJSON AuthResponse where
   parseJSON = withObject "AuthResponse" $ \v -> AuthResponse <$> v .: "token"
+
+api403Error :: Value
+api403Error = object [ "error" .= String "Unauthorized!" ]
+
+requireApiAuth :: Handler UserDetails
+requireApiAuth = do
+  tokenValue' <- lookupCookie "session"
+  case tokenValue' of
+    Nothing -> sendStatusJSON status403 api403Error
+    (Just tokenValue) -> do
+      validRes <- liftIO . runExceptT $ validateToken tokenValue
+      case validRes of
+        (Left _)     -> sendStatusJSON status403 api403Error
+        (Right resp) -> case resp of
+          (AuthResult userDetails) -> return userDetails
+          _anyOther                -> sendStatusJSON status403 api403Error
 
 requireAuth :: Handler UserDetails
 requireAuth = do
