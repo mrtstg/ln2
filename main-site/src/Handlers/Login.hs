@@ -59,4 +59,14 @@ postLoginR =
               setCookie $ defaultSetCookie { setCookieName = BS.pack "session", setCookieValue = BS.pack . unpack $ token }
               redirect ProfileR
             _internalError -> redirect LoginR
-    _formError -> sendStatusJSON status400 $ object ["error" .= String "Failed to parse form!"]
+    _formError -> do
+      r@(UserAuthRequest {}) <- requireCheckJsonBody
+      authRes' <- liftIO $ runExceptT (sendAuthRequest r) `catch` handler
+      case authRes' of
+        Left _ -> error "Unreachable pattern!" -- TODO: REPLACE
+        (Right authRes) -> do
+          case authRes of
+            L.InvalidCredentials -> sendStatusJSON status400 $ object [ "error" .= String "Invalid credentials!" ]
+            (AuthResult token) -> do
+              sendStatusJSON status200 $ object [ "token" .= String token ]
+            _internalError -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
