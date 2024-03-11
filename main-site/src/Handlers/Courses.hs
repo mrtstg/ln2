@@ -5,6 +5,9 @@
 module Handlers.Courses (getCoursesR, getApiCourseR, postApiCourseR) where
 
 import           Api.Login          (requireApiAuth, requireAuth)
+import           Api.User           (UserGetResult (..))
+import qualified Crud.User          as U
+import qualified Data.Map           as M
 import           Data.Models.Course
 import           Data.Models.Role   (adminRoleGranted)
 import           Data.Models.User
@@ -45,13 +48,19 @@ $if cAmount > (pageN * defaultPageSize)
 |]
 
 getApiCourseR :: Handler Value
-getApiCourseR = do
+getApiCourseR = let
+  helper :: Maybe (UserGetResult UserDetails) -> Maybe UserDetails
+  helper Nothing                  = Nothing
+  helper (Just (UserGetResult d)) = Just d
+  helper _                        = Nothing
+  in do
   pageN <- getPageNumber
   (courses, cAmount) <- getUserCourses pageN requireApiAuth
+  users <- liftIO $ U.retrieveCourseUsers courses
   sendStatusJSON status200 $ object
     [ "total" .= cAmount
     , "pageSize" .= defaultPageSize
-    , "objects" .= map (`courseDetailsFromModel` Nothing) courses
+    , "objects" .= map (\e@(Entity _ (Course {courseAuthorId = aid})) -> courseDetailsFromModel e (helper $ M.lookup aid users)) courses
     ]
 
 postApiCourseR :: Handler Value
