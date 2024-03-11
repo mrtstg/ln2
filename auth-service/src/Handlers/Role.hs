@@ -7,6 +7,7 @@ module Handlers.Role
   ) where
 
 import           Data.Aeson
+import           Data.Models.Role   (roleDetailsFromModel)
 import           Data.Text
 import           Database.Persist
 import           Foundation
@@ -29,9 +30,11 @@ postRoleR = do
     let err = pack $ "Role with name " ++ unpack roleName' ++ " already exists!"
     sendStatusJSON status400 $ object ["error" .= String err]
     else do
-      (RoleKey rId) <- runDB $ do
-        insert $ Role roleName' displayName
-      sendStatusJSON status200 $ object ["id" .= rId]
+      ires <- runDB $ do
+        rid <- insert $ Role roleName' displayName
+        get rid
+      case ires of
+        ~(Just r) -> sendStatusJSON status200 $ (toJSON . roleDetailsFromModel) r
 
 getRoleNameDetailR :: Text -> Handler Value
 getRoleNameDetailR roleName' = do
