@@ -56,7 +56,7 @@ mkYesodData
 /user/id/#UserId UserIdDetailR GET DELETE
 /role RoleR POST
 /role/#Text RoleNameDetailR GET DELETE
-/assign/#Text/#Text AssignRoleR POST
+/assign/#Text/#Text AssignRoleR GET POST
 /auth AuthRouteR POST
 /validate ValidateTokenR POST
 |]
