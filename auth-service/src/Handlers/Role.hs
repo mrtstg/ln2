@@ -4,6 +4,7 @@ module Handlers.Role
   , getRoleNameDetailR
   , deleteRoleNameDetailR
   , postAssignRoleR
+  , getAssignRoleR
   ) where
 
 import           Data.Aeson
@@ -66,6 +67,29 @@ deleteRoleNameDetailR roleName' = do
             deleteWhere [RoleAssignRole ==. rId]
             delete rId
       sendResponseStatus status204 ()
+
+getAssignRoleR :: Text -> Text -> Handler Value
+getAssignRoleR userName' roleName' = do
+  let assignError = object [ "assigned" .= False ]
+  let respF = sendStatusJSON status200
+  existFlags <- runDB $ do
+    uE <- exists [ UserLogin ==. userName' ]
+    rE <- exists [ RoleName ==. roleName' ]
+    return (uE, rE)
+  case existFlags of
+    (False, True) -> respF assignError
+    (_, False) -> respF assignError
+    (True, True) -> do
+      userRes <- runDB $ selectFirst [ UserLogin ==. userName' ] []
+      case userRes of
+        Nothing -> respF assignError
+        (Just (Entity uid _)) -> do
+          roleRes <- runDB $ selectFirst [ RoleName ==. roleName' ] []
+          case roleRes of
+            Nothing -> respF assignError
+            (Just (Entity rid _)) -> do
+              roleAssigned <- runDB $ exists [ RoleAssignUser ==. uid, RoleAssignRole ==. rid]
+              if roleAssigned then respF $ object [ "assigned" .= True ] else respF assignError
 
 postAssignRoleR :: Text -> Text -> Handler Value
 postAssignRoleR userName' roleName' = do
