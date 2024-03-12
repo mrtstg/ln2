@@ -12,7 +12,7 @@ import           Data.Text  (Text)
 data RoleDetails = RoleDetails
   { getRoleName        :: !Text
   , getRoleDisplayName :: !Text
-  } deriving Show
+  } deriving (Eq, Show)
 
 instance ToJSON RoleDetails where
   toJSON (RoleDetails { .. }) = object

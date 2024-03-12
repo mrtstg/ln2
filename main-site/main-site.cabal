@@ -25,14 +25,19 @@ source-repository head
 library
   exposed-modules:
       Api.Login
+      Api.Role
+      Api.User
       App.Commands
       App.Parser
       App.Types
+      Crud.Course
+      Crud.User
       Data.Models.Course
       Data.Models.Role
       Data.Models.User
       Data.Models.UserAuthRequest
       Foundation
+      Handlers.CoursePage
       Handlers.Courses
       Handlers.Login
       Handlers.Profile
@@ -49,6 +54,7 @@ library
       aeson ==2.1.2.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , containers ==0.6.7
     , cookie ==0.4.6
     , directory ==1.3.7.1
     , filepath ==1.4.2.2
@@ -82,6 +88,7 @@ executable main-site-exe
       aeson ==2.1.2.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , containers ==0.6.7
     , cookie ==0.4.6
     , directory ==1.3.7.1
     , filepath ==1.4.2.2
@@ -118,6 +125,7 @@ test-suite main-site-test
       aeson ==2.1.2.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , containers ==0.6.7
     , cookie ==0.4.6
     , directory ==1.3.7.1
     , filepath ==1.4.2.2

@@ -2,18 +2,23 @@
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeFamilies      #-}
-module Handlers.Courses (getCoursesR, getApiCourseR, postApiCourseR) where
+module Handlers.Courses
+  ( getCoursesR
+  , getApiCourseR
+  , postApiCourseR
+  , deleteApiCourseIdR
+  ) where
 
 import           Api.Login          (requireApiAuth, requireAuth)
 import           Api.User           (UserGetResult (..))
+import           Crud.Course
 import qualified Crud.User          as U
+import           Data.Aeson
 import qualified Data.Map           as M
 import           Data.Models.Course
 import           Data.Models.Role   (adminRoleGranted)
 import           Data.Models.User
 import           Data.Text          (pack, unpack)
-import           Data.Time.Clock    (getCurrentTime)
-import           Data.UUID.V4       (nextRandom)
 import           Database.Persist
 import           Foundation
 import           Handlers.Utils
@@ -65,18 +70,18 @@ getApiCourseR = let
 
 postApiCourseR :: Handler Value
 postApiCourseR = do
-  d@(UserDetails { getUserDetailsId = uId }) <- requireApiAuth
-  (CourseCreate { .. }) <- requireCheckJsonBody
+  d@(UserDetails { getUserDetailsId = uId, getUserDetailsName = uName }) <- requireApiAuth
+  c@(CourseCreate { .. }) <- requireCheckJsonBody
   let courseName = pack getCourseCreateName
   courseExists <- runDB $ exists [CourseName ==. courseName]
   if courseExists then sendStatusJSON status400 $ object [ "error" .= String "Course with this name already exists!" ] else do
-    courseUUID' <- liftIO $ nextRandom
-    let courseUUID = show courseUUID'
-    createTime <- liftIO getCurrentTime
-    courseEntity' <- runDB $ do
-      insertKey (CourseKey courseUUID) (Course courseName uId createTime)
-      get $ CourseKey courseUUID
-    case courseEntity' of
+    createRes <- createCourse (unpack uName) uId c
+    case createRes of
       Nothing -> sendStatusJSON status400 $ object [ "error" .= String "Something went wrong!" ]
-      (Just courseEntity) -> do
-        sendStatusJSON status200 (courseDetailsFromModel (Entity (CourseKey courseUUID) courseEntity) (Just d))
+      (Just e) -> do
+        sendStatusJSON status200 (courseDetailsFromModel e (Just d))
+
+deleteApiCourseIdR :: CourseId -> Handler Value
+deleteApiCourseIdR (CourseKey courseUUID) = do
+  res <- deleteCourse courseUUID
+  if not res then sendStatusJSON status400 $ object [ "error" .= String "Course not found!" ] else sendResponseStatus status204 ()

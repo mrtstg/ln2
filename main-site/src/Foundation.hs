@@ -32,15 +32,6 @@ data App = App
   { postgresqlPool :: !(Pool SqlBackend)
   }
 
-mkYesodData
-  "App"
-  [parseRoutes|
-/profile ProfileR GET
-/login LoginR GET POST
-/courses CoursesR GET
-/api/courses ApiCourseR GET POST
-|]
-
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Course
   Id String
@@ -58,6 +49,17 @@ CourseTask
   standIdentifier Text
   standActions ByteString
   deriving Show
+|]
+
+mkYesodData
+  "App"
+  [parseRoutes|
+/profile ProfileR GET
+/login LoginR GET POST
+/courses CoursesR GET
+/course/#CourseId CourseR GET
+/api/courses ApiCourseR GET POST
+/api/courses/#CourseId ApiCourseIdR DELETE
 |]
 
 instance Yesod App where
