@@ -12,11 +12,17 @@ module App.Commands (
 import           App.Types
 import           Control.Monad.Logger        (runStdoutLoggingT)
 import qualified Data.ByteString.Char8       as BS
+import qualified Data.Text                   as T
 import           Database.Persist.Postgresql
 import           Foundation
+import           Handlers.CoursePage
 import           Handlers.Courses
+import           Handlers.CourseTask
 import           Handlers.Login
 import           Handlers.Profile
+import           Network.AMQP                (openConnection')
+import           Network.Socket              (PortNumber)
+import           Rabbit
 import           System.Exit
 import           Utils
 import           Yesod.Core
@@ -43,9 +49,22 @@ runServerCommand port = do
       putStrLn "No postgres connection info!"
       exitWith $ ExitFailure 1
     Just postgresString -> do
-      postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-      let app = App postgresPool
-      warp port app
+      rabbitCreds' <- getEnvRabbitConnectionData
+      case rabbitCreds' of
+        Nothing -> do
+          putStrLn "No RabbitMQ connection data!"
+          exitWith $ ExitFailure 1
+        Just rabbitCreds -> do
+          rabbitConn <- openConnection'
+            (getRConHost rabbitCreds)
+            (read $ (show . getRConPort) rabbitCreds :: PortNumber)
+            "/"
+            ((T.pack . getRConUser) rabbitCreds)
+            ((T.pack . getRConPass) rabbitCreds)
+          postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
+          let app = App postgresPool rabbitConn
+          _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
+          warp port app
 
 runCommand :: AppOpts -> IO ()
 runCommand (AppOpts _ CreateDatabase) = runCreateDatabaseCommand
