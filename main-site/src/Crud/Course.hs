@@ -3,6 +3,8 @@ module Crud.Course
   , generateCourseAdminsGroup
   , createCourse
   , deleteCourse
+  , isUserCourseAdmin
+  , isUserCourseMember
   ) where
 
 import           Api.Role
@@ -22,6 +24,14 @@ generateCourseAdminsGroup uid = "members-" <> uid
 
 generateCourseMembersGroup :: String -> String
 generateCourseMembersGroup uid = "admins-" <> uid
+
+isUserCourseAdmin :: String -> [RoleDetails] -> Bool
+isUserCourseAdmin courseUUID roles = any (\(RoleDetails name _) -> name == v) roles || adminRoleGranted roles where
+  v = pack . generateCourseAdminsGroup $ courseUUID
+
+isUserCourseMember :: String -> [RoleDetails] -> Bool
+isUserCourseMember courseUUID roles = isUserCourseAdmin courseUUID roles || adminRoleGranted roles || any (\(RoleDetails name _) -> name == v) roles where
+  v = pack .generateCourseMembersGroup $ courseUUID
 
 -- TODO: unify interface
 createCourse :: String -> Int -> CourseCreate -> Handler (Maybe (Entity Course))
