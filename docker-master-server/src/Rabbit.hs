@@ -38,8 +38,8 @@ putQueueTask rCon = putQueueRequest' rCon . encode
 putQueueRequest' :: Connection -> BL.ByteString -> IO ()
 putQueueRequest' rCon messageBody = do
   chan <- openChannel rCon
-  _ <- publishMsg chan "requestsExchange" "" $
-    newMsg { msgBody = messageBody, msgDeliveryMode = Just Persistent }
+  let msg = newMsg { msgBody = messageBody, msgDeliveryMode = Just Persistent }
+  _ <- publishMsg chan "requestsExchange" "" msg
   return ()
 
 putQueueRequest :: Connection -> String -> IO ()
@@ -52,6 +52,8 @@ jsonValueToBytestring (Just v) = Just $ (BS.toStrict . encode) v
 rabbitResultConsumer :: App -> (Message, Envelope) -> IO ()
 rabbitResultConsumer App { .. } (msg, env) = do
   let msgBody' = msgBody msg
+  chan <- openChannel rabbitConnection
+  _ <- publishMsg chan "mainSiteExchange" "" msg
   --let msgBodyString = (BL.unpack . msgBody) msg
   let msgParseRes = eitherDecode msgBody' :: Either String QueueTaskResponse
   case msgParseRes of
@@ -85,6 +87,9 @@ getEnvRabbitConnectionData = do
 prepareRabbitQuery :: Connection -> IO ()
 prepareRabbitQuery rCon = do
   chan <- openChannel rCon
+  _ <- declareQueue chan newQueue { queueName = "mainSiteQueue" }
+  declareExchange chan newExchange { exchangeName = "mainSiteExchange", exchangeType = "direct" }
+  bindQueue chan "mainSiteQueue" "mainSiteExchange" ""
   _ <- declareQueue chan newQueue { queueName = "requestsQueue" }
   declareExchange chan newExchange { exchangeName = "requestsExchange", exchangeType = "direct" }
   bindQueue chan "requestsQueue" "requestsExchange" ""
