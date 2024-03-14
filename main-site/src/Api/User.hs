@@ -5,14 +5,12 @@ module Api.User
   , UserGetResult(..)
   ) where
 
-import           Control.Applicative
 import           Control.Exception
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.ByteString            (ByteString)
 import           Data.ByteString.Lazy       (fromStrict)
 import           Data.Models.User
-import           Foundation
 import           Network.HTTP.Simple
 import           System.Environment
 import           Yesod.Core                 (liftIO)
