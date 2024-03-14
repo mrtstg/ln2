@@ -24,12 +24,14 @@ import           Data.Pool                   (Pool)
 import           Data.Text
 import           Data.Time.Clock
 import           Database.Persist.Postgresql
+import qualified Network.AMQP                as R
 import           Yesod.Core
 import           Yesod.Form
 import           Yesod.Persist
 
 data App = App
-  { postgresqlPool :: !(Pool SqlBackend)
+  { postgresqlPool   :: !(Pool SqlBackend)
+  , rabbitConnection :: !R.Connection
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
@@ -41,14 +43,24 @@ Course
   CourseUnique name
   deriving Show
 CourseTask
-  Id Int
   name Text
   content Text
   orderNumber Int default=0
   course CourseId
   standIdentifier Text
   standActions ByteString
+  awaitedResult ByteString
   deriving Show
+CourseSolves
+  Id String
+  userId Int
+  taskId CourseTaskId
+  correct Bool
+  deriving Show
+CourseSolveAcception
+  userId Int
+  taskId CourseTaskId
+  Primary userId taskId
 |]
 
 mkYesodData
@@ -60,6 +72,8 @@ mkYesodData
 /course/#CourseId CourseR GET
 /api/courses ApiCourseR GET POST
 /api/courses/#CourseId ApiCourseIdR DELETE
+/api/course/#CourseId/task ApiCourseTaskR POST GET
+/api/task/#CourseTaskId ApiTaskR DELETE GET
 |]
 
 instance Yesod App where
