@@ -20,6 +20,7 @@ import           Handlers.Courses
 import           Handlers.CourseTask
 import           Handlers.Login
 import           Handlers.Profile
+import           Handlers.TaskSolves
 import           Network.AMQP                (openConnection')
 import           Network.Socket              (PortNumber)
 import           Rabbit
