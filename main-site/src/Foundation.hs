@@ -74,6 +74,7 @@ mkYesodData
 /api/courses/#CourseId ApiCourseIdR DELETE
 /api/course/#CourseId/task ApiCourseTaskR POST GET
 /api/task/#CourseTaskId ApiTaskR DELETE GET
+/api/task/#CourseTaskId/solves ApiTaskSolvesR POST
 |]
 
 instance Yesod App where

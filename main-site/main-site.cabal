@@ -26,6 +26,7 @@ library
   exposed-modules:
       Api.Login
       Api.Role
+      Api.Task
       Api.User
       App.Commands
       App.Parser
@@ -33,15 +34,21 @@ library
       Crud.Course
       Crud.User
       Data.Models.Course
+      Data.Models.CourseTask
+      Data.Models.QueueTaskResponse
       Data.Models.Role
+      Data.Models.StandCheck
       Data.Models.User
       Data.Models.UserAuthRequest
       Foundation
       Handlers.CoursePage
       Handlers.Courses
+      Handlers.CourseTask
       Handlers.Login
       Handlers.Profile
+      Handlers.TaskSolves
       Handlers.Utils
+      Rabbit
       Utils
   other-modules:
       Paths_main_site
@@ -52,6 +59,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       aeson ==2.1.2.1
+    , amqp ==0.22.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
     , containers ==0.6.7
@@ -62,6 +70,7 @@ library
     , http-types ==0.12.3
     , load-env ==0.2.1.0
     , monad-logger ==0.3.40
+    , network ==3.1.4.0
     , optparse-applicative ==0.17.1.0
     , persistent ==2.14.*
     , persistent-postgresql ==2.13.6.1
@@ -86,6 +95,7 @@ executable main-site-exe
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson ==2.1.2.1
+    , amqp ==0.22.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
     , containers ==0.6.7
@@ -97,6 +107,7 @@ executable main-site-exe
     , load-env ==0.2.1.0
     , main-site
     , monad-logger ==0.3.40
+    , network ==3.1.4.0
     , optparse-applicative ==0.17.1.0
     , persistent ==2.14.*
     , persistent-postgresql ==2.13.6.1
@@ -123,6 +134,7 @@ test-suite main-site-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson ==2.1.2.1
+    , amqp ==0.22.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
     , containers ==0.6.7
@@ -136,6 +148,7 @@ test-suite main-site-test
     , load-env ==0.2.1.0
     , main-site
     , monad-logger ==0.3.40
+    , network ==3.1.4.0
     , optparse-applicative ==0.17.1.0
     , persistent ==2.14.*
     , persistent-postgresql ==2.13.6.1
