@@ -35,8 +35,8 @@ getCoursesR = do
     setTitle "Доступные курсы"
     [whamlet|
 <ul>
-  $forall (Entity _ (Course cName _ _)) <- courses
-    <li> #{cName}
+  $forall (Entity cId (Course cName _ _)) <- courses
+    <li> <a href=@{CourseR cId}> #{cName}
 $if pageN /= 1
   <a href=@{CoursesR}?page=#{pageN - 1}> Prev
 $if cAmount > (pageN * defaultPageSize)

@@ -70,6 +70,7 @@ mkYesodData
 /login LoginR GET POST
 /courses CoursesR GET
 /course/#CourseId CourseR GET
+/task/#CourseTaskId CourseTaskR GET
 /api/courses ApiCourseR GET POST
 /api/courses/#CourseId ApiCourseIdR DELETE
 /api/course/#CourseId/task ApiCourseTaskR POST GET
