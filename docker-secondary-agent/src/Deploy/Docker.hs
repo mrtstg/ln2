@@ -99,7 +99,7 @@ executeStandCheck baseName = helper [] where
     command_ [] "docker" ["cp", tempPath, T.unpack $ baseName <> "-" <> getStageContainer <> ":" <> T.pack getStageFilePath]
     helper acc cs
   helper acc (ExecuteCommand { .. }:cs) = do
-    Stdout cmdOut <- command [] "docker" $
+    (Stdout cmdOut, Exit _, Stderr _) <- command [] "docker" $
       [ "exec"
       , T.unpack $ baseName <> "-" <> getStageContainer
       ] ++ map T.unpack (T.splitOn " " getStageCommand)
@@ -111,7 +111,7 @@ executeStandCheck baseName = helper [] where
 
 destroyStand :: [ContainerID] -> NetworkID -> DockerT IO ()
 destroyStand cIds nId = do
-  _ <- mapM (stopContainer (Timeout 1)) cIds
-  _ <- mapM (deleteContainer defaultContainerDeleteOpts { force = True }) cIds
+  mapM_ (stopContainer (Timeout 1)) cIds
+  mapM_ (deleteContainer defaultContainerDeleteOpts { force = True }) cIds
   _ <- removeNetwork nId
   return ()
