@@ -10,6 +10,7 @@ module Handlers.CourseTask
 
 import           Api.Login              (requireApiAuth)
 import           Crud.Course
+import           Crud.CourseTask        (getCourseTaskDetails, getCourseTasks)
 import           Data.Aeson
 import           Data.ByteString        (toStrict)
 import           Data.Models.CourseTask
@@ -63,11 +64,7 @@ getApiCourseTaskR cId = do
       let isMember = isUserCourseMember courseUUID getUserRoles
       if not isMember then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
         pageV <- getPageNumber
-        let params = [LimitTo defaultPageSize, OffsetBy $ (pageV - 1) * defaultPageSize, Desc CourseTaskOrderNumber]
-        (tasks, taskC) <- runDB $ do
-          v <- selectList [CourseTaskCourse ==. cId] params
-          v' <- count [CourseTaskCourse ==. cId]
-          return (v, v')
+        (tasks, taskC) <- getCourseTasks cId pageV
         sendStatusJSON status200 $ object
           [ "total" .= taskC
           , "pageSize" .= defaultPageSize
@@ -95,7 +92,7 @@ deleteApiTaskR ctId = do
 
 getApiTaskR :: CourseTaskId -> Handler Value
 getApiTaskR ctId = do
-  (UserDetails { .. }) <- requireApiAuth
+  d@(UserDetails { .. }) <- requireApiAuth
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status400 $ object [ "error" .= String "Task not found!" ]
@@ -106,11 +103,5 @@ getApiTaskR ctId = do
         (Just cE@(Entity (CourseKey courseUUID) _)) -> do
           let isMember = isUserCourseMember courseUUID getUserRoles
           if not isMember then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
-            (taskAccepted, solves) <- runDB $ do
-              tAccepted <- exists
-                [ CourseSolveAcceptionUserId ==. getUserDetailsId
-                , CourseSolveAcceptionTaskId ==. ctId
-                ]
-              solves <- selectList [ CourseSolvesTaskId ==. ctId, CourseSolvesUserId ==. getUserDetailsId ] []
-              return (tAccepted, solves)
+            (taskAccepted, solves) <- getCourseTaskDetails d cT
             sendStatusJSON status200 $ courseTaskWithSolveFromModel cT cE solves taskAccepted
