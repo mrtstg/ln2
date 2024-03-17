@@ -25,6 +25,7 @@ import qualified Data.Vector                   as V
 import           Deploy.Docker
 import           Network.AMQP
 import           System.Environment            (lookupEnv)
+import           System.Timeout
 import           Text.Read                     (readMaybe)
 
 data RabbitConnectionData = RConData
@@ -74,9 +75,12 @@ rabbitResultConsumer App { .. } (msg, env) = do
             putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "error" Nothing
           else do
             putStrLn "Everything deployed! Launching check..."
-            res <- executeStandCheck taskUUID' ((getStandDefaultActions . getStandData) queueTask ++ getStandCheck queueTask)
-            let jsonV = if null res then Nothing else (Just . Array . V.fromList) $ map (String . T.pack) res
-            putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" jsonV
+            res' <- timeout 60000000 $ executeStandCheck taskUUID' ((getStandDefaultActions . getStandData) queueTask ++ getStandCheck queueTask)
+            case res' of
+              Nothing -> putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "timeout" Nothing
+              (Just res) -> do
+                let jsonV = if null res then Nothing else (Just . Array . V.fromList) $ map (String . T.pack) res
+                putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" jsonV
           defaultRunDocker $ destroyStand (E.rights containerRess) networkId
 
 getEnvRabbitConnectionData :: IO (Maybe RabbitConnectionData)
