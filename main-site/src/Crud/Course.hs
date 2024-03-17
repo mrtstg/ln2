@@ -47,10 +47,10 @@ getUserMembershipCourses roles pageN = let
     return (courses, coursesAmount)
 
 generateCourseAdminsGroup :: String -> String
-generateCourseAdminsGroup uid = "members-" <> uid
+generateCourseAdminsGroup uid = "admins-" <> uid
 
 generateCourseMembersGroup :: String -> String
-generateCourseMembersGroup uid = "admins-" <> uid
+generateCourseMembersGroup uid = "members-" <> uid
 
 isUserCourseManager :: [RoleDetails] -> Bool
 isUserCourseManager roles = any (\(RoleDetails name _) -> name == "course-creator") roles || adminRoleGranted roles
@@ -92,10 +92,11 @@ createCourse userName uId (CourseCreate courseName) = do
             _ <- liftIO $ assignRole' userName roleName -- TODO: assign handle
             return ()
           unless creatorAssigned' $ do
-            _ <- liftIO $ assignRole' userName roleName
+            _ <- liftIO $ assignRole' userName adminsRoleName
             return ()
           return $ Just (Entity (CourseKey courseUUID) e)
 
+-- TODO: task cascade delete
 deleteCourse :: String -> Handler Bool
 deleteCourse courseUUID = do
   let roleName = generateCourseMembersGroup courseUUID
