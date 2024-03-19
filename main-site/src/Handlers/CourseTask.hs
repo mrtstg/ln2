@@ -110,20 +110,34 @@ getCourseTaskR ctId = do
             defaultLayout $ do
               setTitle $ toHtml ("Задача: " <> T.unpack courseTaskName)
               [whamlet|
-<h1> #{ courseTaskName }
-<p> #{ courseTaskContent }
-$if (not . null) solves
-  <ul>
-    $forall (Entity (CourseSolvesKey sId) CourseSolves { .. }) <- solves
-      <li> #{sId} - #{show courseSolvesCorrect}
-$else
-  <h2> Предыдущие решения не найдены!
-$if taskAccepted
-  <h2> Задание принято!
-$else
-  <form method=post action=@{CourseTaskR ctId} enctype=#{enctype}>
-    ^{widget}
-    <button> Отправить решение
+<div .container.pt-2.py-3>
+  <h1 .title.pb-3> #{ courseTaskName }
+  <div .content.is-medium>
+    #{ courseTaskContent }
+  $if (not . null) solves
+    <div .columns.is-multiline>
+      $forall (Entity (CourseSolvesKey sId) CourseSolves { .. }) <- solves
+        <div .column.is-6>
+          <div .card>
+            <header .card-header>
+              <p .card-header-title :courseSolvesCorrect:.has-text-success> Решение #{sId}
+  $else
+    <article .message.is-warning>
+      <div .message-header>
+        <p> Внимание!
+      <div .message-body>
+        <p> Вы не подавали решений этой задачи или они были стерты.
+
+  $if taskAccepted
+    <article .message.is-success>
+      <div .message-header>
+        Задание принято!
+  $else
+    <form method=post action=@{CourseTaskR ctId} enctype=#{enctype}>
+      <div .required.field>
+        <label .label> Решение
+        <textarea name=f1 .textarea>
+      <button type=submit .button.is-fullwidth.is-success> Отправить решение
 |]
 
 getApiCourseTaskR :: CourseId -> Handler Value

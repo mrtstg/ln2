@@ -36,15 +36,18 @@ getCourseR cId = do
         defaultLayout $ do
           setTitle $ toHtml ("Курс: " <> unpack courseName)
           [whamlet|
-<h1> #{ courseName }
-<ul>
-  $forall (Entity tId (CourseTask { .. })) <- tasks
-    $if elem tId acceptedTasks
-      <li> <a href=@{CourseTaskR tId}> #{courseTaskName} (принято)
-    $else
-      <li> <a href=@{CourseTaskR tId}> #{courseTaskName}
-$if pageV /= 1
-  <a href=@{CourseR cId}?page=#{pageV - 1}> Назад
-$if taskA > (pageV * defaultPageSize)
-  <a href=@{CourseR cId}?page=#{pageV + 1}> Далее
+<div .container.pt-2.py-3>
+  <h1 .title.pb-3> #{ courseName }
+  <div .columns.is-multiline>
+    $forall (Entity tId (CourseTask { .. })) <- tasks
+      <div .column.is-full>
+        <a href=@{CourseTaskR tId}>
+          <div .card>
+            <header .card-header>
+              <p .card-header-title :elem tId acceptedTasks:.has-text-success> #{ courseTaskName }
+  <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
+    <a href=@{CourseR cId}?page=#{pageV - 1}>
+      <button .button.is-primary.mx-3 :pageV == 1:disabled> Назад
+    <a href=@{CourseR cId}?page=#{pageV + 1}>
+      <button .button.is-primary.mx-3 :taskA <= (pageV * defaultPageSize):disabled> Вперед
 |]

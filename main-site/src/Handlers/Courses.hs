@@ -34,13 +34,20 @@ getCoursesR = do
   defaultLayout $ do
     setTitle "Доступные курсы"
     [whamlet|
-<ul>
-  $forall (Entity cId (Course cName _ _)) <- courses
-    <li> <a href=@{CourseR cId}> #{cName}
-$if pageN /= 1
-  <a href=@{CoursesR}?page=#{pageN - 1}> Prev
-$if cAmount > (pageN * defaultPageSize)
-  <a href=@{CoursesR}?page=#{pageN + 1}> Next
+<div .container.pt-2.py-3>
+  <h1 .title.pb-3> Доступные курсы
+  <div .columns.is-multiline>
+    $forall (Entity cId (Course cName _ _)) <- courses
+      <div .column.is-full>
+        <a href=@{CourseR cId}>
+          <div .card>
+            <header .card-header>
+              <p .card-header-title>  #{cName}
+  <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
+    <a href=@{CoursesR}?page=#{pageN - 1}>
+      <button .button.is-primary.mx-3 :pageN == 1:disabled> Назад
+    <a href=@{CoursesR}?page=#{pageN + 1}>
+      <button .button.is-primary.mx-3 :cAmount <= (pageN * defaultPageSize):disabled> Вперед
 |]
 
 getApiCourseR :: Handler Value

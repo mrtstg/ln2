@@ -21,13 +21,20 @@ import           Yesod.Form
 
 getLoginR :: Handler Html
 getLoginR = do
-  (widget, enctype) <- generateFormPost loginForm
+  (_, enctype) <- generateFormPost loginForm
   defaultLayout $ do
     setTitle "Login"
     [whamlet|
-<form method=post action=@{LoginR} enctype=#{enctype}>
-  ^{widget}
-  <button> Login
+<div .container.pt-5.py-3>
+  <h1 .title.is-2> Вход
+  <form .pb-2 method=post action=@{LoginR} enctype=#{enctype}>
+    <div .required.field>
+      <label .label> Логин
+      <input .input name=f1 type=text required value="">
+    <div .required.field>
+      <label .label> Пароль
+      <input .input name=f2 type=password required>
+    <button type=submit .button.is-fullwidth.is-success> Login
 |]
 
 data LoginRequest = LoginRequest !Text !Text deriving Show
