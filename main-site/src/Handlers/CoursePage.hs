@@ -40,9 +40,9 @@ getCourseR cId = do
 <ul>
   $forall (Entity tId (CourseTask { .. })) <- tasks
     $if elem tId acceptedTasks
-      <li> #{courseTaskName} (принято)
+      <li> <a href=@{CourseTaskR tId}> #{courseTaskName} (принято)
     $else
-      <li> #{courseTaskName}
+      <li> <a href=@{CourseTaskR tId}> #{courseTaskName}
 $if pageV /= 1
   <a href=@{CourseR cId}?page=#{pageV - 1}> Назад
 $if taskA > (pageV * defaultPageSize)

@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
 module Handlers.CourseTask
@@ -6,21 +7,28 @@ module Handlers.CourseTask
   , getApiCourseTaskR
   , deleteApiTaskR
   , getApiTaskR
+  , getCourseTaskR
+  , postCourseTaskR
   ) where
 
-import           Api.Login              (requireApiAuth)
+import           Api.Login              (requireApiAuth, requireAuth)
+import           Api.Task
 import           Crud.Course
 import           Crud.CourseTask        (getCourseTaskDetails, getCourseTasks)
 import           Data.Aeson
 import           Data.ByteString        (toStrict)
+import           Data.ByteString.Lazy   (fromStrict)
 import           Data.Models.CourseTask
+import           Data.Models.StandCheck
 import           Data.Models.User
 import qualified Data.Text              as T
 import           Database.Persist
 import           Foundation
+import           Handlers.Forms
 import           Handlers.Utils
 import           Network.HTTP.Types
 import           Yesod.Core
+import           Yesod.Form
 import           Yesod.Persist
 
 -- TODO: stand identifier existence check
@@ -53,6 +61,70 @@ postApiCourseTaskR cId = do
                 $logError . T.pack $ "Course task detail parse error: " <> parseE
                 sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
               (Right m)     -> sendStatusJSON status200 m
+
+postCourseTaskR :: CourseTaskId -> Handler Html
+postCourseTaskR ctId = do
+  ((result, _), _) <- runFormPost taskResponseForm
+  case result of
+    (FormSuccess taskResp') -> do
+      let taskResp = unTextarea taskResp'
+      (UserDetails { .. }) <- requireAuth
+      courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
+      case courseTaskRes of
+        Nothing -> redirect $ CourseTaskR ctId
+        (Just (Entity _ (CourseTask { .. }))) -> do
+          courseRes <- runDB $ selectFirst [ CourseId ==. courseTaskCourse ] []
+          case courseRes of
+            Nothing -> error "Unreachable pattern!"
+            (Just (Entity (CourseKey courseUUID) _)) -> do
+              let isMember = isUserCourseMember courseUUID getUserRoles
+              if not isMember then redirect CoursesR else do
+                case eitherDecode . fromStrict $ courseTaskStandActions :: Either String [StandCheckStage] of
+                  (Left _) -> redirect CoursesR
+                  (Right taskActions) -> do
+                    taskCRes <- liftIO $ createTask'' taskResp courseTaskStandIdentifier taskActions
+                    case taskCRes of
+                      (TaskError e) -> do
+                        liftIO $ putStrLn e
+                        redirect CoursesR
+                      (TaskResult taskUUID) -> do
+                        runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId False)
+                        redirect $ CourseTaskR ctId
+    _formError             -> redirect CoursesR
+
+getCourseTaskR :: CourseTaskId -> Handler Html
+getCourseTaskR ctId = do
+  d@(UserDetails { .. }) <- requireAuth
+  courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
+  case courseTaskRes of
+    Nothing -> redirect CoursesR
+    (Just cT@(Entity _ (CourseTask { .. }))) -> do
+      courseRes <- runDB $ selectFirst [ CourseId ==. courseTaskCourse ] []
+      case courseRes of
+        Nothing -> error "Unreachable pattern!"
+        (Just (Entity (CourseKey courseUUID) _)) -> do
+          let isMember = isUserCourseMember courseUUID getUserRoles
+          if not isMember then redirect CoursesR else do
+            (taskAccepted, solves) <- getCourseTaskDetails d cT
+            (widget, enctype) <- generateFormPost taskResponseForm
+            defaultLayout $ do
+              setTitle $ toHtml ("Задача: " <> T.unpack courseTaskName)
+              [whamlet|
+<h1> #{ courseTaskName }
+<p> #{ courseTaskContent }
+$if (not . null) solves
+  <ul>
+    $forall (Entity (CourseSolvesKey sId) CourseSolves { .. }) <- solves
+      <li> #{sId} - #{show courseSolvesCorrect}
+$else
+  <h2> Предыдущие решения не найдены!
+$if taskAccepted
+  <h2> Задание принято!
+$else
+  <form method=post action=@{CourseTaskR ctId} enctype=#{enctype}>
+    ^{widget}
+    <button> Отправить решение
+|]
 
 getApiCourseTaskR :: CourseId -> Handler Value
 getApiCourseTaskR cId = do
