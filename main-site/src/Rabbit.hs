@@ -87,3 +87,4 @@ rabbitResultConsumer App { .. } (msg, env) = do
                           unless taskAccepted $ do
                             _ <- insert (CourseSolveAcception courseSolvesUserId taskId)
                             return ()
+                      ackEnv env

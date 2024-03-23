@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Crud.Course
   ( generateCourseMembersGroup
   , generateCourseAdminsGroup
@@ -5,25 +6,54 @@ module Crud.Course
   , deleteCourse
   , isUserCourseAdmin
   , isUserCourseMember
+  , getUserMembershipCourses
+  , isUserCourseManager
+  , getUserCourses
   ) where
 
 import           Api.Role
 import           Control.Monad      (unless)
 import           Data.Models.Course
 import           Data.Models.Role
-import           Data.Text          (pack)
+import           Data.Models.User
+import           Data.Text          (pack, unpack)
+import qualified Data.Text          as T
 import           Data.Time.Clock
 import           Data.UUID.V4       (nextRandom)
 import           Database.Persist
 import           Foundation
+import           Handlers.Utils
 import           Yesod.Core
 import           Yesod.Persist
 
+getUserCourses :: Int -> UserDetails -> Handler ([Entity Course], Int)
+getUserCourses pageN (UserDetails uId _ roles) = do
+  let isAdmin = adminRoleGranted roles
+  runDB $ do
+    let params = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize, Desc CourseCreatedAt]
+    courses <- if isAdmin then selectList [] params else selectList [CourseAuthorId ==. uId] params
+    coursesAmount <- if isAdmin then count ([] :: [Filter Course]) else count [CourseAuthorId ==. uId]
+    return (courses, coursesAmount)
+
+getUserMembershipCourses :: [RoleDetails] -> Int -> Handler ([Entity Course], Int)
+getUserMembershipCourses roles pageN = let
+  memberCourses :: [CourseId]
+  memberCourses = map (\(RoleDetails name _) -> (CourseKey . unpack . T.drop 8) name) $
+    filter (\(RoleDetails name _) -> T.take 8 name == "members-") roles
+  in runDB $ do
+    let opts = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize, Desc CourseCreatedAt]
+    courses <- selectList [ CourseId <-. memberCourses ] opts
+    coursesAmount <- count [ CourseId <-. memberCourses ]
+    return (courses, coursesAmount)
+
 generateCourseAdminsGroup :: String -> String
-generateCourseAdminsGroup uid = "members-" <> uid
+generateCourseAdminsGroup uid = "admins-" <> uid
 
 generateCourseMembersGroup :: String -> String
-generateCourseMembersGroup uid = "admins-" <> uid
+generateCourseMembersGroup uid = "members-" <> uid
+
+isUserCourseManager :: [RoleDetails] -> Bool
+isUserCourseManager roles = any (\(RoleDetails name _) -> name == "course-creator") roles || adminRoleGranted roles
 
 isUserCourseAdmin :: String -> [RoleDetails] -> Bool
 isUserCourseAdmin courseUUID roles = any (\(RoleDetails name _) -> name == v) roles || adminRoleGranted roles where
@@ -62,10 +92,11 @@ createCourse userName uId (CourseCreate courseName) = do
             _ <- liftIO $ assignRole' userName roleName -- TODO: assign handle
             return ()
           unless creatorAssigned' $ do
-            _ <- liftIO $ assignRole' userName roleName
+            _ <- liftIO $ assignRole' userName adminsRoleName
             return ()
           return $ Just (Entity (CourseKey courseUUID) e)
 
+-- TODO: task cascade delete
 deleteCourse :: String -> Handler Bool
 deleteCourse courseUUID = do
   let roleName = generateCourseMembersGroup courseUUID

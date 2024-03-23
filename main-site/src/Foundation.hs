@@ -70,6 +70,7 @@ mkYesodData
 /login LoginR GET POST
 /courses CoursesR GET
 /course/#CourseId CourseR GET
+/task/#CourseTaskId CourseTaskR GET POST
 /api/courses ApiCourseR GET POST
 /api/courses/#CourseId ApiCourseIdR DELETE
 /api/course/#CourseId/task ApiCourseTaskR POST GET
@@ -79,6 +80,20 @@ mkYesodData
 
 instance Yesod App where
   makeSessionBackend _ = return Nothing
+  defaultLayout widget = do
+    pc <- widgetToPageContent widget
+    withUrlRenderer [hamlet|
+$doctype 5
+<html>
+  <head>
+    <title> #{pageTitle pc}
+    <meta charset=utf-8>
+    ^{pageHead pc}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css>
+  <body>
+    ^{pageBody pc}
+|]
 
 instance RenderMessage App FormMessage where
   renderMessage _ _ = defaultFormMessage
