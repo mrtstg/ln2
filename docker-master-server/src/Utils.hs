@@ -21,6 +21,9 @@ standContainerExists (StandData { getStandContainers = containers }) containerNa
     True  -> return ()
     False -> Left $ containerName ++ " not found in stand!"
 
+stackVariableDeclared :: T.Text -> [T.Text] -> Either String ()
+stackVariableDeclared v vs = if v `elem` vs then Right () else Left $ "Variable " <> T.unpack v <> " is not declared!"
+
 standFilePathValid :: FilePath -> Either String ()
 standFilePathValid "" = Left "File path must be specified!"
 standFilePathValid _  = Right ()
@@ -30,11 +33,26 @@ standCommandValid "" = Left "Command to container must be specified!"
 standCommandValid _  = Right()
 
 validateStandCheck :: StandData -> [StandCheckStage] -> Either String ()
-validateStandCheck d = helper where
-  helper :: [StandCheckStage] -> Either String ()
-  helper []                                        = Right ()
-  helper ((CopyFile containerName _ filePath):ls)  = standContainerExists d containerName >> standFilePathValid filePath >> helper ls
-  helper ((ExecuteCommand containerName cmd _ _):ls) = standContainerExists d containerName >> standCommandValid cmd >> helper ls
+validateStandCheck d = helper [] where
+  helper :: [T.Text] -> [StandCheckStage] -> Either String ()
+  helper _ []                                        = Right ()
+  helper stack ((CopyFile containerName _ filePath):ls)  = do
+    () <- standContainerExists d containerName
+    () <- standFilePathValid filePath
+    helper stack ls
+  helper stack ((ExecuteCommand containerName cmd _ _ rValue):ls) = do
+    () <- standContainerExists d containerName
+    () <- standCommandValid cmd
+    case rValue of
+      Nothing  -> helper stack ls
+      (Just v) -> helper (v:stack) ls
+  -- TODO: score upper bound
+  -- TODO: forbid variable overflow
+  helper stack ((CompareResults fst' snd' score):ls) = do
+    () <- stackVariableDeclared fst' stack
+    () <- stackVariableDeclared snd' stack
+    () <- if score > 0 then Right () else Left "Score can't be negative or zero!"
+    helper stack ls
 
 constructPostgreStringFromEnv :: IO (Maybe String)
 constructPostgreStringFromEnv = do

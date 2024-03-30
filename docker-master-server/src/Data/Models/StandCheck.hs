@@ -19,16 +19,29 @@ data StandCheckStage = CopyFile
   , getStageCommand         :: !T.Text
   , getStandRecordStdout    :: !Bool
   , getStandFormattedOutput :: !Bool
+  , getStandRecordVariable  :: !(Maybe T.Text)
+  }
+  | CompareResults
+  { getFirstCompareV  :: !T.Text
+  , getSecondCompareV :: !T.Text
+  , getCompareScore   :: !Int
   } deriving (Show, Eq, Generic)
 
 instance ToJSON StandCheckStage where
   toJSON (CopyFile container file path) = object ["action" .= String "copy", "container" .= container, "fileContent" .= file, "filePath" .= path]
-  toJSON (ExecuteCommand container command recordStdout formatOut) = object
+  toJSON (ExecuteCommand container command recordStdout formatOut recordVar) = object
     [ "action" .= String "command"
     , "container" .= container
     , "command" .= command
     , "recordStdout" .= recordStdout
     , "formatOutput" .= formatOut
+    , "recordInto" .= recordVar
+    ]
+  toJSON (CompareResults fvar svar score) = object
+    [ "action" .= String "compareVars"
+    , "first" .= String fvar
+    , "second" .= String svar
+    , "score" .= score
     ]
 
 instance FromJSON StandCheckStage where
@@ -40,4 +53,9 @@ instance FromJSON StandCheckStage where
       <*> v .: "command"
       <*> v .:? "recordStdout" .!= True
       <*> v .:? "formatOutput" .!= False
+      <*> v .:? "recordInto"
+    (Just (String "compareVars")) -> CompareResults
+      <$> v .: "first"
+      <*> v .: "second"
+      <*> v .: "score"
     _anyOther -> fail "Wrong action type, excepted string!"
