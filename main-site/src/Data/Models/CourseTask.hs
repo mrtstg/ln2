@@ -45,7 +45,6 @@ data CourseTaskDetails = CourseTaskDetails
   , getCourseTaskDCourse       :: !CourseDetails
   , getCourseTaskDStand        :: !Text
   , getCourseTaskDStandActions :: ![StandCheckStage]
-  , getCourseTaskDAwaitedRes   :: !Value
   }
 
 data CourseTaskDetails' = CourseTaskDetails'
@@ -117,7 +116,6 @@ instance ToJSON CourseTaskDetails where
     , "course" .= getCourseTaskDCourse
     , "standIdentifier" .= getCourseTaskDStand
     , "standActions" .= getCourseTaskDStandActions
-    , "awaitedResult" .= getCourseTaskDAwaitedRes
     ]
 
 courseTaskDetailFromModels' :: Entity CourseTask -> Entity Course -> Maybe UserDetails -> CourseTaskDetails'
@@ -133,10 +131,6 @@ courseTaskDetailFromModels (Entity ctId (CourseTask { .. })) e userDetails = let
   standActions = case (eitherDecode . fromStrict) courseTaskStandActions :: Either String [StandCheckStage] of
                   (Left e') -> Left $ "standActions: " <> e'
                   (Right r) -> Right r
-  awaitedResult = case (eitherDecode . fromStrict) courseTaskAwaitedResult :: Either String Value of
-                    (Left e') -> Left $ "awaitedResult: " <> e'
-                    (Right r) -> Right r
   in do
     actions' <- standActions
-    res' <- awaitedResult
-    return $  CourseTaskDetails (fromIntegral taskId) courseTaskName courseTaskContent courseTaskOrderNumber courseDetails courseTaskStandIdentifier actions' res'
+    return $  CourseTaskDetails (fromIntegral taskId) courseTaskName courseTaskContent courseTaskOrderNumber courseDetails courseTaskStandIdentifier actions'
