@@ -25,6 +25,10 @@ data StandCheckStage = CopyFile
   { getFirstCompareV  :: !T.Text
   , getSecondCompareV :: !T.Text
   , getCompareScore   :: !Int
+  }
+  | DeclareVariable
+  { getStandDeclaringVariable :: !T.Text
+  , getStandDeclaredValue     :: !Value
   } deriving (Show, Eq, Generic)
 
 instance ToJSON StandCheckStage where
@@ -43,6 +47,11 @@ instance ToJSON StandCheckStage where
     , "second" .= String svar
     , "score" .= score
     ]
+  toJSON (DeclareVariable varname varvalue) = object
+    [ "action" .= String "declare"
+    , "variableName" .= String varname
+    , "variableValue" .= varvalue
+    ]
 
 instance FromJSON StandCheckStage where
   parseJSON = withObject "StandCheckStage" $ \v -> case K.lookup "action" v of
@@ -58,4 +67,7 @@ instance FromJSON StandCheckStage where
       <$> v .: "first"
       <*> v .: "second"
       <*> v .: "score"
+    (Just (String "declare")) -> DeclareVariable
+      <$> v .: "variableName"
+      <*> v .: "variableValue"
     _anyOther -> fail "Wrong action type, excepted string!"
