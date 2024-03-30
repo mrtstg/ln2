@@ -78,9 +78,8 @@ rabbitResultConsumer App { .. } (msg, env) = do
             res' <- timeout 60000000 $ executeStandCheck taskUUID' ((getStandDefaultActions . getStandData) queueTask ++ getStandCheck queueTask)
             case res' of
               Nothing -> putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "timeout" Nothing
-              (Just res) -> do
-                let jsonV = if null res then Nothing else (Just . Array . V.fromList) $ map (String . T.pack) res
-                putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" jsonV
+              (Just (_, res)) -> do
+                putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" (Just res)
           defaultRunDocker $ destroyStand (E.rights containerRess) networkId
 
 getEnvRabbitConnectionData :: IO (Maybe RabbitConnectionData)

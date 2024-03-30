@@ -6,12 +6,13 @@ module Data.Models.QueueTaskResponse (
 ) where
 
 import           Data.Aeson
+import           Data.Models.StandCheckResult
 import           GHC.Generics
 
 data QueueTaskResponse = QueueTaskResponse
   { getTaskResponseUUID   :: !String
   , getTaskResponseStatus :: !String
-  , getTaskResult         :: !(Maybe Value)
+  , getTaskResult         :: !(Maybe StandCheckResult)
   } deriving (Show, Generic)
 
 instance FromJSON QueueTaskResponse where

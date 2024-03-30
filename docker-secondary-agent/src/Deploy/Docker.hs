@@ -8,19 +8,25 @@ module Deploy.Docker
   , executeStandCheck
   ) where
 
-import           Conduit                (MonadUnliftIO, liftIO)
-import           Control.Concurrent     (threadDelay)
-import           Control.Monad.Catch    (MonadMask)
-import           Data.Bifunctor         (bimap)
-import qualified Data.HashMap.Strict    as HM
-import qualified Data.Map               as M
+import           Conduit                      (MonadUnliftIO, liftIO)
+import           Control.Concurrent           (threadDelay)
+import           Control.Monad                (when)
+import           Control.Monad.Catch          (MonadMask)
+import qualified Data.Aeson                   as A
+import           Data.Aeson.Key               (fromString)
+import qualified Data.Aeson.KeyMap            as K
+import           Data.Bifunctor               (bimap)
+import qualified Data.HashMap.Strict          as HM
+import qualified Data.Map                     as M
+import           Data.Maybe                   (isNothing)
 import           Data.Models.Stand
 import           Data.Models.StandCheck
-import qualified Data.Text              as T
-import           Data.Text.IO           (writeFile)
+import           Data.Models.StandCheckResult
+import qualified Data.Text                    as T
+import           Data.Text.IO                 (writeFile)
 import           Docker.Client
 import           System.Command
-import           System.FilePath        (combine)
+import           System.FilePath              (combine)
 import           Utils
 
 type DockerNetworkName = T.Text
@@ -89,25 +95,49 @@ deployStand baseName networkName (StandData containers _) = do
       cIds'' <- mapM (deployContainer baseName networkName) containers
       return (cIds'', Just netId)
 
-executeStandCheck :: ContainerBaseName -> [StandCheckStage] -> IO [String]
-executeStandCheck baseName = helper [] where
-  helper :: [String] -> [StandCheckStage] -> IO [String]
-  helper acc []                   = return acc
-  helper acc (CopyFile { .. }:cs) = do
+executeStandCheck :: ContainerBaseName -> [StandCheckStage] -> IO (K.KeyMap A.Value, StandCheckResult)
+executeStandCheck baseName = helper K.empty defaultCheckResult where
+  helper :: K.KeyMap A.Value -> StandCheckResult -> [StandCheckStage] -> IO (K.KeyMap A.Value, StandCheckResult)
+  helper stack res []                   = return (stack, res)
+  helper stack res (CopyFile { .. }:cs) = do
     let tempPath = "/tmp" `combine` T.unpack (baseName <> getStageContainer)
     Data.Text.IO.writeFile tempPath getStageFileContent
     command_ [] "docker" ["cp", tempPath, T.unpack $ baseName <> "-" <> getStageContainer <> ":" <> T.pack getStageFilePath]
-    helper acc cs
-  helper acc (ExecuteCommand { .. }:cs) = do
+    helper stack res cs
+  helper stack res (ExecuteCommand { .. }:cs) = do
     (Stdout cmdOut, Exit _, Stderr _) <- command [] "docker" $
       [ "exec"
       , T.unpack $ baseName <> "-" <> getStageContainer
       ] ++ map T.unpack (T.splitOn " " getStageCommand)
-    case getStandRecordStdout of
-      False -> helper acc cs
-      True -> do
+    case getStandRecordVariable of
+      Nothing -> helper stack res cs
+      (Just recV) -> do
         let cmdOut' = if not getStandFormattedOutput then cmdOut else formatString' cmdOut
-        helper (acc ++ [cmdOut']) cs
+        let mKey = fromString recV
+        case K.lookup mKey stack of
+          (Just _) -> do
+            -- assuming that public stack also has this value
+            helper stack res cs
+          Nothing -> do
+            let mapV = (A.String . T.pack) cmdOut'
+            let nStack = K.insert mKey mapV stack
+            let oldRecV = getRecordedValues res
+            helper nStack (
+              res { getRecordedValues = if getStandRecordStdout then K.insert mKey (A.String $ T.pack cmdOut') oldRecV else oldRecV }
+              ) cs
+  helper stack r@(StandCheckResult { .. }) ((CompareResults fstK sndK score):cs) = do
+    case K.lookup (fromString fstK) stack of
+      Nothing -> helper stack r cs
+      (Just fstV) -> do
+        case K.lookup (fromString sndK) stack of
+          Nothing -> helper stack r cs
+          (Just sndV) -> do
+            let scoreDelta = if fstV == sndV then score else 0
+            helper stack (
+              r { getCheckScore = getCheckScore + scoreDelta
+                , getMaxCheckScore = getMaxCheckScore + score
+                }
+              ) cs
 
 destroyStand :: [ContainerID] -> NetworkID -> DockerT IO ()
 destroyStand cIds nId = do
