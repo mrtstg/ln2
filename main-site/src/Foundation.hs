@@ -49,7 +49,6 @@ CourseTask
   course CourseId
   standIdentifier Text
   standActions ByteString
-  awaitedResult ByteString
   deriving Show
 CourseSolves
   Id String
