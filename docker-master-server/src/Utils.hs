@@ -53,6 +53,8 @@ validateStandCheck d = helper [] where
     () <- stackVariableDeclared snd' stack
     () <- if score > 0 then Right () else Left "Score can't be negative or zero!"
     helper stack ls
+  -- TODO: empty var check
+  helper stack ((DeclareVariable varName _):ls) = helper (varName:stack) ls
 
 constructPostgreStringFromEnv :: IO (Maybe String)
 constructPostgreStringFromEnv = do

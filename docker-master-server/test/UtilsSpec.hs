@@ -110,3 +110,13 @@ spec = describe "Stand validation test" $ do
       ExecuteCommand "postgres" "psql -f /tmp/b.sql --csv" True False (Just "taskRes"),
       CompareResults "solveRes" "taskRes" (-1)
       ] `shouldBe` Left "Score can't be negative or zero!"
+  it "Static variable declare test" $ do
+    validateStandCheck sampleStand' [
+      DeclareVariable "solveRes" "",
+      ExecuteCommand "postgres" "psql -f /tmp/b.sql --csv" True False (Just "taskRes"),
+      CompareResults "solveRes" "taskRes" 1
+      ] `shouldBe` Right ()
+    validateStandCheck sampleStand' [
+      ExecuteCommand "postgres" "psql -f /tmp/b.sql --csv" True False (Just "taskRes"),
+      CompareResults "solveRes" "taskRes" 1
+      ] `shouldBe` Left "Variable solveRes is not declared!"
