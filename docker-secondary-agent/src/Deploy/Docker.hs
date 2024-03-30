@@ -96,9 +96,13 @@ deployStand baseName networkName (StandData containers _) = do
       return (cIds'', Just netId)
 
 executeStandCheck :: ContainerBaseName -> [StandCheckStage] -> IO (K.KeyMap A.Value, StandCheckResult)
-executeStandCheck baseName = helper K.empty defaultCheckResult where
+executeStandCheck baseName stages= do
+  putStrLn $ show stages
+  helper K.empty defaultCheckResult stages where
   helper :: K.KeyMap A.Value -> StandCheckResult -> [StandCheckStage] -> IO (K.KeyMap A.Value, StandCheckResult)
-  helper stack res []                   = return (stack, res)
+  helper stack res []                   = do
+    putStrLn $ show stack
+    return (stack, res)
   helper stack res (CopyFile { .. }:cs) = do
     let tempPath = "/tmp" `combine` T.unpack (baseName <> getStageContainer)
     Data.Text.IO.writeFile tempPath getStageFileContent
@@ -138,6 +142,11 @@ executeStandCheck baseName = helper K.empty defaultCheckResult where
                 , getMaxCheckScore = getMaxCheckScore + score
                 }
               ) cs
+  helper stack r ((DeclareVariable varName varValue):cs) = do
+    case K.lookup (fromString varName) stack of
+      (Just _) -> helper stack r cs
+      Nothing -> do
+        helper (K.insert (fromString varName) varValue stack) r cs
 
 destroyStand :: [ContainerID] -> NetworkID -> DockerT IO ()
 destroyStand cIds nId = do
