@@ -39,6 +39,7 @@ library
       Data.Models.QueueTaskResponse
       Data.Models.Role
       Data.Models.StandCheck
+      Data.Models.StandCheckResult
       Data.Models.User
       Data.Models.UserAuthRequest
       Foundation

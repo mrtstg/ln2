@@ -23,6 +23,11 @@ data StandCheckStage = CopyFile
   | CopyAnswer
   { getStageContainer :: !ContainerName
   , getStageFilePath  :: !FilePath
+  }
+  | CompareResults
+  { getFirstCompareV  :: !T.Text
+  , getSecondCompareV :: !T.Text
+  , getCompareScore   :: !Int
   } deriving (Show, Eq, Generic)
 
 instance ToJSON StandCheckStage where
@@ -39,6 +44,12 @@ instance ToJSON StandCheckStage where
     , "container" .= container
     , "filePath" .= path
     ]
+  toJSON (CompareResults fvar svar score) = object
+    [ "action" .= String "compareVars"
+    , "first" .= String fvar
+    , "second" .= String svar
+    , "score" .= score
+    ]
 
 instance FromJSON StandCheckStage where
   parseJSON = withObject "StandCheckStage" $ \v -> case K.lookup "action" v of
@@ -52,6 +63,10 @@ instance FromJSON StandCheckStage where
     (Just (String "copyAnswer")) -> CopyAnswer
       <$> v .: "container"
       <*> v .: "filePath"
+    (Just (String "compareVars")) -> CompareResults
+      <$> v .: "first"
+      <*> v .: "second"
+      <*> v .: "score"
     _anyOther -> fail "Wrong action type, excepted string!"
 
 -- заменяет "особый" блок ответа на копирование файла

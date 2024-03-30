@@ -50,7 +50,6 @@ postApiCourseTaskR cId = do
             cId
             getCourseTaskCreateStandIdentifier
             (toStrict $ encode getCourseTaskCreateStandActions)
-            (toStrict $ encode getCourseTaskCreateAwaitedRes)
           v <- get tId
           return (tId, v)
         case cTaskRes of

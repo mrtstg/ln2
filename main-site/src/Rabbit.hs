@@ -11,6 +11,7 @@ import           Control.Monad                 (unless, when)
 import           Data.Aeson
 import qualified Data.ByteString               as BS
 import           Data.Models.QueueTaskResponse
+import           Data.Models.StandCheckResult
 import           Database.Persist
 import           Database.Persist.Postgresql
 import           Foundation
@@ -59,7 +60,7 @@ rabbitResultConsumer App { .. } (msg, env) = do
       let solveUUID = getTaskResponseUUID
       case getTaskResult of
         Nothing -> ackEnv env
-        (Just taskRes) -> do
+        (Just taskRes@(StandCheckResult { .. })) -> do
           courseSolve' <- flip runSqlPool postgresqlPool $ selectFirst [ CourseSolvesId ==. CourseSolvesKey solveUUID ] []
           case courseSolve' of
             Nothing -> do
@@ -72,19 +73,14 @@ rabbitResultConsumer App { .. } (msg, env) = do
                   putStrLn "Course task not found!"
                   ackEnv env
                 (Just (Entity taskId (CourseTask { .. }))) -> do
-                  case (eitherDecode $ BS.fromStrict courseTaskAwaitedResult :: Either String Value) of
-                    (Left _) -> do
-                      putStrLn "Failed to parse result!"
-                      ackEnv env
-                    (Right v) -> do
-                      let resultCorrect = v == taskRes
-                      flip runSqlPool postgresqlPool $ do
-                        update solveId [ CourseSolvesCorrect =. resultCorrect ]
-                        when resultCorrect $ do
-                          taskAccepted <- exists
-                            [ CourseSolveAcceptionTaskId ==. taskId
-                            , CourseSolveAcceptionUserId ==. courseSolvesUserId]
-                          unless taskAccepted $ do
-                            _ <- insert (CourseSolveAcception courseSolvesUserId taskId)
-                            return ()
-                      ackEnv env
+                  let resultCorrect = getCheckScore == getMaxCheckScore
+                  flip runSqlPool postgresqlPool $ do
+                    update solveId [ CourseSolvesCorrect =. resultCorrect ]
+                    when resultCorrect $ do
+                      taskAccepted <- exists
+                        [ CourseSolveAcceptionTaskId ==. taskId
+                        , CourseSolveAcceptionUserId ==. courseSolvesUserId]
+                      unless taskAccepted $ do
+                        _ <- insert (CourseSolveAcception courseSolvesUserId taskId)
+                        return ()
+                  ackEnv env
