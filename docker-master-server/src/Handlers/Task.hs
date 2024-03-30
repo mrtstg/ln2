@@ -5,20 +5,21 @@
 module Handlers.Task (postTaskCreateR, getTaskR, deleteTaskR) where
 
 import           Data.Aeson
-import qualified Data.ByteString        as BS
-import qualified Data.ByteString.Lazy   as LBS
-import           Data.Models.QueueTask  (QueueTask (QueueTask))
+import qualified Data.ByteString              as BS
+import qualified Data.ByteString.Lazy         as LBS
+import           Data.Models.QueueTask        (QueueTask (QueueTask))
 import           Data.Models.Stand
 import           Data.Models.StandCheck
-import qualified Data.Text              as T
-import           Data.Time              (getCurrentTime)
-import           Data.UUID.V4           (nextRandom)
-import           Data.Yaml              (ParseException, decodeFileEither)
+import           Data.Models.StandCheckResult
+import qualified Data.Text                    as T
+import           Data.Time                    (getCurrentTime)
+import           Data.UUID.V4                 (nextRandom)
+import           Data.Yaml                    (ParseException, decodeFileEither)
 import           Database.Persist
 import           Foundation
 import           GHC.Generics
 import           Network.HTTP.Types
-import           Rabbit                 (putQueueTask)
+import           Rabbit                       (putQueueTask)
 import           Utils
 import           Yesod.Core
 import           Yesod.Persist
@@ -55,7 +56,7 @@ postTaskCreateR = do
               liftIO $ putQueueTask rabbitConnection $ QueueTask taskUuid standData standActions
               sendStatusJSON status200 $ object [ "uuid" .= taskUuid ]
 
-taskResultToValue :: Maybe BS.ByteString -> Maybe Value
+taskResultToValue :: Maybe BS.ByteString -> Maybe StandCheckResult
 taskResultToValue Nothing   = Nothing
 taskResultToValue (Just bs) = decode $ LBS.fromStrict bs
 

@@ -18,6 +18,7 @@ import qualified Data.ByteString               as BS
 import qualified Data.ByteString.Lazy.Char8    as BL
 import           Data.Models.QueueTask         (QueueTask)
 import           Data.Models.QueueTaskResponse
+import           Data.Models.StandCheckResult
 import           Database.Persist
 import           Database.Persist.Postgresql
 import           Foundation
@@ -45,7 +46,7 @@ putQueueRequest' rCon messageBody = do
 putQueueRequest :: Connection -> String -> IO ()
 putQueueRequest rCon messageBody = putQueueRequest' rCon (BL.pack messageBody)
 
-jsonValueToBytestring :: Maybe Value -> Maybe BS.ByteString
+jsonValueToBytestring :: Maybe StandCheckResult -> Maybe BS.ByteString
 jsonValueToBytestring Nothing  = Nothing
 jsonValueToBytestring (Just v) = Just $ (BS.toStrict . encode) v
 
