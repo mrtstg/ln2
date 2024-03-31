@@ -6,7 +6,6 @@ module Data.Models.CourseTask
   , CourseTaskDetails'(..)
   , courseTaskDetailFromModels
   , courseTaskDetailFromModels'
-  , courseTaskWithSolveFromModel
   ) where
 
 import           Data.Aeson
@@ -46,55 +45,26 @@ data CourseTaskDetails = CourseTaskDetails
   }
 
 data CourseTaskDetails' = CourseTaskDetails'
-  { getCourseTaskDId'      :: !Int
-  , getCourseTaskDName'    :: !Text
-  , getCourseTaskDContent' :: !Text
-  , getCourseTaskDOrder'   :: !Int
-  , getCourseTaskDCourse'  :: !CourseDetails
+  { getCourseTaskDId'       :: !Int
+  , getCourseTaskDName'     :: !Text
+  , getCourseTaskDContent'  :: !Text
+  , getCourseTaskDOrder'    :: !Int
+  , getCourseTaskDCourse'   :: !CourseDetails
+  , getCourseTaskDAccepted' :: !Bool
   }
 
 data CourseTaskSolve = CourseTaskSolve
   { getCourseTaskSolveId      :: !Text
   , getCourseTaskSolveCorrect :: !Bool
+  , getCourseTaskSolveInput   :: !Text
   }
 
 instance ToJSON CourseTaskSolve where
   toJSON (CourseTaskSolve { .. }) = object
     [ "id" .= getCourseTaskSolveId
     , "correct" .= getCourseTaskSolveCorrect
+    , "input" .= getCourseTaskSolveInput
     ]
-
-data CourseTaskWithSolves = CourseTaskWithSolves
-  { getCourseTaskWSId       :: !Int
-  , getCourseTaskWSName     :: !Text
-  , getCourseTaskWSContent  :: !Text
-  , getCourseTaskWSCourse   :: !CourseDetails
-  , getCourseTaskWSAccepted :: !Bool
-  , getCourseTaskWSSolves   :: ![CourseTaskSolve]
-  }
-
-instance ToJSON CourseTaskWithSolves where
-  toJSON (CourseTaskWithSolves { .. }) = object
-    [ "id" .= getCourseTaskWSId
-    , "name" .= getCourseTaskWSName
-    , "content" .= getCourseTaskWSContent
-    , "course" .= getCourseTaskWSCourse
-    , "accepted" .= getCourseTaskWSAccepted
-    , "solves" .= getCourseTaskWSSolves
-    ]
-
-courseTaskWithSolveFromModel :: Entity CourseTask -> Entity Course -> [Entity CourseSolves] -> Bool -> CourseTaskWithSolves
-courseTaskWithSolveFromModel (Entity ctId (CourseTask { .. })) e solves accepted =
-   CourseTaskWithSolves
-    (fromIntegral taskId)
-    courseTaskName
-    courseTaskContent
-    courseDetails
-    accepted
-    solves' where
-      solves' = Prelude.map (\(Entity (CourseSolvesKey solveId) (CourseSolves { .. })) -> CourseTaskSolve (pack solveId) courseSolvesCorrect) solves
-      taskId = fromSqlKey ctId
-      courseDetails = courseDetailsFromModel e Nothing
 
 instance ToJSON CourseTaskDetails' where
   toJSON (CourseTaskDetails' { .. }) = object
@@ -103,6 +73,7 @@ instance ToJSON CourseTaskDetails' where
     , "content" .= getCourseTaskDContent'
     , "order" .= getCourseTaskDOrder'
     , "course" .= getCourseTaskDCourse'
+    , "accepted" .= getCourseTaskDAccepted'
     ]
 
 instance ToJSON CourseTaskDetails where
@@ -116,11 +87,11 @@ instance ToJSON CourseTaskDetails where
     , "standActions" .= getCourseTaskDStandActions
     ]
 
-courseTaskDetailFromModels' :: Entity CourseTask -> Entity Course -> Maybe UserDetails -> CourseTaskDetails'
-courseTaskDetailFromModels' (Entity ctId (CourseTask { .. })) e userDetails = let
+courseTaskDetailFromModels' :: Entity CourseTask -> Entity Course -> Maybe UserDetails -> Bool -> CourseTaskDetails'
+courseTaskDetailFromModels' (Entity ctId (CourseTask { .. })) e userDetails accepted = let
   taskId = fromSqlKey ctId
   courseDetails = courseDetailsFromModel e userDetails
-  in CourseTaskDetails' (fromIntegral taskId) courseTaskName courseTaskContent courseTaskOrderNumber courseDetails
+  in CourseTaskDetails' (fromIntegral taskId) courseTaskName courseTaskContent courseTaskOrderNumber courseDetails accepted
 
 courseTaskDetailFromModels :: Entity CourseTask -> Entity Course -> Maybe UserDetails -> Either String CourseTaskDetails
 courseTaskDetailFromModels (Entity ctId (CourseTask { .. })) e userDetails = let
