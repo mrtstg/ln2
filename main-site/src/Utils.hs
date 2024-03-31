@@ -1,9 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Utils
   ( constructPostgreStringFromEnv
+  , unsafeRandomString
   ) where
 
 import           System.Environment
+import           System.IO.Unsafe
+import           System.Random
+
+unsafeRandomString :: Int -> String
+unsafeRandomString n = take n $ randomRs ('a', 'z') $ unsafePerformIO newStdGen
 
 constructPostgreStringFromEnv :: IO (Maybe String)
 constructPostgreStringFromEnv = do
