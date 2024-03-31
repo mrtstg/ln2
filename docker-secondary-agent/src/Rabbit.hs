@@ -12,7 +12,7 @@ module Rabbit
   , putQueueTaskResponse
   ) where
 
-import           Control.Concurrent            (threadDelay)
+import           Control.Monad                 (unless, when)
 import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8    as BL
 import qualified Data.Either                   as E
@@ -21,7 +21,6 @@ import           Data.Models.QueueTask
 import           Data.Models.QueueTaskResponse
 import           Data.Models.Stand
 import qualified Data.Text                     as T
-import qualified Data.Vector                   as V
 import           Deploy.Docker
 import           Network.AMQP
 import           System.Environment            (lookupEnv)
@@ -75,12 +74,13 @@ rabbitResultConsumer App { .. } (msg, env) = do
             putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "error" Nothing
           else do
             putStrLn "Everything deployed! Launching check..."
-            res' <- timeout 60000000 $ executeStandCheck taskUUID' ((getStandDefaultActions . getStandData) queueTask ++ getStandCheck queueTask)
+            res' <- timeout 60000000 $ executeStandCheck debugMode taskUUID' ((getStandDefaultActions . getStandData) queueTask ++ getStandCheck queueTask)
             case res' of
               Nothing -> putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "timeout" Nothing
               (Just (_, res)) -> do
                 putQueueTaskResponse rabbitConnection $ QueueTaskResponse taskUUID "finished" (Just res)
-          defaultRunDocker $ destroyStand (E.rights containerRess) networkId
+          unless debugMode $ defaultRunDocker $ destroyStand (E.rights containerRess) networkId
+          when debugMode $ putStrLn "[DEBUG] Stand is not destroyed!"
 
 getEnvRabbitConnectionData :: IO (Maybe RabbitConnectionData)
 getEnvRabbitConnectionData = do
