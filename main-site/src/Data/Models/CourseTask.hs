@@ -25,7 +25,6 @@ data CourseTaskCreate = CourseTaskCreate
   , getCourseTaskCreateOrder           :: !Int
   , getCourseTaskCreateStandIdentifier :: !Text
   , getCourseTaskCreateStandActions    :: ![StandCheckStage]
-  , getCourseTaskCreateAwaitedRes      :: !Value
   }
 
 instance FromJSON CourseTaskCreate where
@@ -35,7 +34,6 @@ instance FromJSON CourseTaskCreate where
     <*> v .:? "order" .!= 0
     <*> v .: "standIdentifier"
     <*> v .: "standActions"
-    <*> v .: "awaitedResult"
 
 data CourseTaskDetails = CourseTaskDetails
   { getCourseTaskDId           :: !Int
