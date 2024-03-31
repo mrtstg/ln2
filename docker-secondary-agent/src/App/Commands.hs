@@ -10,11 +10,14 @@ module App.Commands
   ) where
 
 import           App.Types
+import           Control.Monad      (when)
+import           Data.Maybe         (fromMaybe)
 import           Data.Models.App
-import qualified Data.Text       as T
+import qualified Data.Text          as T
 import           Network.AMQP
-import           Network.Socket  (PortNumber)
+import           Network.Socket     (PortNumber)
 import           Rabbit
+import           System.Environment
 import           System.Exit
 
 runAgentCommand :: IO ()
@@ -31,7 +34,11 @@ runAgentCommand = do
         "/"
         ((T.pack . getRConUser) rabbitCreds)
         ((T.pack . getRConPass) rabbitCreds)
-      let app = App rabbitConn
+      debugValue' <- lookupEnv "AGENT_DEBUG"
+      let debugValue = fromMaybe "0" debugValue'
+      let debugMode = debugValue == "1"
+      when debugMode $ putStrLn "!!! DEBUG MODE ENABLED !!!"
+      let app = App rabbitConn debugMode
       _ <- prepareRabbitQuery rabbitConn
       _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
       _ <- getLine

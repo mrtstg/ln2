@@ -95,24 +95,29 @@ deployStand baseName networkName (StandData containers _) = do
       cIds'' <- mapM (deployContainer baseName networkName) containers
       return (cIds'', Just netId)
 
-executeStandCheck :: ContainerBaseName -> [StandCheckStage] -> IO (K.KeyMap A.Value, StandCheckResult)
-executeStandCheck baseName stages= do
-  putStrLn $ show stages
+executeStandCheck :: Bool -> ContainerBaseName -> [StandCheckStage] -> IO (K.KeyMap A.Value, StandCheckResult)
+executeStandCheck debug baseName stages = do
+  when debug (putStrLn $ "[DEBUG] " <> show stages)
   helper K.empty defaultCheckResult stages where
   helper :: K.KeyMap A.Value -> StandCheckResult -> [StandCheckStage] -> IO (K.KeyMap A.Value, StandCheckResult)
   helper stack res []                   = do
-    putStrLn $ show stack
+    when debug (putStrLn $ "[DEBUG] Final stack: " <> show stack)
     return (stack, res)
   helper stack res (CopyFile { .. }:cs) = do
     let tempPath = "/tmp" `combine` T.unpack (baseName <> getStageContainer)
+    when debug (putStrLn $ "[DEBUG] Writing in " <> getStageFilePath <> ": " <> T.unpack getStageFileContent)
     Data.Text.IO.writeFile tempPath getStageFileContent
     command_ [] "docker" ["cp", tempPath, T.unpack $ baseName <> "-" <> getStageContainer <> ":" <> T.pack getStageFilePath]
     helper stack res cs
   helper stack res (ExecuteCommand { .. }:cs) = do
-    (Stdout cmdOut, Exit _, Stderr _) <- command [] "docker" $
+    let cmdArgs = map T.unpack (T.splitOn " " getStageCommand)
+    (Stdout cmdOut, Exit _, Stderr cmdErr) <- command [] "docker" $
       [ "exec"
       , T.unpack $ baseName <> "-" <> getStageContainer
-      ] ++ map T.unpack (T.splitOn " " getStageCommand)
+      ] ++ cmdArgs
+    when debug $ putStrLn $ "[DEBUG] Cmd: " <> T.unpack getStageCommand
+    when (debug && not (null cmdOut)) $ putStrLn $ "[DEBUG] Cmd stdout: " <> cmdOut
+    when (debug && not (null cmdErr)) $ putStrLn $ "[DEBUG] Cmd stderr: " <> cmdErr
     case getStandRecordVariable of
       Nothing -> helper stack res cs
       (Just recV) -> do
