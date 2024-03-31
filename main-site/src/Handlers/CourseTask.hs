@@ -14,7 +14,7 @@ module Handlers.CourseTask
 import           Api.Login              (requireApiAuth, requireAuth)
 import           Api.Task
 import           Crud.Course
-import           Crud.CourseTask        (getCourseTaskDetails, getCourseTasks)
+import           Crud.CourseTask
 import           Data.Aeson
 import           Data.ByteString        (toStrict)
 import           Data.ByteString.Lazy   (fromStrict)
@@ -22,6 +22,7 @@ import           Data.Models.CourseTask
 import           Data.Models.StandCheck
 import           Data.Models.User
 import qualified Data.Text              as T
+import           Data.Text.Encoding     (encodeUtf8)
 import           Database.Persist
 import           Foundation
 import           Handlers.Forms
@@ -87,7 +88,7 @@ postCourseTaskR ctId = do
                         liftIO $ putStrLn e
                         redirect CoursesR
                       (TaskResult taskUUID) -> do
-                        runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId False)
+                        runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 taskResp) False)
                         redirect $ CourseTaskR ctId
     _formError             -> redirect CoursesR
 
@@ -141,7 +142,7 @@ getCourseTaskR ctId = do
 
 getApiCourseTaskR :: CourseId -> Handler Value
 getApiCourseTaskR cId = do
-  (UserDetails { .. }) <- requireApiAuth
+  d@(UserDetails { .. }) <- requireApiAuth
   courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
   case courseRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ]
@@ -150,10 +151,11 @@ getApiCourseTaskR cId = do
       if not isMember then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
         pageV <- getPageNumber
         (tasks, taskC) <- getCourseTasks cId pageV
+        acceptedTasksId <- getCourseAcceptedTasks d tasks
         sendStatusJSON status200 $ object
           [ "total" .= taskC
           , "pageSize" .= defaultPageSize
-          , "objects" .= map (\e -> courseTaskDetailFromModels' e e' Nothing) tasks
+          , "objects" .= map (\e@(Entity ctId _) -> courseTaskDetailFromModels' e e' Nothing (ctId `elem` acceptedTasksId)) tasks
           ]
 
 deleteApiTaskR :: CourseTaskId -> Handler Value
@@ -188,5 +190,5 @@ getApiTaskR ctId = do
         (Just cE@(Entity (CourseKey courseUUID) _)) -> do
           let isMember = isUserCourseMember courseUUID getUserRoles
           if not isMember then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
-            (taskAccepted, solves) <- getCourseTaskDetails d cT
-            sendStatusJSON status200 $ courseTaskWithSolveFromModel cT cE solves taskAccepted
+            taskAccepted <- getCourseTaskAccepted d cT
+            sendStatusJSON status200 $ courseTaskDetailFromModels' cT cE Nothing taskAccepted

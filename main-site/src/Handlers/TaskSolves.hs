@@ -12,6 +12,7 @@ import           Data.ByteString.Lazy   (fromStrict)
 import           Data.Models.StandCheck
 import           Data.Models.User
 import           Data.Text
+import           Data.Text.Encoding     (encodeUtf8)
 import           Foundation
 import           Network.HTTP.Types
 import           Yesod.Core
@@ -45,5 +46,5 @@ postApiTaskSolvesR ctId = do
                     let errorResponse = pack $ "Task launch error: " <> e
                     sendStatusJSON status400 $ object [ "error" .= String errorResponse ]
                   (TaskResult taskUUID) -> do
-                    runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId False)
+                    runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 ans) False)
                     sendStatusJSON status200 $ object [ "uuid" .= taskUUID ]

@@ -54,6 +54,7 @@ CourseSolves
   Id String
   userId Int
   taskId CourseTaskId
+  userInput ByteString
   correct Bool
   deriving Show
 CourseSolveAcception
