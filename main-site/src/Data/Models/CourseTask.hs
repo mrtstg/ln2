@@ -6,6 +6,7 @@ module Data.Models.CourseTask
   , CourseTaskDetails'(..)
   , courseTaskDetailFromModels
   , courseTaskDetailFromModels'
+  , courseSolveFromModel
   ) where
 
 import           Data.Aeson
@@ -14,6 +15,7 @@ import           Data.Models.Course
 import           Data.Models.StandCheck
 import           Data.Models.User
 import           Data.Text
+import           Data.Text.Encoding
 import           Database.Persist
 import           Database.Persist.Sql
 import           Foundation
@@ -65,6 +67,9 @@ instance ToJSON CourseTaskSolve where
     , "correct" .= getCourseTaskSolveCorrect
     , "input" .= getCourseTaskSolveInput
     ]
+
+courseSolveFromModel :: Entity CourseSolves -> CourseTaskSolve
+courseSolveFromModel (Entity (CourseSolvesKey id') (CourseSolves { .. })) = CourseTaskSolve (pack id') courseSolvesCorrect (decodeUtf8 courseSolvesUserInput)
 
 instance ToJSON CourseTaskDetails' where
   toJSON (CourseTaskDetails' { .. }) = object
