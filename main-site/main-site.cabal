@@ -33,6 +33,7 @@ library
       App.Types
       Crud.Course
       Crud.CourseTask
+      Crud.TaskSolves
       Crud.User
       Data.Models.Course
       Data.Models.CourseTask
