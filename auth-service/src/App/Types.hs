@@ -8,4 +8,4 @@ data AppOpts = AppOpts
   , appCommand :: !AppCommand
   }
 
-data AppCommand = RunServer | CreateDatabase deriving (Show, Eq)
+data AppCommand = RunServer | CreateDatabase | CreateRoles deriving (Show, Eq)

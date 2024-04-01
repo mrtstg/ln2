@@ -38,6 +38,7 @@ dependencies:
 - monad-logger == 0.3.40
 - hashing == 0.1.1.0
 - transformers == 0.5.6.2
+- containers == 0.6.7
 
 ghc-options:
 - -Wall

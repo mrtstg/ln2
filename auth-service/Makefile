@@ -7,3 +7,7 @@ run: ../.env
 create-db: ../.env
 	cp ../.env .
 	stack run -- create-db
+
+create-roles: ../.env
+	cp ../.env .
+	stack run -- create-roles

@@ -50,6 +50,7 @@ library
       aeson ==2.1.2.1
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , containers ==0.6.7
     , directory ==1.3.7.1
     , filepath ==1.4.2.2
     , hashing ==0.1.1.0
@@ -82,6 +83,7 @@ executable auth-service-exe
     , auth-service
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , containers ==0.6.7
     , directory ==1.3.7.1
     , filepath ==1.4.2.2
     , hashing ==0.1.1.0
@@ -115,6 +117,7 @@ test-suite auth-service-test
     , auth-service
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
+    , containers ==0.6.7
     , directory ==1.3.7.1
     , filepath ==1.4.2.2
     , hashing ==0.1.1.0

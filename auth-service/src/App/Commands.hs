@@ -10,8 +10,11 @@ module App.Commands (
   ) where
 
 import           App.Types
+import           Control.Monad               (unless, when)
 import           Control.Monad.Logger        (runStdoutLoggingT)
 import qualified Data.ByteString.Char8       as BS
+import qualified Data.Map                    as M
+import           Data.Text
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.Auth
@@ -24,6 +27,35 @@ import           Utils
 import           Yesod.Core
 
 mkYesodDispatch "App" resourcesApp
+
+defaultRoles :: M.Map Text Text
+defaultRoles = M.fromList
+  [ ("admins", "Администраторы")
+  , ("course-creator", "Управляющие курсами")
+  ]
+
+runCreateRolesCommand :: IO ()
+runCreateRolesCommand = let
+  runDB v f = runStdoutLoggingT $ withPostgresqlPool (BS.pack v) 1 $ \pool -> liftIO $ do runSqlPersistMPool f pool
+  helper :: String -> [(Text, Text)] -> IO ()
+  helper _ []                         = return ()
+  helper cS ((roleName, roleDesc):rs) = do
+    roleExists <- runDB cS $ do exists [ RoleName ==. roleName ]
+    when roleExists $ putStrLn ("Роль " <> unpack roleDesc <> " существует!")
+    unless roleExists $ do
+      putStrLn $ "Создаю роль " <> unpack roleDesc <> "!"
+      _ <- runDB cS $ do insert (Role roleName roleDesc)
+      return ()
+    helper cS rs
+
+  in do
+  postgresString <- constructPostgreStringFromEnv
+  case postgresString of
+    Nothing -> do
+      putStrLn "No postgres connection info!"
+      exitWith $ ExitFailure 1
+    (Just v) -> do
+      helper v (M.toList defaultRoles)
 
 runCreateDatabaseCommand :: IO ()
 runCreateDatabaseCommand = do
@@ -58,3 +90,4 @@ runServerCommand port = do
 runCommand :: AppOpts -> IO ()
 runCommand (AppOpts _ CreateDatabase) = runCreateDatabaseCommand
 runCommand (AppOpts port RunServer)   = runServerCommand port
+runCommand (AppOpts _ CreateRoles)    = runCreateRolesCommand
