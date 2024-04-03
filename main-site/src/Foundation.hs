@@ -69,7 +69,9 @@ mkYesodData
 /profile ProfileR GET
 /login LoginR GET POST
 /courses CoursesR GET
+/courses/admin AdminCoursesR GET
 /course/#CourseId CourseR GET
+/course/#CourseId/admin AdminCourseR GET
 /task/#CourseTaskId CourseTaskR GET POST
 /api/courses ApiCourseR GET POST
 /api/courses/#CourseId ApiCourseIdR DELETE
