@@ -7,6 +7,7 @@ module Handlers.Courses
   , getApiCourseR
   , postApiCourseR
   , deleteApiCourseIdR
+  , getAdminCoursesR
   ) where
 
 import           Api.Login          (requireApiAuth, requireAuth)
@@ -26,28 +27,47 @@ import           Network.HTTP.Types
 import           Yesod.Core
 import           Yesod.Persist
 
+courseList :: ([Entity Course], Int) -> Int -> (CourseId -> Route App) -> Route App -> WidgetFor App ()
+courseList (courses, cAmount) pageN coursePageR coursesR = do
+  [whamlet|
+  <div .columns.is-multiline>
+    $forall (Entity cId (Course cName _ _)) <- courses
+      <div .column.is-full>
+        <a href=@{coursePageR cId}>
+          <div .card>
+            <header .card-header>
+              <p .card-header-title>  #{cName}
+  <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
+    <a href=@{coursesR}?page=#{pageN - 1}>
+      <button .button.is-primary.mx-3 :pageN == 1:disabled> Назад
+    <a href=@{coursesR}?page=#{pageN + 1}>
+      <button .button.is-primary.mx-3 :cAmount <= (pageN * defaultPageSize):disabled> Вперед
+    |]
+
 getCoursesR :: Handler Html
 getCoursesR = do
   (UserDetails { .. }) <- requireAuth
   pageN <- getPageNumber
-  (courses, cAmount) <- getUserMembershipCourses getUserRoles pageN
+  r <- getUserMembershipCourses getUserRoles pageN
   defaultLayout $ do
     setTitle "Доступные курсы"
     [whamlet|
 <div .container.pt-2.py-3>
   <h1 .title.pb-3> Доступные курсы
-  <div .columns.is-multiline>
-    $forall (Entity cId (Course cName _ _)) <- courses
-      <div .column.is-full>
-        <a href=@{CourseR cId}>
-          <div .card>
-            <header .card-header>
-              <p .card-header-title>  #{cName}
-  <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
-    <a href=@{CoursesR}?page=#{pageN - 1}>
-      <button .button.is-primary.mx-3 :pageN == 1:disabled> Назад
-    <a href=@{CoursesR}?page=#{pageN + 1}>
-      <button .button.is-primary.mx-3 :cAmount <= (pageN * defaultPageSize):disabled> Вперед
+  ^{courseList r pageN CourseR CoursesR}
+|]
+
+getAdminCoursesR :: Handler Html
+getAdminCoursesR = do
+  d@(UserDetails { .. }) <- requireAuth
+  pageN <- getPageNumber
+  r <- getUserCourses pageN d
+  defaultLayout $ do
+    setTitle "Администрируемые курсы"
+    [whamlet|
+<div .container.pt-2.py-3>
+  <h1 .title.pb-3> Администрируемые курсы
+  ^{courseList r pageN AdminCourseR AdminCoursesR}
 |]
 
 getApiCourseR :: Handler Value
