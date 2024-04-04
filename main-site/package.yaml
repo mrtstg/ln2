@@ -45,6 +45,8 @@ dependencies:
 - amqp == 0.22.1
 - network == 3.1.4.0
 - random == 1.2.1.1
+- wai-cors == 0.2.7
+- warp == 3.3.25
 
 ghc-options:
 - -Wall

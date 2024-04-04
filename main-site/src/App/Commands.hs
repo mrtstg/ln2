@@ -23,6 +23,8 @@ import           Handlers.Profile
 import           Handlers.TaskSolves
 import           Network.AMQP                (openConnection')
 import           Network.Socket              (PortNumber)
+import           Network.Wai.Handler.Warp
+import           Network.Wai.Middleware.Cors
 import           Rabbit
 import           System.Exit
 import           Utils
@@ -65,7 +67,12 @@ runServerCommand port = do
           postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
           let app = App postgresPool rabbitConn
           _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
-          warp port app
+          waiApp <- toWaiApp app
+          run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
+            { corsOrigins = Nothing
+            , corsMethods = ["OPTIONS", "GET", "PUT", "POST"]
+            , corsRequestHeaders = simpleHeaders
+            }) waiApp
 
 runCommand :: AppOpts -> IO ()
 runCommand (AppOpts _ CreateDatabase) = runCreateDatabaseCommand
