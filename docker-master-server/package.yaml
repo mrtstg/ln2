@@ -41,6 +41,8 @@ dependencies:
 - containers == 0.6.7
 - time == 1.12.2
 - vector == 0.13.1.0
+- wai-cors == 0.2.7
+- warp == 3.3.25
 
 ghc-options:
 - -Wall

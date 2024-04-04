@@ -20,6 +20,8 @@ import           Handlers.Stands
 import           Handlers.Task
 import           Network.AMQP                (openConnection')
 import           Network.Socket              (PortNumber)
+import           Network.Wai.Handler.Warp
+import           Network.Wai.Middleware.Cors
 import           Rabbit
 import           System.Directory            (createDirectory,
                                               doesDirectoryExist)
@@ -74,7 +76,12 @@ runServerCommand port = do
           let app = App standsFolder rabbitConn postgresPool
           _ <- prepareRabbitQuery rabbitConn
           _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
-          warp port app
+          waiApp <- toWaiApp app
+          run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
+            { corsOrigins = Nothing
+            , corsMethods = ["OPTIONS", "GET", "PUT", "POST"]
+            , corsRequestHeaders = simpleHeaders
+            }) waiApp
 
 runCommand :: AppOpts -> IO ()
 runCommand AppOpts { appCommand = RunServer, serverPort = port } = runServerCommand port
