@@ -1,17 +1,23 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.Stand (StandData(..), StandContainerData(..)) where
+module Data.Models.Stand (StandData(..), StandContainerData(..), getContainersSummary) where
 
 import           Data.Aeson
 import           Data.Map
 import           Data.Models.StandCheck
+import qualified Data.Vector            as V
 import           GHC.Generics
 
 data StandData = StandData {
   getStandContainers     :: ![StandContainerData],
   getStandDefaultActions :: ![StandCheckStage]
   } deriving (Show, Generic)
+
+getContainersSummary :: StandData -> Value
+getContainersSummary (StandData { getStandContainers = containers }) = Array $ V.map f (V.fromList containers) where
+  f :: StandContainerData -> Value
+  f (ContainerData { .. }) = object [ "name" .= getContainerName, "image" .= getContainerImage ]
 
 instance FromJSON StandData where
   parseJSON = withObject "StandData" $ \v -> StandData

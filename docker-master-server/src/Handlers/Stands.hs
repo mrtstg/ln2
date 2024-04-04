@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Handlers.Stands (getStandsR, postStandsCreateR, getStandsCreateR) where
+module Handlers.Stands (getStandsR, postStandsCreateR, getStandsCreateR, getStandContainersR) where
 
 import           Data.Aeson
 import           Data.Models.Stand
@@ -12,23 +12,33 @@ import           System.FilePath           (dropExtension)
 import           Utils
 import           Yesod.Core
 
-getStandsR :: Handler Value
-getStandsR = do
+validateAndParseStand :: String -> Handler StandData
+validateAndParseStand standName = do
   App { .. } <- getYesod
-  files <- liftIO $ listYMLFiles standsFolder
-  sendStatusJSON status200 $ map dropExtension files
-
-getStandsCreateR :: T.Text -> Handler Value
-getStandsCreateR standName = do
-  App { .. } <- getYesod
-  findRes <- liftIO $ findYMLByName standsFolder (T.unpack standName)
+  findRes <- liftIO $ findYMLByName standsFolder (standName)
   case findRes of
     Nothing -> sendStatusJSON notFound404 $ object ["error" .= String "Not found"]
     (Just p') -> do
       parseRes <- liftIO $ Y.decodeFileEither p' :: Handler (Either Y.ParseException StandData)
       case parseRes of
         (Left _) -> sendStatusJSON status505 $ object ["error" .= String "Internal error"]
-        (Right r) -> sendStatusJSON status200 r
+        (Right r) -> return r
+
+getStandsR :: Handler Value
+getStandsR = do
+  App { .. } <- getYesod
+  files <- liftIO $ listYMLFiles standsFolder
+  sendStatusJSON status200 $ map dropExtension files
+
+getStandContainersR :: T.Text -> Handler Value
+getStandContainersR standName = do
+  standData <- validateAndParseStand (T.unpack standName)
+  sendStatusJSON status200 $ getContainersSummary standData
+
+getStandsCreateR :: T.Text -> Handler Value
+getStandsCreateR standName = do
+  standData <- validateAndParseStand (T.unpack standName)
+  sendStatusJSON status200 $ standData
 
 postStandsCreateR :: T.Text -> Handler Value
 postStandsCreateR standName = do
