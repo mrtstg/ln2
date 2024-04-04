@@ -48,6 +48,7 @@ mkYesodData
   [parseRoutes|
 /stands StandsR GET
 /stands/#Text StandsCreateR GET POST
+/stands/containers/#Text StandContainersR GET
 /task/  TaskCreateR POST
 /task/#Text TaskR GET DELETE
 |]
