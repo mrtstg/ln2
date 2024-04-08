@@ -29,6 +29,7 @@ import           Yesod.Persist
 data App = App
   { postgresqlPool :: !(Pool SqlBackend)
   , redisPool      :: !R.Connection
+  , bypassAuth     :: !Bool
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
