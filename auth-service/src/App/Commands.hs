@@ -14,6 +14,7 @@ import           Control.Monad               (unless, when)
 import           Control.Monad.Logger        (runStdoutLoggingT)
 import qualified Data.ByteString.Char8       as BS
 import qualified Data.Map                    as M
+import           Data.Maybe                  (fromMaybe)
 import           Data.Text
 import           Database.Persist.Postgresql
 import           Foundation
@@ -22,7 +23,10 @@ import           Handlers.Role
 import           Handlers.User
 import           Handlers.UserDetail
 import           Handlers.Validate
+import           Redis                       (deleteValue', rewriteAuthToken')
+import           System.Environment
 import           System.Exit
+import           Text.Read                   (readMaybe)
 import           Utils
 import           Yesod.Core
 
@@ -83,8 +87,17 @@ runServerCommand port = do
           putStrLn "No redis connection data!"
           exitWith $ ExitFailure 1
         Just redisConnection -> do
+          bypassValue <- lookupEnv "BYPASS_AUTH"
+          let bypassAuthStr = fromMaybe "0" bypassValue
+          let bypassAuth = fromMaybe 0 (readMaybe bypassAuthStr) == 1
           postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-          let app = App postgresPool redisConnection
+          let app = App postgresPool redisConnection bypassAuth
+          when bypassAuth $ do
+            putStrLn "[DEBUG] Auth bypass enabled!"
+            rewriteAuthToken' Nothing redisConnection "admin" "admin"
+          unless bypassAuth $ do
+            deleteValue' redisConnection "admin"
+            deleteValue' redisConnection "token-admin"
           warp port app
 
 runCommand :: AppOpts -> IO ()
