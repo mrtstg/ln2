@@ -4,8 +4,8 @@
 {-# LANGUAGE TypeFamilies      #-}
 module Handlers.Courses
   ( getCoursesR
-  , getApiCourseR
-  , postApiCourseR
+  , getApiCoursesR
+  , postApiCoursesR
   , deleteApiCourseIdR
   , getAdminCoursesR
   ) where
@@ -70,8 +70,8 @@ getAdminCoursesR = do
   ^{courseList r pageN AdminCourseR AdminCoursesR}
 |]
 
-getApiCourseR :: Handler Value
-getApiCourseR = let
+getApiCoursesR :: Handler Value
+getApiCoursesR = let
   helper :: Maybe (UserGetResult UserDetails) -> Maybe UserDetails
   helper Nothing                  = Nothing
   helper (Just (UserGetResult d)) = Just d
@@ -87,8 +87,8 @@ getApiCourseR = let
     , "objects" .= map (\e@(Entity _ (Course {courseAuthorId = aid})) -> courseDetailsFromModel e (helper $ M.lookup aid users)) courses
     ]
 
-postApiCourseR :: Handler Value
-postApiCourseR = do
+postApiCoursesR :: Handler Value
+postApiCoursesR = do
   d@(UserDetails { getUserDetailsId = uId, getUserDetailsName = uName, getUserRoles = roles }) <- requireApiAuth
   c@(CourseCreate { .. }) <- requireCheckJsonBody
   if not $ isUserCourseManager roles then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do

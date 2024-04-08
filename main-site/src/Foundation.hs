@@ -73,7 +73,7 @@ mkYesodData
 /course/#CourseId CourseR GET
 /course/#CourseId/admin AdminCourseR GET
 /task/#CourseTaskId CourseTaskR GET POST
-/api/courses ApiCourseR GET POST
+/api/courses ApiCoursesR GET POST
 /api/courses/#CourseId ApiCourseIdR DELETE
 /api/course/#CourseId/task ApiCourseTaskR POST GET
 /api/task/#CourseTaskId ApiTaskR DELETE GET
