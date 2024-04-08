@@ -5,6 +5,8 @@ module Redis
   , getValue
   , getValue'
   , rewriteAuthToken
+  , rewriteAuthToken'
+  , deleteValue'
   ) where
 
 import           Control.Monad         (when)
@@ -14,10 +16,8 @@ import           Data.Maybe
 import qualified Data.Text             as T
 import           Database.Redis
 
--- TODO: login timeout customization
--- TODO: returning result?
-rewriteAuthToken :: Connection -> T.Text -> String -> IO ()
-rewriteAuthToken conn login token = do
+rewriteAuthToken' :: Maybe Integer -> Connection -> T.Text -> String -> IO ()
+rewriteAuthToken' timeout conn login token = do
   let loginBS = (BS.pack . T.unpack) login
   let tokenBS = BS.pack token
   let tokenKey = BS.pack $ "token-" <> T.unpack login
@@ -29,9 +29,13 @@ rewriteAuthToken conn login token = do
           _ <- del [oldToken]
           return ()
 
-    _ <- setOpts tokenKey tokenBS (SetOpts (Just 7200) Nothing Nothing)
-    _ <- setOpts tokenBS loginBS (SetOpts (Just 7200) Nothing Nothing)
+    _ <- setOpts tokenKey tokenBS (SetOpts timeout Nothing Nothing)
+    _ <- setOpts tokenBS loginBS (SetOpts timeout Nothing Nothing)
     return ()
+
+-- TODO: returning result?
+rewriteAuthToken :: Connection -> T.Text -> String -> IO ()
+rewriteAuthToken = rewriteAuthToken' (Just 7200)
 
 cacheValue :: Connection -> BS.ByteString -> BS.ByteString -> Maybe Integer -> IO ()
 cacheValue conn key value timeout = do
@@ -45,6 +49,9 @@ deleteValue :: Connection -> BS.ByteString -> IO ()
 deleteValue conn key = do
   _ <- runRedis conn $ del [key]
   return ()
+
+deleteValue' :: Connection -> String -> IO ()
+deleteValue' conn key = deleteValue conn (BS.pack key)
 
 getValue :: Connection -> BS.ByteString -> IO (Maybe BS.ByteString)
 getValue conn key = do
