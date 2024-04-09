@@ -13,6 +13,7 @@ module Handlers.CoursePage
 import           Api.Login
 import           Crud.Course
 import           Crud.CourseTask
+import           Data.Models.Course
 import           Data.Models.Role
 import           Data.Models.User
 import           Data.Text          (pack, unpack)
@@ -31,6 +32,15 @@ validateCourseId cId (UserDetails { .. }) controlF failureR = do
     (Just e@(Entity (CourseKey courseUUID) _)) -> do
       let isPermited = controlF courseUUID getUserRoles
       if not isPermited then redirect failureR else return e
+
+validateApiCourseId :: CourseId -> UserDetails -> (String -> [RoleDetails] -> Bool) -> Handler (Entity Course)
+validateApiCourseId cId (UserDetails { .. }) controlF = do
+  courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
+  case courseRes of
+    Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ]
+    (Just e@(Entity (CourseKey courseUUID) _)) -> do
+      let isPermited = controlF courseUUID getUserRoles
+      if not isPermited then sendStatusJSON status403 $ object [ "error" .= String "Forbidden"] else return e
 
 getAdminCourseR :: CourseId -> Handler Html
 getAdminCourseR cId = do
@@ -73,10 +83,25 @@ getCourseR cId = do
 |]
 
 getApiCourseIdR :: CourseId -> Handler Value
-getApiCourseIdR (CourseKey courseUUID) = undefined
+getApiCourseIdR cId = do
+  d <- requireApiAuth
+  course <- validateApiCourseId cId d isUserCourseMember
+  sendStatusJSON status200 $ courseDetailsFromModel course Nothing
 
+-- TODO: own model for patching
 patchApiCourseIdR :: CourseId -> Handler Value
-patchApiCourseIdR (CourseKey courseUUID) = undefined
+patchApiCourseIdR cId = do
+  d <- requireApiAuth
+  _ <- validateApiCourseId cId d isUserCourseAdmin
+  (CourseCreate cName) <- requireCheckJsonBody
+  nameTaken <- runDB $ exists [CourseName ==. pack cName, CourseId !=. cId]
+  if nameTaken then sendStatusJSON status400 $ object [ "error" .= String "Invalid name" ] else do
+    newCourse' <- runDB $ do
+      update cId [CourseName =. pack cName]
+      get cId
+    case newCourse' of
+      Nothing -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
+      (Just e) -> sendStatusJSON status200 $ courseDetailsFromModel (Entity cId e) Nothing
 
 deleteApiCourseIdR :: CourseId -> Handler Value
 deleteApiCourseIdR (CourseKey courseUUID) = do
