@@ -2,17 +2,24 @@
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeFamilies      #-}
-module Handlers.CoursePage (getCourseR, getAdminCourseR) where
+module Handlers.CoursePage
+  ( getCourseR
+  , getAdminCourseR
+  , deleteApiCourseIdR
+  , getApiCourseIdR
+  , patchApiCourseIdR
+  ) where
 
 import           Api.Login
 import           Crud.Course
 import           Crud.CourseTask
 import           Data.Models.Role
 import           Data.Models.User
-import           Data.Text        (pack, unpack)
+import           Data.Text          (pack, unpack)
 import           Database.Persist
 import           Foundation
 import           Handlers.Utils
+import           Network.HTTP.Types
 import           Yesod.Core
 import           Yesod.Persist
 
@@ -64,3 +71,18 @@ getCourseR cId = do
     <a href=@{CourseR cId}?page=#{pageV + 1}>
       <button .button.is-primary.mx-3 :taskA <= (pageV * defaultPageSize):disabled> Вперед
 |]
+
+getApiCourseIdR :: CourseId -> Handler Value
+getApiCourseIdR (CourseKey courseUUID) = undefined
+
+patchApiCourseIdR :: CourseId -> Handler Value
+patchApiCourseIdR (CourseKey courseUUID) = undefined
+
+deleteApiCourseIdR :: CourseId -> Handler Value
+deleteApiCourseIdR (CourseKey courseUUID) = do
+  (UserDetails { .. }) <- requireApiAuth
+  if not $ isUserCourseManager getUserRoles then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
+    let isAdmin = isUserCourseAdmin courseUUID getUserRoles
+    if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You're not admin of this course!" ] else do
+      res <- deleteCourse courseUUID
+      if not res then sendStatusJSON status400 $ object [ "error" .= String "Course not found!" ] else sendResponseStatus status204 ()
