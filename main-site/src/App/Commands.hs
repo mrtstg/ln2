@@ -26,6 +26,7 @@ import           Network.Socket              (PortNumber)
 import           Network.Wai.Handler.Warp
 import           Network.Wai.Middleware.Cors
 import           Rabbit
+import           System.Environment          (lookupEnv)
 import           System.Exit
 import           Utils
 import           Yesod.Core
@@ -43,6 +44,13 @@ runCreateDatabaseCommand = do
       runStdoutLoggingT $ withPostgresqlPool (BS.pack v) 1 $ \pool -> liftIO $ do
         flip runSqlPersistMPool pool $ do
           runMigration migrateAll
+
+isDevEnabled :: IO Bool
+isDevEnabled = do
+  devV <- lookupEnv "DEV"
+  case devV of
+    Nothing  -> return False
+    (Just v) -> return $ v == "1"
 
 runServerCommand :: Int -> IO ()
 runServerCommand port = do
@@ -67,9 +75,11 @@ runServerCommand port = do
           postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
           let app = App postgresPool rabbitConn
           _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
+          devMode <- isDevEnabled
+          let corsOrigins = ["http://localhost:5173" | devMode]
           waiApp <- toWaiApp app
           run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
-            { corsOrigins = Nothing
+            { corsOrigins = Just (corsOrigins, True)
             , corsMethods = ["OPTIONS", "GET", "PUT", "POST"]
             , corsRequestHeaders = simpleHeaders
             }) waiApp

@@ -44,6 +44,13 @@ runCreateDatabaseCommand = do
         flip runSqlPersistMPool pool $ do
           runMigration migrateAll
 
+isDevEnabled :: IO Bool
+isDevEnabled = do
+  devV <- lookupEnv "DEV"
+  case devV of
+    Nothing  -> return False
+    (Just v) -> return $ v == "1"
+
 runServerCommand :: Int -> IO ()
 runServerCommand port = do
   rabbitCreds' <- getEnvRabbitConnectionData
@@ -76,11 +83,13 @@ runServerCommand port = do
           let app = App standsFolder rabbitConn postgresPool
           _ <- prepareRabbitQuery rabbitConn
           _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
+          devMode <- isDevEnabled
+          let corsOrigins = ["http://localhost:5173" | devMode]
           waiApp <- toWaiApp app
           run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
-            { corsOrigins = Nothing
-            , corsMethods = ["OPTIONS", "GET", "PUT", "POST"]
-            , corsRequestHeaders = simpleHeaders
+            { corsOrigins = Just (corsOrigins, True)
+            , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH"]
+            , corsRequestHeaders = simpleHeaders ++ ["Authorization", "Cookie"]
             }) waiApp
 
 runCommand :: AppOpts -> IO ()
