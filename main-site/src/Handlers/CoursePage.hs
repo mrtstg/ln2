@@ -48,7 +48,8 @@ getAdminCourseR cId = do
   (Entity _ (Course { .. })) <- validateCourseId cId userD isUserCourseAdmin AdminCoursesR
   defaultLayout $ do
     [whamlet|
-      <h1 .title.is-3> #{show cId}|]
+      <div #app>
+      <script src="/static/js/adminCourseForm.js">|]
 
 -- TODO: errors screens
 getCourseR :: CourseId -> Handler Html
