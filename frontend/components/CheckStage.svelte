@@ -8,6 +8,7 @@
   export let data: CheckStage
   export let containers: string[]
   export let updateCallback: (data: CheckStage) => Promise<void>
+  export let deleteCallback: () => void = (() => {})
 
   let selectedActionIndex: number
   $: selectedActionIndex = 0
@@ -116,5 +117,5 @@
   {:else}
     <DangerMessage title="Ошибка!" description="Неизвестный тип"/>
   {/if}
-  { JSON.stringify(data) }
+  <button class="button is-danger is-fullwidth" on:click={deleteCallback}> Удалить </button>
 </div>
