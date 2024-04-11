@@ -7,6 +7,13 @@ export default defineConfig(({ command, mode }) =>  {
     define: {
       API_URL: JSON.stringify(command === 'serve' ? "http://localhost" : "")
     },
-    plugins: [svelte()]
+    plugins: [svelte()],
+    build: {
+      rollupOptions: {
+        output: {
+          entryFileNames: '[name].js'
+        }
+      }
+    }
   }
 })
