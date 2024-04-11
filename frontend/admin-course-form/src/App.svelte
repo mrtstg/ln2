@@ -263,5 +263,4 @@
   {:catch error}
     <DangerMessage title="Ошибка!" description="Не удалось получить данные о доступных стеднах."/>
   {/await}
-  { JSON.stringify(stages) }
 </div>
