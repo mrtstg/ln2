@@ -8,9 +8,12 @@ import           Control.Monad       (when)
 import           LoadEnv
 import           Options.Applicative
 import           System.Directory    (doesFileExist)
+import           System.IO
 
 main :: IO ()
 main = do
+  -- TODO: is it safe?
+  hSetBuffering stdout NoBuffering
   envFileExists <- doesFileExist "./.env"
   when envFileExists $ do
     putStrLn "Loading environment variables!"
