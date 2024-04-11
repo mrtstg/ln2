@@ -76,10 +76,10 @@ runServerCommand port = do
           let app = App postgresPool rabbitConn
           _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
           devMode <- isDevEnabled
-          let corsOrigins = ["http://localhost:5173" | devMode]
+          let corsOrigins = ["http://localhost:5173", "http://localhost"]
           waiApp <- toWaiApp app
           run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
-            { corsOrigins = Just (corsOrigins, True)
+            { corsOrigins = if devMode then Just (corsOrigins, True) else Nothing
             , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH"]
             , corsRequestHeaders = simpleHeaders
             }) waiApp
