@@ -12,6 +12,7 @@ module Handlers.CourseTask
   ) where
 
 import           Api.Login              (requireApiAuth, requireAuth)
+import           Api.Markdown
 import           Api.Task
 import           Crud.Course
 import           Crud.CourseTask
@@ -106,14 +107,29 @@ getCourseTaskR ctId = do
           let isMember = isUserCourseMember courseUUID getUserRoles
           if not isMember then redirect CoursesR else do
             (taskAccepted, solves) <- getCourseTaskDetails d cT
+            parseRes <- liftIO $ convertMarkdown' courseTaskContent
             (widget, enctype) <- generateFormPost taskResponseForm
             defaultLayout $ do
               setTitle $ toHtml ("Задача: " <> T.unpack courseTaskName)
               [whamlet|
 <div .container.pt-2.py-3>
   <h1 .title.pb-3> #{ courseTaskName }
-  <div .content.is-medium>
-    #{ courseTaskContent }
+  $case parseRes
+    $of NoApiURL
+      <article .message.is-warning>
+        <div .message-header>
+          <p> Неправильная конфигурация сервиса!
+        <div .message-body>
+          <p> Обратитесь к администраторам сайта.
+    $of (MDError err)
+      <article .message.is-danger>
+        <div .message-header>
+          <p> Ошибка!
+        <div .message-body>
+          <p> Не удалось отрисовать условие задачи.
+    $of (MDResult html)
+      <div .content.is-medium>
+        #{preEscapedToMarkup html}
   $if (not . null) solves
     <div .columns.is-multiline>
       $forall (Entity (CourseSolvesKey sId) CourseSolves { .. }) <- solves
