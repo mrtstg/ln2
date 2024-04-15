@@ -33,7 +33,7 @@ getApiTaskSolvesR ctId = do
   pageN <- getPageNumber
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
-    Nothing -> sendStatusJSON status400 $ object [ "error" .= String "Task not found!" ]
+    Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
     (Just (Entity _ (CourseTask { .. }))) -> do
       courseRes <- runDB $ selectFirst [ CourseId ==. courseTaskCourse ] []
       case courseRes of
@@ -55,7 +55,7 @@ postApiTaskSolvesR ctId = do
   (TaskAnswer ans) <- requireCheckJsonBody
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
-    Nothing -> sendStatusJSON status400 $ object [ "error" .= String "Task not found!" ]
+    Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
     (Just (Entity _ (CourseTask { .. }))) -> do
       courseRes <- runDB $ selectFirst [ CourseId ==. courseTaskCourse ] []
       case courseRes of
