@@ -42,3 +42,21 @@ export type CourseTaskDetails = {
   standIdentifier?: string,
   standActions?: [object]
 }
+
+export type CourseSolvesResponse = {
+  total: number,
+  pageSize: number,
+  objects: [CourseTaskSolve]
+}
+
+export type CourseTaskSolve = {
+  id: string,
+  correct: Boolean,
+  input: string
+}
+
+export type TaskResult = {
+  score: number,
+  maxScore: number,
+  values: object
+}

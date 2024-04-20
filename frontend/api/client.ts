@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import type { CommonCourseDetails, ContainerSummary, CourseTaskCreate, CourseTaskDetails } from "./types";
+import type { TaskResult, CommonCourseDetails, ContainerSummary, CourseSolvesResponse, CourseTaskCreate, CourseTaskDetails } from "./types";
 
 export class ApiClient {
   base_url = "";
@@ -84,6 +84,32 @@ export class ApiClient {
         }
       }
       return "Unknown"
+    }
+  }
+
+  async getCourseTaskSolves(taskId: number, page: number = 1): Promise<CourseSolvesResponse | string> {
+    try {
+      const { data, status } = await this.client.get<CourseSolvesResponse>("/api/task/" + taskId + "/solves", {params: {page: page}})
+      return data
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status == 404) {
+          return "Not found"
+        }
+        if (error.response.status == 403) {
+          return "Forbidden"
+        }
+      }
+      return "Unknown"
+    }
+  }
+
+  async getTaskDetails(taskId: string): Promise<TaskResult | null> {
+    try {
+      const { data, status } = await this.client.get<TaskResult>("/api/taskResults/" + taskId)
+      return data
+    } catch (error) {
+      return null
     }
   }
 }
