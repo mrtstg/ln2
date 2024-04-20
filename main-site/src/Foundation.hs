@@ -55,6 +55,7 @@ CourseSolves
   userId Int
   taskId CourseTaskId
   userInput ByteString
+  createdAt UTCTime default=now()
   correct Bool
   deriving Show
 CourseSolveAcception

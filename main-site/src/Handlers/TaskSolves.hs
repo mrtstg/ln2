@@ -16,6 +16,7 @@ import           Data.Models.StandCheck
 import           Data.Models.User
 import           Data.Text
 import           Data.Text.Encoding     (encodeUtf8)
+import           Data.Time.Clock
 import           Foundation
 import           Handlers.Utils
 import           Network.HTTP.Types
@@ -51,6 +52,7 @@ getApiTaskSolvesR ctId = do
 
 postApiTaskSolvesR :: CourseTaskId -> Handler Value
 postApiTaskSolvesR ctId = do
+  reqTime <- liftIO getCurrentTime
   (UserDetails { .. }) <- requireApiAuth
   (TaskAnswer ans) <- requireCheckJsonBody
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
@@ -72,5 +74,5 @@ postApiTaskSolvesR ctId = do
                     let errorResponse = pack $ "Task launch error: " <> e
                     sendStatusJSON status400 $ object [ "error" .= String errorResponse ]
                   (TaskResult taskUUID) -> do
-                    runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 ans) False)
+                    runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 ans) reqTime False)
                     sendStatusJSON status200 $ object [ "uuid" .= taskUUID ]
