@@ -11,7 +11,7 @@ import           Yesod.Persist
 getTaskSolves :: Int -> UserDetails -> CourseTaskId -> Handler ([Entity CourseSolves], Int)
 getTaskSolves pageN (UserDetails { .. }) ctId = do
   runDB $ do
-    let params = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize, Desc CourseSolvesId]
+    let params = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize, Desc CourseSolvesCreatedAt]
     let filters = [CourseSolvesUserId ==. getUserDetailsId, CourseSolvesTaskId ==. ctId]
     solves <- selectList filters params
     solvesAmount <- count filters
