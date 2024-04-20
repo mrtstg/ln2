@@ -24,6 +24,7 @@ import           Data.Models.StandCheck
 import           Data.Models.User
 import qualified Data.Text              as T
 import           Data.Text.Encoding     (encodeUtf8)
+import           Data.Time.Clock
 import           Database.Persist
 import           Foundation
 import           Handlers.Forms
@@ -65,6 +66,7 @@ postApiCourseTaskR cId = do
 
 postCourseTaskR :: CourseTaskId -> Handler Html
 postCourseTaskR ctId = do
+  reqTime <- liftIO getCurrentTime
   ((result, _), _) <- runFormPost taskResponseForm
   case result of
     (FormSuccess taskResp') -> do
@@ -89,7 +91,7 @@ postCourseTaskR ctId = do
                         liftIO $ putStrLn e
                         redirect CoursesR
                       (TaskResult taskUUID) -> do
-                        runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 taskResp) False)
+                        runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 taskResp) reqTime False)
                         redirect $ CourseTaskR ctId
     _formError             -> redirect CoursesR
 
