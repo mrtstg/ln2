@@ -1,11 +1,23 @@
 {-# LANGUAGE RecordWildCards #-}
-module Crud.TaskSolves (getTaskSolves) where
+module Crud.TaskSolves
+  ( getTaskSolves
+  , createTaskSolve
+  ) where
 
+
+import           Api.Task
+import           Crud.Course
+import           Data.Aeson             (eitherDecode)
+import           Data.ByteString.Lazy   (fromStrict)
+import           Data.Models.StandCheck
 import           Data.Models.User
+import qualified Data.Text              as T
+import           Data.Text.Encoding     (encodeUtf8)
+import           Data.Time.Clock
 import           Database.Persist
-import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.Utils
+import           Yesod.Core
 import           Yesod.Persist
 
 getTaskSolves :: Int -> UserDetails -> CourseTaskId -> Handler ([Entity CourseSolves], Int)
@@ -16,3 +28,24 @@ getTaskSolves pageN (UserDetails { .. }) ctId = do
     solves <- selectList filters params
     solvesAmount <- count filters
     return (solves, solvesAmount)
+
+createTaskSolve :: T.Text -> UserDetails -> Entity CourseTask -> Handler (Int, String)
+createTaskSolve answer (UserDetails { .. }) (Entity ctId (CourseTask { .. })) = do
+  reqTime <- liftIO getCurrentTime
+  courseRes <- runDB $ selectFirst [ CourseId ==. courseTaskCourse ] []
+  case courseRes of
+    Nothing -> error "Unreachable pattern!"
+    (Just (Entity (CourseKey courseUUID) _)) -> do
+      let isMember = isUserCourseMember courseUUID getUserRoles
+      if not isMember then return (403, "You have no access to course!") else do
+        case eitherDecode . fromStrict $ courseTaskStandActions :: Either String [StandCheckStage] of
+          (Left _) -> return (400, "Invalid task data!")
+          (Right taskActions) -> do
+            taskCRes <- liftIO $ createTask'' answer courseTaskStandIdentifier taskActions
+            case taskCRes of
+              (TaskError e) -> do
+                let errorResponse = "Task launch error: " <> e
+                return (400, errorResponse)
+              (TaskResult taskUUID) -> do
+                runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 answer) reqTime False)
+                return (200, taskUUID)
