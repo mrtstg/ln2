@@ -55,6 +55,10 @@ export type CourseTaskSolve = {
   input: string
 }
 
+export type TaskResultWrapper = {
+  result: TaskResult
+}
+
 export type TaskResult = {
   score: number,
   maxScore: number,

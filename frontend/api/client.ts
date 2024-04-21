@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import type { TaskResult, CommonCourseDetails, ContainerSummary, CourseSolvesResponse, CourseTaskCreate, CourseTaskDetails } from "./types";
+import type { TaskResult, TaskResultWrapper, CommonCourseDetails, ContainerSummary, CourseSolvesResponse, CourseTaskCreate, CourseTaskDetails } from "./types";
 
 export class ApiClient {
   base_url = "";
@@ -106,8 +106,8 @@ export class ApiClient {
 
   async getTaskDetails(taskId: string): Promise<TaskResult | null> {
     try {
-      const { data, status } = await this.client.get<TaskResult>("/api/taskResults/" + taskId)
-      return data
+      const { data, status } = await this.client.get<TaskResultWrapper>("/api/taskResults/" + taskId)
+      return data.result
     } catch (error) {
       return null
     }
