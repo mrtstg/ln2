@@ -16,6 +16,7 @@ import           Api.Markdown
 import           Api.Task
 import           Crud.Course
 import           Crud.CourseTask
+import           Crud.TaskSolves
 import           Data.Aeson
 import           Data.ByteString        (toStrict)
 import           Data.ByteString.Lazy   (fromStrict)
@@ -66,33 +67,19 @@ postApiCourseTaskR cId = do
 
 postCourseTaskR :: CourseTaskId -> Handler Html
 postCourseTaskR ctId = do
-  reqTime <- liftIO getCurrentTime
   ((result, _), _) <- runFormPost taskResponseForm
   case result of
     (FormSuccess taskResp') -> do
       let taskResp = unTextarea taskResp'
-      (UserDetails { .. }) <- requireAuth
+      d <- requireAuth
       courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
       case courseTaskRes of
         Nothing -> redirect $ CourseTaskR ctId
-        (Just (Entity _ (CourseTask { .. }))) -> do
-          courseRes <- runDB $ selectFirst [ CourseId ==. courseTaskCourse ] []
-          case courseRes of
-            Nothing -> error "Unreachable pattern!"
-            (Just (Entity (CourseKey courseUUID) _)) -> do
-              let isMember = isUserCourseMember courseUUID getUserRoles
-              if not isMember then redirect CoursesR else do
-                case eitherDecode . fromStrict $ courseTaskStandActions :: Either String [StandCheckStage] of
-                  (Left _) -> redirect CoursesR
-                  (Right taskActions) -> do
-                    taskCRes <- liftIO $ createTask'' taskResp courseTaskStandIdentifier taskActions
-                    case taskCRes of
-                      (TaskError e) -> do
-                        liftIO $ putStrLn e
-                        redirect CoursesR
-                      (TaskResult taskUUID) -> do
-                        runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 taskResp) reqTime False)
-                        redirect $ CourseTaskR ctId
+        (Just ct@(Entity _ (CourseTask { .. }))) -> do
+          (status, response) <- createTaskSolve taskResp d ct
+          case status of
+            200        -> redirect $ CourseTaskR ctId
+            _someError -> redirect CoursesR
     _formError             -> redirect CoursesR
 
 getCourseTaskR :: CourseTaskId -> Handler Html

@@ -52,27 +52,18 @@ getApiTaskSolvesR ctId = do
 
 postApiTaskSolvesR :: CourseTaskId -> Handler Value
 postApiTaskSolvesR ctId = do
-  reqTime <- liftIO getCurrentTime
-  (UserDetails { .. }) <- requireApiAuth
+  d <- requireApiAuth
   (TaskAnswer ans) <- requireCheckJsonBody
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
-    (Just (Entity _ (CourseTask { .. }))) -> do
+    (Just ct@(Entity _ (CourseTask { .. }))) -> do
       courseRes <- runDB $ selectFirst [ CourseId ==. courseTaskCourse ] []
       case courseRes of
         Nothing -> error "Unreachable pattern!"
         (Just (Entity (CourseKey courseUUID) _)) -> do
-          let isMember = isUserCourseMember courseUUID getUserRoles
-          if not isMember then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
-            case eitherDecode . fromStrict $ courseTaskStandActions :: Either String [StandCheckStage] of
-              (Left _) -> sendStatusJSON status400 $ object [ "error" .= String "Invalid task data!" ]
-              (Right taskActions) -> do
-                taskCRes <- liftIO $ createTask'' ans courseTaskStandIdentifier taskActions
-                case taskCRes of
-                  (TaskError e) -> do
-                    let errorResponse = pack $ "Task launch error: " <> e
-                    sendStatusJSON status400 $ object [ "error" .= String errorResponse ]
-                  (TaskResult taskUUID) -> do
-                    runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 ans) reqTime False)
-                    sendStatusJSON status200 $ object [ "uuid" .= taskUUID ]
+          (status, response) <- createTaskSolve ans d ct
+          case status of
+            n | n `Prelude.elem` [400, 403] -> sendStatusJSON (if status == 403 then status403 else status400) $ object [ "error" .= (String . pack) response ]
+            200 -> sendStatusJSON status200 $ object ["uuid" .= response]
+            _unexpectedStatus -> sendStatusJSON status500 $ object ["error" .= String "Sometyhing went wrong!"]
