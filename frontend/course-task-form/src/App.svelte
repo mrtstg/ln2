@@ -2,6 +2,7 @@
   import { ApiClient } from "../../api/client"
   import type { CourseTaskSolve, CourseSolvesResponse, TaskResult } from "../../api/types"
   import DangerMessage from "../../components/DangerMessage.svelte"
+  import WarningMessage from "../../components/WarningMessage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
 
   // client
@@ -46,12 +47,17 @@
     taskResultPromise = null
   }
 
+  const goToPage = (newNum: number) => {
+    pageNum = newNum
+    taskSolvesPromise = taskSolvesWrapper()
+  }
+
 </script>
 
 {#if taskSolvesPromise != null}
   {#await taskSolvesPromise}
     <SuccessMessage title="Ожидайте" description="Загружаем данные..." additionalStyle="is-fullwidth"/>
-  {:then result}
+  {:then taskResult}
     {#if selectedTask != null}
       <div class="box">
         <h2 class="subtitle is-4"> Решение { selectedTask.id } </h2>
@@ -78,21 +84,41 @@
         {/if}
       </div>
     {:else}
-      <div class="columns is-multiline">
-        {#each tasks as task}
-          <div class="column is-6">
-            <div class="card" on:click={() => selectTask(task)}>
-              <header class="card-header">
-                {#if task.correct}
-                  <p class="card-header-title has-text-success"> Решение { task.id } </p>
-                {:else}
-                  <p class="card-header-title"> Решение { task.id } </p>
-                {/if}
-              </header>
+      {#if tasks.length > 0}
+        <div class="columns is-multiline">
+          {#each tasks as task}
+            <div class="column is-6">
+              <div class="card" on:click={() => selectTask(task)}>
+                <header class="card-header">
+                  {#if task.correct}
+                    <p class="card-header-title has-text-success"> Решение { task.id } </p>
+                  {:else}
+                    <p class="card-header-title"> Решение { task.id } </p>
+                  {/if}
+                </header>
+              </div>
             </div>
-          </div>
-        {/each}
-      </div>
+          {/each}
+        </div>
+        <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+          <ul class="pagination-list">
+            {#if pageNum == 1}
+              <li><a href="#" class="pagination-link is-current" aria-label="Page 1" aria-current="page"> 1 </a></li>
+              {#if pageNum * taskResult.pageSize < taskResult.total}
+                <li><a href="#" class="pagination-link" aria-label="Go to page 2" on:click={() => goToPage(2)}> 2 </a></li>
+              {/if}
+            {:else}
+              <li><a href="#" class="pagination-link" aria-label="Go to page { pageNum - 1 }" on:click={() => goToPage(pageNum - 1)}> { pageNum - 1} </a></li>
+              <li><a href="#" class="pagination-link is-current" aria-label="Page { pageNum }" aria-current="page"> { pageNum } </a></li>
+              {#if pageNum * taskResult.pageSize < taskResult.total}
+                <li><a href="#" class="pagination-link" aria-label="Go to page { pageNum + 1 }" on:click={() => goToPage(pageNum + 1)}> { pageNum + 1 } </a></li>
+              {/if}
+            {/if}
+          </ul>
+        </nav>
+      {:else}
+        <WarningMessage title="Внимание!" description="Вы еще не подавали решений на это задание!" additionalStyle="is-fullwidth"/>
+      {/if}
     {/if}
   {:catch e}
     <DangerMessage title="Ошибка!" description="Не удалось загрузить решения." additionalStyle="is-fullwidth"/>
