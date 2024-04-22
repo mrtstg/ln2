@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { taskStatusToString } from "../../api/utils"
   import { ApiClient } from "../../api/client"
-  import type { CourseTaskSolve, CourseSolvesResponse, TaskResult } from "../../api/types"
+  import type { CourseTaskSolve, CourseSolvesResponse, TaskResult, TaskResultWrapper } from "../../api/types"
   import DangerMessage from "../../components/DangerMessage.svelte"
   import WarningMessage from "../../components/WarningMessage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
@@ -15,7 +16,7 @@
   let selectedTask: CourseTaskSolve | null
   $: selectedTask = null
   let taskSolvesPromise: Promise<CourseSolvesResponse> | null = null
-  let taskResultPromise: Promise<TaskResult | null> | null = null
+  let taskResultPromise: Promise<TaskResultWrapper | null> | null = null
 
   let tasks: Array<CourseTaskSolve>
   $: tasks = []
@@ -71,11 +72,14 @@
             {#await taskResultPromise}
               <SuccessMessage title="Ожидайте..." description="Загружаем результаты проверки."/>
             {:then result}
-              {#if result == null}
+              {#if result == null }
                 <DangerMessage title="Ошибка!" description="Результат проверки задания больше не хранится в системе." additionalStyle="is-fullwidth"/>
               {:else}
                   <h3 class="subtitle is-5"> Результаты проверки </h3>
-                  <p> Набрано баллов: { result.score } из { result.maxScore } </p>
+                  <p> Статус проверки: { taskStatusToString(result.status) } </p>
+                  {#if result.result != null}
+                    <p> Набрано баллов: { result.result.score } из { result.result.maxScore } </p>
+                  {/if}
               {/if}
             {:catch e}
               <DangerMessage title="Ошибка!" description="Результат проверки задания был загружен с ошибкой." additionalStyle="is-fullwidth"/>
