@@ -48,7 +48,6 @@ library
       Handlers.CoursePage
       Handlers.Courses
       Handlers.CourseTask
-      Handlers.Forms
       Handlers.Login
       Handlers.Profile
       Handlers.TaskSolves
