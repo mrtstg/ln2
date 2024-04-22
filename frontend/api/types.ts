@@ -65,3 +65,7 @@ export type TaskResult = {
   maxScore: number,
   values: object
 }
+
+export type TaskCreateResponse = {
+  uuid: string
+}

@@ -1,5 +1,14 @@
 import axios, { AxiosInstance } from "axios";
-import type { TaskResult, TaskResultWrapper, CommonCourseDetails, ContainerSummary, CourseSolvesResponse, CourseTaskCreate, CourseTaskDetails } from "./types";
+import type { 
+  TaskResult, 
+  TaskResultWrapper, 
+  CommonCourseDetails, 
+  ContainerSummary, 
+  CourseSolvesResponse, 
+  CourseTaskCreate, 
+  CourseTaskDetails,
+  TaskCreateResponse
+} from "./types";
 
 export class ApiClient {
   base_url = "";
@@ -110,6 +119,26 @@ export class ApiClient {
       return data
     } catch (error) {
       return null
+    }
+  }
+
+  async postTaskSolve(taskId: number, answer: string): Promise<TaskCreateResponse | string> {
+    try {
+      const { data, status } = await this.client.post<TaskCreateResponse>("/api/task/" + taskId + "/solves", { answer: answer })
+      return data
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status == 400) {
+          return "invalid"
+        }
+        if (error.response.status == 403) {
+          return "unauthorized"
+        }
+        if (error.response.status == 429) {
+          return "timeout"
+        }
+      }
+      return "unknown"
     }
   }
 }
