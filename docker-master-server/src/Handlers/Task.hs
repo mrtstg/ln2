@@ -66,7 +66,7 @@ getTaskR taskUuid = do
   case taskObj' of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
     (Just (Task { .. })) -> do
-      sendStatusJSON status200 $ object [ "result" .= taskResultToValue taskResult ]
+      sendStatusJSON status200 $ object [ "result" .= taskResultToValue taskResult, "status" .= taskState ]
 
 deleteTaskR :: T.Text -> Handler Value
 deleteTaskR taskUuid = do
