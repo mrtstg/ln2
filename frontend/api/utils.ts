@@ -23,3 +23,20 @@ export const courseTaskErrorToString = (error: string): string => {
       return 'Неизвестная ошибка!'
   }
 }
+
+export const taskStatusToString = (status: string): string => {
+  switch (status) {
+    case 'queued':
+      return 'В очереди на выполнение'
+    case 'taken':
+      return 'Взята на выполнение'
+    case 'error':
+      return 'Завершена с ошибкой'
+    case 'processing':
+      return 'Выполняется'
+    case 'finished':
+      return 'Проверка завершена'
+    default:
+      return 'Неизвестный статус'
+  }
+}
