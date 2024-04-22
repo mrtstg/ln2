@@ -57,13 +57,9 @@ postApiTaskSolvesR ctId = do
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
-    (Just ct@(Entity _ (CourseTask { .. }))) -> do
-      courseRes <- runDB $ selectFirst [ CourseId ==. courseTaskCourse ] []
-      case courseRes of
-        Nothing -> error "Unreachable pattern!"
-        (Just (Entity (CourseKey courseUUID) _)) -> do
-          (status, response) <- createTaskSolve ans d ct
-          case status of
-            n | n `Prelude.elem` [400, 403] -> sendStatusJSON (if status == 403 then status403 else status400) $ object [ "error" .= (String . pack) response ]
-            200 -> sendStatusJSON status200 $ object ["uuid" .= response]
-            _unexpectedStatus -> sendStatusJSON status500 $ object ["error" .= String "Sometyhing went wrong!"]
+    (Just ct) -> do
+      (status, response) <- createTaskSolve ans d ct
+      case status of
+        n | n `Prelude.elem` [400, 403] -> sendStatusJSON (if status == 403 then status403 else status400) $ object [ "error" .= (String . pack) response ]
+        200 -> sendStatusJSON status200 $ object ["uuid" .= response]
+        _unexpectedStatus -> sendStatusJSON status500 $ object ["error" .= String "Sometyhing went wrong!"]
