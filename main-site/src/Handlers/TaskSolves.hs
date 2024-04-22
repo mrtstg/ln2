@@ -52,14 +52,17 @@ getApiTaskSolvesR ctId = do
 
 postApiTaskSolvesR :: CourseTaskId -> Handler Value
 postApiTaskSolvesR ctId = do
+  reqTime <- liftIO getCurrentTime
   d <- requireApiAuth
   (TaskAnswer ans) <- requireCheckJsonBody
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
     (Just ct) -> do
-      (status, response) <- createTaskSolve ans d ct
-      case status of
-        n | n `Prelude.elem` [400, 403] -> sendStatusJSON (if status == 403 then status403 else status400) $ object [ "error" .= (String . pack) response ]
-        200 -> sendStatusJSON status200 $ object ["uuid" .= response]
-        _unexpectedStatus -> sendStatusJSON status500 $ object ["error" .= String "Sometyhing went wrong!"]
+      reachedTimeout <- isUserReachedSolveTimeout d reqTime
+      if reachedTimeout then sendStatusJSON status429 $ object [ "error" .= String "Reached timeout!" ] else do
+        (status, response) <- createTaskSolve ans d ct
+        case status of
+          n | n `Prelude.elem` [400, 403] -> sendStatusJSON (if status == 403 then status403 else status400) $ object [ "error" .= (String . pack) response ]
+          200 -> sendStatusJSON status200 $ object ["uuid" .= response]
+          _unexpectedStatus -> sendStatusJSON status500 $ object ["error" .= String "Sometyhing went wrong!"]
