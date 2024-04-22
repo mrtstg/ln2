@@ -119,20 +119,7 @@ getCourseTaskR ctId = do
     $of (MDResult html)
       <div .content.is-medium>
         #{preEscapedToMarkup html}
-  $if (not . null) solves
-    <div .columns.is-multiline>
-      $forall (Entity (CourseSolvesKey sId) CourseSolves { .. }) <- solves
-        <div .column.is-6>
-          <div .card>
-            <header .card-header>
-              <p .card-header-title :courseSolvesCorrect:.has-text-success> Решение #{sId}
-  $else
-    <article .message.is-warning>
-      <div .message-header>
-        <p> Внимание!
-      <div .message-body>
-        <p> Вы не подавали решений этой задачи или они были стерты.
-
+  <div #app .py-3>
   $if taskAccepted
     <article .message.is-success>
       <div .message-header>
@@ -143,6 +130,7 @@ getCourseTaskR ctId = do
         <label .label> Решение
         <textarea name=f1 .textarea>
       <button type=submit .button.is-fullwidth.is-success> Отправить решение
+  <script src="/static/js/courseTaskForm.js">
 |]
 
 getApiCourseTaskR :: CourseId -> Handler Value
