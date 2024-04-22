@@ -2,6 +2,7 @@
 module Crud.TaskSolves
   ( getTaskSolves
   , createTaskSolve
+  , isUserReachedSolveTimeout
   ) where
 
 
@@ -19,6 +20,15 @@ import           Foundation
 import           Handlers.Utils
 import           Yesod.Core
 import           Yesod.Persist
+
+isUserReachedSolveTimeout :: UserDetails -> UTCTime -> Handler Bool
+isUserReachedSolveTimeout (UserDetails { .. }) compareDate = do
+  lastTask' <- runDB $ selectFirst [CourseSolvesUserId ==. getUserDetailsId] [Desc CourseSolvesCreatedAt]
+  case lastTask' of
+    Nothing -> return False
+    (Just (Entity _ CourseSolves { .. })) -> do
+      let diff = round $ diffUTCTime compareDate courseSolvesCreatedAt :: Int
+      return $ diff < 10
 
 getTaskSolves :: Int -> UserDetails -> CourseTaskId -> Handler ([Entity CourseSolves], Int)
 getTaskSolves pageN (UserDetails { .. }) ctId = do
