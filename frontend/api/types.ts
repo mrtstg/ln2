@@ -56,7 +56,8 @@ export type CourseTaskSolve = {
 }
 
 export type TaskResultWrapper = {
-  result: TaskResult
+  result: TaskResult | null,
+  status: string
 }
 
 export type TaskResult = {
