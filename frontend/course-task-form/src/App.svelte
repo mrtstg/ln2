@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { taskStatusToString } from "../../api/utils"
+  import { taskStatusToString, taskCreateErrorToString } from "../../api/utils"
   import { ApiClient } from "../../api/client"
-  import type { CourseTaskSolve, CourseSolvesResponse, TaskResult, TaskResultWrapper } from "../../api/types"
+  import type { CourseTaskSolve, CourseSolvesResponse, TaskResult, TaskResultWrapper, TaskCreateResponse } from "../../api/types"
   import DangerMessage from "../../components/DangerMessage.svelte"
   import WarningMessage from "../../components/WarningMessage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
@@ -11,6 +11,8 @@
   const api = new ApiClient(url)
 
   let pageNum: number = 1
+  let answer: string = '';
+  let answerError: string = '';
 
   let taskID: string | null = null
   let selectedTask: CourseTaskSolve | null
@@ -20,6 +22,24 @@
 
   let tasks: Array<CourseTaskSolve>
   $: tasks = []
+
+  const sendSolution = async (): Promise<TaskCreateResponse | null> => {
+    answerError = ''
+    if (answer.length == 0) {
+      answerError = 'Заполните поле решения!'
+      return null
+    }
+
+    const res = await api.postTaskSolve(parseInt(taskID!), answer)
+    if (typeof res === 'string') {
+      answerError = taskCreateErrorToString(res)
+      return null
+    }
+
+    answer = ''
+    await refreshTasks()
+    return res
+  }
 
   const taskSolvesWrapper = async (): Promise<CourseSolvesResponse> => {
     const res = await api.getCourseTaskSolves(parseInt(taskID!), pageNum)
@@ -46,6 +66,7 @@
   const unselectTask = () => {
     selectedTask = null
     taskResultPromise = null
+    goToPage(pageNum)
   }
 
   const goToPage = (newNum: number) => {
@@ -53,6 +74,12 @@
     taskSolvesPromise = taskSolvesWrapper()
   }
 
+  const refreshTasks = async () => {
+    unselectTask()
+    goToPage(1)
+  }
+
+  let sendPromise: Promise<TaskCreateResponse | null> | null = null
 </script>
 
 {#if taskSolvesPromise != null}
@@ -127,4 +154,25 @@
   {:catch e}
     <DangerMessage title="Ошибка!" description="Не удалось загрузить решения." additionalStyle="is-fullwidth"/>
   {/await}
+{/if}
+
+{#if taskID != null}
+  {#if answerError.length > 0}
+    <DangerMessage title="Ошибка!" description={answerError} additionalStyle="is-fullwidth"/>
+  {/if}
+  <div class="field required">
+    <label class="label"> Решение </label>
+    <textarea class="textarea" bind:value={answer}></textarea>
+  </div>
+  {#if sendPromise == null}
+    <button class="button is-fullwidth is-success" on:click={async () => { sendSolution() }}> Отправить решение </button>
+  {:else}
+    {#await sendPromise}
+      <button class="button is-fullwidth is-success" disabled> Отправляем решение... </button>
+    {:then}
+      <button class="button is-fullwidth is-success" on:click={async () => { sendSolution() }}> Отправить решение </button>
+    {:catch}
+      <DangerMessage title="Неизвестная ошибка!" description="Попробуйте обновить страницу."/>
+    {/await}
+  {/if}
 {/if}
