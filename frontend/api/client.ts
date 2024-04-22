@@ -104,10 +104,10 @@ export class ApiClient {
     }
   }
 
-  async getTaskDetails(taskId: string): Promise<TaskResult | null> {
+  async getTaskDetails(taskId: string): Promise<TaskResultWrapper | null> {
     try {
       const { data, status } = await this.client.get<TaskResultWrapper>("/api/taskResults/" + taskId)
-      return data.result
+      return data
     } catch (error) {
       return null
     }
