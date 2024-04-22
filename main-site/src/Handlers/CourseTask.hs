@@ -8,7 +8,6 @@ module Handlers.CourseTask
   , deleteApiTaskR
   , getApiTaskR
   , getCourseTaskR
-  , postCourseTaskR
   ) where
 
 import           Api.Login              (requireApiAuth, requireAuth)
@@ -28,7 +27,6 @@ import           Data.Text.Encoding     (encodeUtf8)
 import           Data.Time.Clock
 import           Database.Persist
 import           Foundation
-import           Handlers.Forms
 import           Handlers.Utils
 import           Network.HTTP.Types
 import           Yesod.Core
@@ -65,23 +63,6 @@ postApiCourseTaskR cId = do
                 sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
               (Right m)     -> sendStatusJSON status200 m
 
-postCourseTaskR :: CourseTaskId -> Handler Html
-postCourseTaskR ctId = do
-  ((result, _), _) <- runFormPost taskResponseForm
-  case result of
-    (FormSuccess taskResp') -> do
-      let taskResp = unTextarea taskResp'
-      d <- requireAuth
-      courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
-      case courseTaskRes of
-        Nothing -> redirect $ CourseTaskR ctId
-        (Just ct@(Entity _ (CourseTask { .. }))) -> do
-          (status, response) <- createTaskSolve taskResp d ct
-          case status of
-            200        -> redirect $ CourseTaskR ctId
-            _someError -> redirect CoursesR
-    _formError             -> redirect CoursesR
-
 getCourseTaskR :: CourseTaskId -> Handler Html
 getCourseTaskR ctId = do
   d@(UserDetails { .. }) <- requireAuth
@@ -97,12 +78,14 @@ getCourseTaskR ctId = do
           if not isMember then redirect CoursesR else do
             (taskAccepted, solves) <- getCourseTaskDetails d cT
             parseRes <- liftIO $ convertMarkdown' courseTaskContent
-            (widget, enctype) <- generateFormPost taskResponseForm
             defaultLayout $ do
               setTitle $ toHtml ("Задача: " <> T.unpack courseTaskName)
               [whamlet|
 <div .container.pt-2.py-3>
   <h1 .title.pb-3> #{ courseTaskName }
+  $if taskAccepted
+    <div .notification.is-primary>
+      <p> Данное задание является принятым, но вы можете подобрать еще решения!
   $case parseRes
     $of NoApiURL
       <article .message.is-warning>
@@ -120,16 +103,6 @@ getCourseTaskR ctId = do
       <div .content.is-medium>
         #{preEscapedToMarkup html}
   <div #app .py-3>
-  $if taskAccepted
-    <article .message.is-success>
-      <div .message-header>
-        Задание принято!
-  $else
-    <form method=post action=@{CourseTaskR ctId} enctype=#{enctype}>
-      <div .required.field>
-        <label .label> Решение
-        <textarea name=f1 .textarea>
-      <button type=submit .button.is-fullwidth.is-success> Отправить решение
   <script src="/static/js/courseTaskForm.js">
 |]
 
