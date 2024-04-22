@@ -40,3 +40,16 @@ export const taskStatusToString = (status: string): string => {
       return 'Неизвестный статус'
   }
 }
+
+export const taskCreateErrorToString = (error: string): string => {
+  switch (error) {
+    case 'invalid':
+      return 'Некорректное содержание задания или решения!'
+    case 'timeout':
+      return 'Вы отправляете слишком много решений в период времени!'
+    case 'unauthorized':
+      return 'У вас нет доступа к заданию!'
+    default:
+      return 'Неизвестная ошибка!'
+  }
+}
