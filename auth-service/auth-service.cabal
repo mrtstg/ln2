@@ -33,6 +33,7 @@ library
       Data.Models.UserAuthRequest
       Foundation
       Handlers.Auth
+      Handlers.Logout
       Handlers.Role
       Handlers.User
       Handlers.UserDetail

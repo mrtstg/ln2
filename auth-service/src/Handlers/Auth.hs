@@ -1,9 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Handlers.Auth (postAuthRouteR) where
+module Handlers.Auth
+  ( postAuthRouteR
+  ) where
 
 import           Data.Aeson
-import qualified Data.ByteString.Char8       as BS
 import           Data.Models.UserAuthRequest
 import qualified Data.Text                   as T
 import           Data.UUID.V4
