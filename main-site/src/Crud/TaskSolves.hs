@@ -7,7 +7,7 @@ module Crud.TaskSolves
 
 
 import           Api.Task
-import           Crud.Course
+import           Crud.User
 import           Data.Aeson             (eitherDecode)
 import           Data.ByteString.Lazy   (fromStrict)
 import           Data.Models.StandCheck

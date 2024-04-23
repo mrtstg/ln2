@@ -13,6 +13,7 @@ module Handlers.CoursePage
 import           Api.Login
 import           Crud.Course
 import           Crud.CourseTask
+import           Crud.User
 import           Data.Models.Course
 import           Data.Models.Role
 import           Data.Models.User
@@ -44,8 +45,8 @@ validateApiCourseId cId (UserDetails { .. }) controlF = do
 
 getAdminCourseR :: CourseId -> Handler Html
 getAdminCourseR cId = do
-  userD@(UserDetails { .. }) <- requireAuth
-  (Entity _ (Course { .. })) <- validateCourseId cId userD isUserCourseAdmin AdminCoursesR
+  userD <- requireAuth
+  _ <- validateCourseId cId userD isUserCourseAdmin AdminCoursesR
   defaultLayout $ do
     [whamlet|
       <div #app>

@@ -6,16 +6,12 @@ module Handlers.TaskSolves
   ) where
 
 import           Api.Login              (requireApiAuth)
-import           Api.Task
-import           Crud.Course
 import           Crud.TaskSolves
+import           Crud.User
 import           Data.Aeson
-import           Data.ByteString.Lazy   (fromStrict)
 import           Data.Models.CourseTask
-import           Data.Models.StandCheck
 import           Data.Models.User
 import           Data.Text
-import           Data.Text.Encoding     (encodeUtf8)
 import           Data.Time.Clock
 import           Foundation
 import           Handlers.Utils

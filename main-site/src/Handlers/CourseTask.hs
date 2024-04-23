@@ -12,25 +12,18 @@ module Handlers.CourseTask
 
 import           Api.Login              (requireApiAuth, requireAuth)
 import           Api.Markdown
-import           Api.Task
-import           Crud.Course
 import           Crud.CourseTask
-import           Crud.TaskSolves
+import           Crud.User
 import           Data.Aeson
 import           Data.ByteString        (toStrict)
-import           Data.ByteString.Lazy   (fromStrict)
 import           Data.Models.CourseTask
-import           Data.Models.StandCheck
 import           Data.Models.User
 import qualified Data.Text              as T
-import           Data.Text.Encoding     (encodeUtf8)
-import           Data.Time.Clock
 import           Database.Persist
 import           Foundation
 import           Handlers.Utils
 import           Network.HTTP.Types
 import           Yesod.Core
-import           Yesod.Form
 import           Yesod.Persist
 
 -- TODO: stand identifier existence check

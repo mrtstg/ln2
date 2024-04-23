@@ -4,10 +4,7 @@ module Crud.Course
   , generateCourseAdminsGroup
   , createCourse
   , deleteCourse
-  , isUserCourseAdmin
-  , isUserCourseMember
   , getUserMembershipCourses
-  , isUserCourseManager
   , getUserCourses
   ) where
 
@@ -51,17 +48,6 @@ generateCourseAdminsGroup uid = "admins-" <> uid
 
 generateCourseMembersGroup :: String -> String
 generateCourseMembersGroup uid = "members-" <> uid
-
-isUserCourseManager :: [RoleDetails] -> Bool
-isUserCourseManager roles = any (\(RoleDetails name _) -> name == "course-creator") roles || adminRoleGranted roles
-
-isUserCourseAdmin :: String -> [RoleDetails] -> Bool
-isUserCourseAdmin courseUUID roles = any (\(RoleDetails name _) -> name == v) roles || adminRoleGranted roles where
-  v = pack . generateCourseAdminsGroup $ courseUUID
-
-isUserCourseMember :: String -> [RoleDetails] -> Bool
-isUserCourseMember courseUUID roles = isUserCourseAdmin courseUUID roles || adminRoleGranted roles || any (\(RoleDetails name _) -> name == v) roles where
-  v = pack .generateCourseMembersGroup $ courseUUID
 
 -- TODO: unify interface
 createCourse :: String -> Int -> CourseCreate -> Handler (Maybe (Entity Course))
