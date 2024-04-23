@@ -35,6 +35,7 @@ data App = App
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 User
   login Text
+  name Text
   passwordHash Text
   UniqueUser login
   deriving Show
