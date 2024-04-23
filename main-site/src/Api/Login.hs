@@ -4,6 +4,7 @@ module Api.Login
   , AuthResult(..)
   , requireAuth
   , requireApiAuth
+  , expireToken'
   ) where
 
 import           Control.Exception           (catch, try)
@@ -13,7 +14,7 @@ import           Data.ByteString             (ByteString)
 import qualified Data.ByteString.Lazy        as LBS
 import           Data.Models.User
 import           Data.Models.UserAuthRequest
-import           Data.Text                   (Text, pack, unpack)
+import           Data.Text                   (Text)
 import           Foundation
 import           Network.HTTP.Simple
 import           Network.HTTP.Types
@@ -31,8 +32,7 @@ instance FromJSON AuthResponse where
 api403Error :: Value
 api403Error = object [ "error" .= String "Unauthorized!" ]
 
-
-authHandler :: HttpException -> IO (Either HttpException (AuthResult UserDetails))
+authHandler :: HttpException -> IO (Either HttpException (AuthResult m))
 authHandler _ = return $ Right InternalError -- MUST return Right
 
 requireApiAuth :: Handler UserDetails
@@ -90,6 +90,36 @@ validateToken token = do
                   return InternalError
                 (Right e@(UserDetails {})) -> do
                   return $ AuthResult e
+            _unexpectedCode -> do
+              liftIO $ putStrLn ("Unexcepted login response code: " <> show statusCode)
+              return InternalError
+
+expireToken' :: Text -> IO ()
+expireToken' token = do
+  _ <- liftIO $ runExceptT (expireToken token) `catch` authHandler
+  return ()
+
+expireToken :: Text -> ExceptT HttpException IO (AuthResult ())
+expireToken token = do
+  httpApiUrl' <- liftIO $ lookupEnv "AUTH_SERVICE_URL"
+  case httpApiUrl' of
+    Nothing -> do
+      liftIO $ putStrLn "No auth api url provided!"
+      return NoAuthURL
+    Just httpApiUrl -> do
+      let payload = object [ "token" .= String token ]
+      let reqString = "POST " <> httpApiUrl <> "/logout"
+      request' <- liftIO . try $ parseRequest reqString :: (ExceptT HttpException IO (Either HttpException Request))
+      case request' of
+        (Left _) -> do
+          return InternalError
+        (Right request) -> do
+          let requestData = setRequestBodyJSON payload request
+          response <- httpBS requestData :: (ExceptT HttpException IO (Response ByteString))
+          let statusCode = getResponseStatusCode response
+          case statusCode of
+            404 -> return InvalidCredentials
+            204 -> return $ AuthResult ()
             _unexpectedCode -> do
               liftIO $ putStrLn ("Unexcepted login response code: " <> show statusCode)
               return InternalError

@@ -19,6 +19,7 @@ import           Handlers.CoursePage
 import           Handlers.Courses
 import           Handlers.CourseTask
 import           Handlers.Login
+import           Handlers.Logout
 import           Handlers.Profile
 import           Handlers.TaskSolves
 import           Network.AMQP                (openConnection')
