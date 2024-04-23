@@ -24,6 +24,12 @@ instance ToJSON UserDetails where
     , "roles" .= getUserRoles
     ]
 
+instance FromJSON UserDetails where
+  parseJSON = withObject "UserDetails" $ \v -> UserDetails
+    <$> v .: "id"
+    <*> v .: "login"
+    <*> v .: "roles"
+
 userDetailsFromModel :: Entity User -> [Entity Role] -> UserDetails
 userDetailsFromModel e userRoles = let
   (User login _) = entityVal e

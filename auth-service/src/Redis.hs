@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Redis
   ( cacheValue
   , cacheValue'
@@ -7,20 +8,26 @@ module Redis
   , rewriteAuthToken
   , rewriteAuthToken'
   , deleteValue'
+  , getJsonValue'
+  , getOrCacheJsonValue
   ) where
 
 import           Control.Monad         (when)
+import           Data.Aeson
 import qualified Data.ByteString.Char8 as BS
 import           Data.Either
 import           Data.Maybe
 import qualified Data.Text             as T
+import           Data.Text.Encoding    (encodeUtf8)
 import           Database.Redis
+import           Foundation
+import           Yesod.Core
 
 rewriteAuthToken' :: Maybe Integer -> Connection -> T.Text -> String -> IO ()
 rewriteAuthToken' timeout conn login token = do
-  let loginBS = (BS.pack . T.unpack) login
-  let tokenBS = BS.pack token
-  let tokenKey = BS.pack $ "token-" <> T.unpack login
+  let loginBS = encodeUtf8 login
+  let tokenBS = (encodeUtf8 . T.pack) token
+  let tokenKey = encodeUtf8 $ "token-" <> login
   runRedis conn $ do
     prevToken <- get tokenKey
     when (isRight prevToken) $ case prevToken of
@@ -63,4 +70,28 @@ getValue conn key = do
       (Just v') -> Just v'
 
 getValue' :: Connection -> String -> IO (Maybe BS.ByteString)
-getValue' conn = getValue conn . BS.pack
+getValue' conn = getValue conn . encodeUtf8 . T.pack
+
+getJsonValue' :: (FromJSON v) => Connection -> String -> IO (Either String v)
+getJsonValue' conn key = do
+  v' <- getValue' conn key
+  case v' of
+    Nothing -> return $ Left "No data!"
+    (Just v) -> do
+      return $ eitherDecode (BS.fromStrict v)
+
+getOrCacheJsonValue :: (FromJSON v, ToJSON v) => Connection -> Maybe Integer -> String -> Handler (Maybe v) -> Handler (Either String v)
+getOrCacheJsonValue conn timeout key valueF = let
+  cacheF :: (ToJSON v) => Handler (Maybe v) -> Handler (Either String v)
+  cacheF valueF' = do
+    v' <- valueF'
+    case v' of
+      Nothing  -> return $ Left "Failed to get value!"
+      (Just v) -> do
+        _ <- liftIO $ cacheValue conn ((encodeUtf8 . T.pack) key) (BS.toStrict $ encode v) timeout
+        return $ Right v
+  in do
+    cachedData <- liftIO $ getJsonValue' conn key
+    case cachedData of
+      (Left _)  -> cacheF valueF
+      (Right v) -> return $ Right v

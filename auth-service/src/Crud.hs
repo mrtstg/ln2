@@ -2,9 +2,11 @@
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
-module Crud (getUserAssignedRoles) where
+module Crud (getUserAssignedRoles, getUserDetailsByName) where
 
 import           Control.Monad.Trans.Reader
+import           Data.Models.User
+import qualified Data.Text                   as T
 import           Database.Persist
 import           Database.Persist.Postgresql
 import           Foundation
@@ -17,3 +19,12 @@ getUserAssignedRoles
 getUserAssignedRoles uId = do
   assignations <- selectList [ RoleAssignUser ==. uId ] []
   selectList [ RoleId <-. map (\(Entity _ (RoleAssign _ rId)) -> rId) assignations ] []
+
+getUserDetailsByName :: (MonadUnliftIO m) => T.Text -> ReaderT SqlBackend m (Maybe UserDetails)
+getUserDetailsByName userName = do
+  userObject' <- selectFirst [UserLogin ==. userName] []
+  case userObject' of
+    Nothing -> return Nothing
+    (Just e@(Entity uId _)) -> do
+      userRoles <- getUserAssignedRoles uId
+      return $ Just (userDetailsFromModel e userRoles)

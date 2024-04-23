@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 module Data.Models.Role
@@ -20,6 +19,11 @@ instance ToJSON RoleDetails where
     [ "name" .= getRoleName
     , "displayName" .= getRoleDisplayName
     ]
+
+instance FromJSON RoleDetails where
+  parseJSON = withObject "RoleDetails" $ \v -> RoleDetails
+    <$> v .: "name"
+    <*> v .: "displayName"
 
 roleDetailsFromModel :: Role -> RoleDetails
 roleDetailsFromModel (Role name dName) = RoleDetails name dName

@@ -2,7 +2,8 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Handlers.Validate (postValidateTokenR) where
 
-import           Crud                  (getUserAssignedRoles)
+import           Crud                  (getUserAssignedRoles,
+                                        getUserDetailsByName)
 import           Data.Aeson
 import           Data.ByteString.Char8 (unpack)
 import           Data.Models.User      (UserDetails (..), userDetailsFromModel)
@@ -20,6 +21,9 @@ instance FromJSON TokenRequest where
   parseJSON = withObject "TokenRequest" $ \v -> TokenRequest <$>
     v .: "token"
 
+getUserDetailsWrapper :: T.Text -> Handler (Maybe UserDetails)
+getUserDetailsWrapper userName = runDB $ getUserDetailsByName userName
+
 postValidateTokenR :: Handler Value
 postValidateTokenR = do
   TokenRequest { getTokenRequest = token } <- requireCheckJsonBody
@@ -29,9 +33,7 @@ postValidateTokenR = do
     Nothing -> sendStatusJSON status403 $ object [ "error" .= String "Unauthorized!" ]
     (Just v') -> do
       let userName = T.pack $ unpack v'
-      userObject' <- runDB $ selectFirst [UserLogin ==. userName] []
-      case userObject' of
-        Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Not found!" ]
-        (Just e@(Entity uId _)) -> do
-          userRoles <- runDB $ getUserAssignedRoles uId
-          sendStatusJSON status200 $ (toJSON  . userDetailsFromModel e) userRoles
+      cacheRes <- getOrCacheJsonValue redisPool (Just 5) ("uDetails-" <> T.unpack userName) (getUserDetailsWrapper userName)
+      case cacheRes of
+        (Left _) -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
+        (Right v) -> sendStatusJSON status200 $ toJSON v
