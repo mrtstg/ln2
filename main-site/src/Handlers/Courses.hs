@@ -87,13 +87,13 @@ getApiCoursesR = let
 
 postApiCoursesR :: Handler Value
 postApiCoursesR = do
-  d@(UserDetails { getUserDetailsId = uId, getUserDetailsName = uName, getUserRoles = roles }) <- requireApiAuth
+  d@(UserDetails { getUserDetailsId = uId, getUserDetailsLogin = uLogin, getUserRoles = roles }) <- requireApiAuth
   c@(CourseCreate { .. }) <- requireCheckJsonBody
   if not $ isUserCourseManager roles then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
     let courseName = pack getCourseCreateName
     courseExists <- runDB $ exists [CourseName ==. courseName]
     if courseExists then sendStatusJSON status400 $ object [ "error" .= String "Course with this name already exists!" ] else do
-      createRes <- createCourse (unpack uName) uId c
+      createRes <- createCourse (unpack uLogin) uId c
       case createRes of
         Nothing -> sendStatusJSON status400 $ object [ "error" .= String "Something went wrong!" ]
         (Just e) -> do

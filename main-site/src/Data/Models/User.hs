@@ -9,15 +9,15 @@ import           Data.Text        (Text)
 import           GHC.Generics
 
 data UserDetails = UserDetails
-  { getUserDetailsId   :: !Int
-  , getUserDetailsName :: !Text
-  , getUserRoles       :: ![RoleDetails]
+  { getUserDetailsId    :: !Int
+  , getUserDetailsLogin :: !Text
+  , getUserRoles        :: ![RoleDetails]
   } deriving (Show, Generic)
 
 instance ToJSON UserDetails where
   toJSON (UserDetails { .. }) = object
     [ "id" .= getUserDetailsId
-    , "login" .= getUserDetailsName
+    , "login" .= getUserDetailsLogin
     , "roles" .= getUserRoles
     ]
 
