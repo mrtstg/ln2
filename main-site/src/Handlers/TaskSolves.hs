@@ -5,7 +5,6 @@ module Handlers.TaskSolves
   , getApiTaskSolvesR
   ) where
 
-import           Api.Login              (requireApiAuth)
 import           Crud.TaskSolves
 import           Crud.User
 import           Data.Aeson

@@ -9,7 +9,6 @@ module Handlers.Courses
   , getAdminCoursesR
   ) where
 
-import           Api.Login          (requireApiAuth, requireAuth)
 import           Api.User           (UserGetResult (..))
 import           Crud.Course
 import qualified Crud.User          as U

@@ -10,7 +10,6 @@ module Handlers.CourseTask
   , getCourseTaskR
   ) where
 
-import           Api.Login              (requireApiAuth, requireAuth)
 import           Api.Markdown
 import           Crud.CourseTask
 import           Crud.User

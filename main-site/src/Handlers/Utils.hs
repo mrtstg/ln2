@@ -1,5 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Handlers.Utils (getPageNumber, defaultPageSize) where
+module Handlers.Utils
+  ( getPageNumber
+  , defaultPageSize
+  , requireAuth
+  , requireApiAuth
+  ) where
 
 import           Api.Login
 import qualified Api.Login                  as L

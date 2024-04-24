@@ -10,7 +10,6 @@ module Handlers.CoursePage
   , patchApiCourseIdR
   ) where
 
-import           Api.Login
 import           Crud.Course
 import           Crud.CourseTask
 import           Crud.User
