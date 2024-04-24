@@ -4,14 +4,14 @@
 {-# LANGUAGE TypeFamilies      #-}
 module Handlers.Profile (getProfileR) where
 
-import           Api.Login        (requireAuth)
 import           Data.Models.User
 import           Foundation
+import           Handlers.Utils   (requireAuth)
 import           Yesod.Core
 
 getProfileR :: Handler Html
 getProfileR = do
-  (UserDetails uId userName _) <- requireAuth
+  (UserDetails { getUserDetailsId = uId, getUserDetailsName = userName }) <- requireAuth
   defaultLayout $ do
     setTitle . toHtml $ "Profile: " <> userName
     [whamlet|

@@ -24,7 +24,7 @@ import           Yesod.Core
 import           Yesod.Persist
 
 getUserCourses :: Int -> UserDetails -> Handler ([Entity Course], Int)
-getUserCourses pageN (UserDetails uId _ roles) = do
+getUserCourses pageN (UserDetails { getUserDetailsId = uId, getUserRoles = roles }) = do
   let isAdmin = adminRoleGranted roles
   runDB $ do
     let params = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize, Desc CourseCreatedAt]
