@@ -19,7 +19,10 @@
 
 module Foundation where
 
+import           Api.Login
 import           Data.ByteString.Char8
+import           Data.Maybe                  (isJust, isNothing)
+import           Data.Models.User
 import           Data.Pool                   (Pool)
 import           Data.Text
 import           Data.Time.Clock
@@ -85,6 +88,7 @@ mkYesodData
 instance Yesod App where
   makeSessionBackend _ = return Nothing
   defaultLayout widget = do
+    d' <- checkAuth
     pc <- widgetToPageContent widget
     withUrlRenderer [hamlet|
 $doctype 5
@@ -96,7 +100,41 @@ $doctype 5
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
   <body>
+    <nav class="navbar p-3 mb-3" role="navigation" aria-label="Main navigation">
+      <div class="navbar-brand">
+        <a class="navbar-item">
+          Learnew2
+
+        <a id="navBurger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+          <span aria-hidden="true">
+          <span aria-hidden="true">
+          <span aria-hidden="true">
+          <span aria-hidden="true">
+
+      <div class="navbar-menu" id="navMenu">
+        <div class="navbar-start">
+          <a href="/" class="navbar-item">
+            Главная
+          $if isJust d'
+            <a href="/courses" class="navbar-item">
+              Мои курсы
+
+        <div class="navbar-end">
+          $case d'
+            $of Nothing
+              <a href="/login" class="button">
+                Войти
+            $of Just (UserDetails { .. })
+              <div class="navbar-item has-dropdown is-hoverable">
+                <div class="navbar-link">
+                  #{ getUserDetailsName }
+                <div class="navbar-dropdown">
+                  <a class="navbar-item" href="/profile">
+                    Профиль
+                  <a class="navbar-item" href="/logout">
+                    Выйти
     ^{pageBody pc}
+  <script src="/static/js/navbar.js">
 |]
 
 instance RenderMessage App FormMessage where

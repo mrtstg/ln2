@@ -9,4 +9,5 @@ frontend/**/dist
 
 logs
 pids
-static
+static/js/*
+!static/js/navbar.js
