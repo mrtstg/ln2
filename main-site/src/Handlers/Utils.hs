@@ -1,10 +1,49 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Handlers.Utils (getPageNumber, defaultPageSize) where
 
-import           Data.Text  (unpack)
+import           Api.Login
+import qualified Api.Login                  as L
+import           Control.Exception          (catch)
+import           Control.Monad.Trans.Except (runExceptT)
+import           Data.Models.User
+import           Data.Text                  (unpack)
 import           Foundation
-import           Text.Read  (readMaybe)
+import           Network.HTTP.Simple
+import           Network.HTTP.Types
+import           Text.Read                  (readMaybe)
 import           Yesod.Core
+
+authHandler :: HttpException -> IO (Either HttpException (L.AuthResult m))
+authHandler _ = return $ Right L.InternalError -- MUST return Right
+
+api403Error :: Value
+api403Error = object [ "error" .= String "Unauthorized!" ]
+
+requireApiAuth :: Handler UserDetails
+requireApiAuth = do
+  tokenValue' <- lookupCookie "session"
+  case tokenValue' of
+    Nothing -> sendStatusJSON status403 api403Error
+    (Just tokenValue) -> do
+      validRes <- liftIO $ runExceptT (validateToken tokenValue) `catch` authHandler
+      case validRes of
+        (Left _)     -> sendStatusJSON status403 api403Error
+        (Right resp) -> case resp of
+          (AuthResult userDetails) -> return userDetails
+          _anyOther                -> sendStatusJSON status403 api403Error
+
+requireAuth :: Handler UserDetails
+requireAuth = do
+  tokenValue' <- lookupCookie "session"
+  case tokenValue' of
+    Nothing -> redirect LoginR
+    (Just tokenValue) -> do
+      validRes <- liftIO $ runExceptT (validateToken tokenValue) `catch` authHandler
+      case validRes of
+        (Left _)     -> redirect LoginR
+        (Right resp) -> case resp of
+          (AuthResult userDetails) -> return userDetails
+          _anyOther                -> redirect LoginR
 
 defaultPageSize :: Int
 defaultPageSize = 15

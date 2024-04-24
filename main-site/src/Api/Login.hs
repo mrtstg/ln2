@@ -2,9 +2,9 @@
 module Api.Login
   ( sendAuthRequest
   , AuthResult(..)
-  , requireAuth
-  , requireApiAuth
   , expireToken'
+  , checkAuth
+  , validateToken
   ) where
 
 import           Control.Exception           (catch, try)
@@ -15,12 +15,9 @@ import qualified Data.ByteString.Lazy        as LBS
 import           Data.Models.User
 import           Data.Models.UserAuthRequest
 import           Data.Text                   (Text)
-import           Foundation
 import           Network.HTTP.Simple
-import           Network.HTTP.Types
 import           System.Environment
-import           Yesod.Core                  (liftIO, lookupCookie, redirect,
-                                              sendStatusJSON)
+import           Yesod.Core                  (HandlerFor, liftIO, lookupCookie)
 
 data AuthResult a = AuthResult !a | NoAuthURL | InternalError | InvalidCredentials deriving (Show, Eq)
 
@@ -29,37 +26,22 @@ newtype AuthResponse = AuthResponse Text deriving (Show, Eq)
 instance FromJSON AuthResponse where
   parseJSON = withObject "AuthResponse" $ \v -> AuthResponse <$> v .: "token"
 
-api403Error :: Value
-api403Error = object [ "error" .= String "Unauthorized!" ]
-
+-- TODO: solve duplication with handlers.utils
 authHandler :: HttpException -> IO (Either HttpException (AuthResult m))
 authHandler _ = return $ Right InternalError -- MUST return Right
 
-requireApiAuth :: Handler UserDetails
-requireApiAuth = do
+checkAuth :: HandlerFor a (Maybe UserDetails)
+checkAuth = do
   tokenValue' <- lookupCookie "session"
   case tokenValue' of
-    Nothing -> sendStatusJSON status403 api403Error
+    Nothing -> return Nothing
     (Just tokenValue) -> do
       validRes <- liftIO $ runExceptT (validateToken tokenValue) `catch` authHandler
       case validRes of
-        (Left _)     -> sendStatusJSON status403 api403Error
+        (Left _) -> return Nothing
         (Right resp) -> case resp of
-          (AuthResult userDetails) -> return userDetails
-          _anyOther                -> sendStatusJSON status403 api403Error
-
-requireAuth :: Handler UserDetails
-requireAuth = do
-  tokenValue' <- lookupCookie "session"
-  case tokenValue' of
-    Nothing -> redirect LoginR
-    (Just tokenValue) -> do
-      validRes <- liftIO $ runExceptT (validateToken tokenValue) `catch` authHandler
-      case validRes of
-        (Left _)     -> redirect LoginR
-        (Right resp) -> case resp of
-          (AuthResult userDetails) -> return userDetails
-          _anyOther                -> redirect LoginR
+          (AuthResult userDetails) -> return $ Just userDetails
+          _anyOther                -> return Nothing
 
 validateToken :: Text -> ExceptT HttpException IO (AuthResult UserDetails)
 validateToken token = do
