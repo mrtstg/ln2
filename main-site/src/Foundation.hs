@@ -87,6 +87,15 @@ mkYesodData
 
 instance Yesod App where
   makeSessionBackend _ = return Nothing
+  errorHandler NotFound = fmap toTypedContent $ defaultLayout $ do
+    setTitle "Страница не найдена!"
+    toWidget [hamlet|
+<section .hero.is-danger.is-medium>
+  <div .hero-body>
+    <div>
+      <p .title> Страница не найдена!
+|]
+  errorHandler e = defaultErrorHandler e
   defaultLayout widget = do
     d' <- checkAuth
     pc <- widgetToPageContent widget
