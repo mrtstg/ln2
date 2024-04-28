@@ -64,7 +64,7 @@ postLoginR =
             L.InvalidCredentials -> redirect LoginR
             (AuthResult token) -> do
               setCookie $ defaultSetCookie { setCookieName = BS.pack "session", setCookieValue = BS.pack . unpack $ token }
-              redirect ProfileR
+              redirect IndexR
             _internalError -> redirect LoginR
     _formError -> do
       r@(UserAuthRequest {}) <- requireCheckJsonBody

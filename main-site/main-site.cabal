@@ -48,9 +48,9 @@ library
       Handlers.CoursePage
       Handlers.Courses
       Handlers.CourseTask
+      Handlers.Index
       Handlers.Login
       Handlers.Logout
-      Handlers.Profile
       Handlers.TaskSolves
       Handlers.Utils
       Rabbit

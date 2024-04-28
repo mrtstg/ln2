@@ -12,4 +12,4 @@ getLogoutR = do
     Nothing -> redirect LoginR
     (Just tokenValue) -> do
       _ <- liftIO $ expireToken' tokenValue
-      redirect ProfileR
+      redirect IndexR

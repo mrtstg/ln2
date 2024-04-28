@@ -70,8 +70,8 @@ CourseSolveAcception
 mkYesodData
   "App"
   [parseRoutes|
+/ IndexR GET
 /logout LogoutR GET
-/profile ProfileR GET
 /login LoginR GET POST
 /courses CoursesR GET
 /courses/admin AdminCoursesR GET
