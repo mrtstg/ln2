@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Crud.Course
   ( generateCourseMembersGroup
   , generateCourseAdminsGroup
@@ -6,10 +7,13 @@ module Crud.Course
   , deleteCourse
   , getUserMembershipCourses
   , getUserCourses
+  , linkUserAndCourses
   ) where
 
 import           Api.Role
+import           Api.User
 import           Control.Monad      (unless)
+import qualified Data.Map           as M
 import           Data.Models.Course
 import           Data.Models.Role
 import           Data.Models.User
@@ -22,6 +26,16 @@ import           Foundation
 import           Handlers.Utils
 import           Yesod.Core
 import           Yesod.Persist
+
+linkUserAndCourses :: [Entity Course] -> M.Map Int (UserGetResult UserDetails) -> [(Entity Course, Maybe UserDetails)]
+linkUserAndCourses courses m = helper [] courses where
+  helper :: [(Entity Course, Maybe UserDetails)] -> [Entity Course] -> [(Entity Course, Maybe UserDetails)]
+  helper acc []                              = reverse acc
+  helper acc (e@(Entity _ (Course { .. })):cs) = case M.lookup courseAuthorId m of
+    Nothing    -> helper ((e, Nothing):acc) cs
+    (Just res) -> case res of
+      (UserGetResult d) -> helper ((e, Just d):acc) cs
+      _anyOther         -> helper ((e, Nothing):acc) cs
 
 getUserCourses :: Int -> UserDetails -> Handler ([Entity Course], Int)
 getUserCourses pageN (UserDetails { getUserDetailsId = uId, getUserRoles = roles }) = do
@@ -66,7 +80,7 @@ createCourse userName uId (CourseCreate courseName) = do
       createRoleRes <- liftIO $ createRole' roleName ("Участники курса " <> courseUUID)
       adminsRoleRes <- liftIO $ createRole' adminsRoleName ("Администраторы курса " <> courseUUID)
       case (createRoleRes, adminsRoleRes) of
-        (v, v') | v `elem` [NoAuthURL, Api.Role.InternalError] || v' `elem` [NoAuthURL, Api.Role.InternalError] -> do
+        (v, v') | v `elem` [Api.Role.NoAuthURL, Api.Role.InternalError] || v' `elem` [Api.Role.NoAuthURL, Api.Role.InternalError] -> do
           runDB $ delete (CourseKey courseUUID)
           _ <- liftIO $ deleteRole' roleName
           _ <- liftIO $ deleteRole' adminsRoleName
