@@ -21,6 +21,7 @@ import           Database.Persist
 import           Foundation
 import           Handlers.Utils
 import           Network.HTTP.Types
+import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
 
@@ -77,7 +78,7 @@ getCourseR cId = do
       $if taskRatio == 100
         <h2 .subtitle.is-3> Вы прошли все задачи курса!
       $else
-        <h2 .subtitle.is-3> Так держать! Вы прошли #{ solvedTask } из #{ totalTasks } задач курса!
+        <h2 .subtitle.is-3> Так держать! Вы прошли #{ solvedTask } из #{ totalTasks } задач - это #{show $ round taskRatio }% курса!
         <progress .progress.is-success.is-large value=#{show $ round taskRatio} max=100>
   <div .columns.is-multiline>
     $forall (Entity tId (CourseTask { .. })) <- tasks
