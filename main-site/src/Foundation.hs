@@ -28,6 +28,7 @@ import           Data.Text
 import           Data.Time.Clock
 import           Database.Persist.Postgresql
 import qualified Network.AMQP                as R
+import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Form
 import           Yesod.Persist
@@ -109,38 +110,41 @@ $doctype 5
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
   <body>
-    <nav class="navbar p-3 mb-3" role="navigation" aria-label="Main navigation">
-      <div class="navbar-brand">
-        <a class="navbar-item">
+    <nav .navbar.p-3.mb-3 role="navigation" aria-label="Main navigation">
+      <div .navbar-brand>
+        <a .navbar-item>
           Learnew2
 
-        <a id="navBurger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+        <a #navBurger role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
           <span aria-hidden="true">
           <span aria-hidden="true">
           <span aria-hidden="true">
           <span aria-hidden="true">
 
-      <div class="navbar-menu" id="navMenu">
-        <div class="navbar-start">
-          <a href="/" class="navbar-item">
+      <div .navbar-menu #navMenu>
+        <div .navbar-start>
+          <a href=@{IndexR} .navbar-item>
             Главная
           $if isJust d'
-            <a href="/courses" class="navbar-item">
+            <a href=@{CoursesR} .navbar-item>
               Мои курсы
 
-        <div class="navbar-end">
+        <div .navbar-end>
           $case d'
             $of Nothing
-              <a href="/login" class="button">
+              <a href=@{LoginR} class="button">
                 Войти
             $of Just (UserDetails { .. })
-              <div class="navbar-item has-dropdown is-hoverable">
-                <div class="navbar-link">
+              $if isUserCourseManager getUserRoles
+                <a href=@{AdminCoursesR} .navbar-item>
+                  Управление курсами
+              <div .navbar-item.has-dropdown.is-hoverable>
+                <div .navbar-link>
                   #{ getUserDetailsName }
-                <div class="navbar-dropdown">
-                  <a class="navbar-item" href="/profile">
+                <div .navbar-dropdown>
+                  <a .navbar-item href="/profile">
                     Профиль
-                  <a class="navbar-item" href="/logout">
+                  <a .navbar-item href="/logout">
                     Выйти
     ^{pageBody pc}
   <script src="/static/js/navbar.js">
