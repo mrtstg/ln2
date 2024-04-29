@@ -18,6 +18,7 @@ import           Data.Time.Clock
 import           Database.Persist
 import           Foundation
 import           Handlers.Utils
+import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
 

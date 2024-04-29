@@ -28,6 +28,7 @@ import           Database.Persist.Postgresql
 import           Foundation
 import           GHC.Float                   (int2Float)
 import           Handlers.Utils
+import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
 
@@ -68,12 +69,6 @@ getUserMembershipCourses roles pageN = let
     courses <- selectList [ CourseId <-. memberCourses ] opts
     coursesAmount <- count [ CourseId <-. memberCourses ]
     return (courses, coursesAmount)
-
-generateCourseAdminsGroup :: String -> String
-generateCourseAdminsGroup uid = "admins-" <> uid
-
-generateCourseMembersGroup :: String -> String
-generateCourseMembersGroup uid = "members-" <> uid
 
 -- TODO: unify interface
 createCourse :: String -> Int -> CourseCreate -> Handler (Maybe (Entity Course))

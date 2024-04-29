@@ -6,7 +6,6 @@ module Handlers.TaskSolves
   ) where
 
 import           Crud.TaskSolves
-import           Crud.User
 import           Data.Aeson
 import           Data.Models.CourseTask
 import           Data.Models.User
@@ -15,6 +14,7 @@ import           Data.Time.Clock
 import           Foundation
 import           Handlers.Utils
 import           Network.HTTP.Types
+import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
 

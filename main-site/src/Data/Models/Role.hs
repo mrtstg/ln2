@@ -1,9 +1,7 @@
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 module Data.Models.Role
   ( RoleDetails(..)
-  , adminRoleGranted
   ) where
 
 import           Data.Aeson
@@ -24,6 +22,3 @@ instance FromJSON RoleDetails where
   parseJSON = withObject "RoleDetails" $ \v -> RoleDetails
     <$> v .: "name"
     <*> v .: "displayName"
-
-adminRoleGranted :: [RoleDetails] -> Bool
-adminRoleGranted = any (\(RoleDetails name _) -> name == "admins")

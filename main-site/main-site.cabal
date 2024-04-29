@@ -55,6 +55,7 @@ library
       Handlers.Utils
       Rabbit
       Utils
+      Utils.Auth
   other-modules:
       Paths_main_site
   autogen-modules:
