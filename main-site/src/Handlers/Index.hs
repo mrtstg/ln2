@@ -32,17 +32,18 @@ getIndexR = do
   $else
     <p .is-size-3> Ваши последние курсы:
     <div .columns.is-multiline>
-      $forall ((Entity _ (Course { .. })), d) <- linkedCourses
+      $forall ((Entity courseId (Course { .. })), d) <- linkedCourses
         <div .column>
-          <div .card>
-            <header .card-header>
-              <p .card-header-title> #{ courseName }
-            $case d
-              $of (Just (UserDetails { getUserDetailsName = authorName }))
-                <div .card-content>
-                  <div .content>
-                    <p> Автор: #{ authorName }
-              $of Nothing
-                <div .card-content>
+          <a href=@{CourseR courseId}>
+            <div .card>
+              <header .card-header>
+                <p .card-header-title> #{ courseName }
+              $case d
+                $of (Just (UserDetails { getUserDetailsName = authorName }))
+                  <div .card-content>
+                    <div .content>
+                      <p> Автор: #{ authorName }
+                $of Nothing
+                  <div .card-content>
     <a .button.is-fullwidth href=@{CoursesR}> Все курсы
 |]
