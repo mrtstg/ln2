@@ -24,16 +24,20 @@ import           Network.HTTP.Types
 import           Yesod.Core
 import           Yesod.Persist
 
-courseList :: ([Entity Course], Int) -> Int -> (CourseId -> Route App) -> Route App -> WidgetFor App ()
+courseList :: ([(Entity Course, Maybe UserDetails)], Int) -> Int -> (CourseId -> Route App) -> Route App -> WidgetFor App ()
 courseList (courses, cAmount) pageN coursePageR coursesR = do
   [whamlet|
   <div .columns.is-multiline>
-    $forall (Entity cId (Course cName _ _)) <- courses
+    $forall ((Entity cId (Course cName _ _)), d) <- courses
       <div .column.is-full>
         <a href=@{coursePageR cId}>
           <div .card>
             <header .card-header>
               <p .card-header-title>  #{cName}
+            <div .card-content>
+              $case d
+                $of Just (UserDetails { getUserDetailsName = authorName })
+                  <p> Автор: #{ authorName }
   <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
     <a href=@{coursesR}?page=#{pageN - 1}>
       <button .button.is-primary.mx-3 :pageN == 1:disabled> Назад
@@ -45,26 +49,30 @@ getCoursesR :: Handler Html
 getCoursesR = do
   (UserDetails { .. }) <- requireAuth
   pageN <- getPageNumber
-  r <- getUserMembershipCourses getUserRoles pageN
+  (courses, amount) <- getUserMembershipCourses getUserRoles pageN
+  authors <- liftIO $ U.retrieveCourseUsers courses
+  let linkedCourses = linkUserAndCourses courses authors
   defaultLayout $ do
     setTitle "Доступные курсы"
     [whamlet|
 <div .container.pt-2.py-3>
   <h1 .title.pb-3> Доступные курсы
-  ^{courseList r pageN CourseR CoursesR}
+  ^{courseList (linkedCourses, amount) pageN CourseR CoursesR}
 |]
 
 getAdminCoursesR :: Handler Html
 getAdminCoursesR = do
-  d@(UserDetails { .. }) <- requireAuth
+  d <- requireAuth
   pageN <- getPageNumber
-  r <- getUserCourses pageN d
+  (courses, amount) <- getUserCourses pageN d
+  authors <- liftIO $ U.retrieveCourseUsers courses
+  let linkedCourses = linkUserAndCourses courses authors
   defaultLayout $ do
     setTitle "Администрируемые курсы"
     [whamlet|
 <div .container.pt-2.py-3>
   <h1 .title.pb-3> Администрируемые курсы
-  ^{courseList r pageN AdminCourseR AdminCoursesR}
+  ^{courseList (linkedCourses, amount) pageN AdminCourseR AdminCoursesR}
 |]
 
 getApiCoursesR :: Handler Value
