@@ -64,11 +64,21 @@ getCourseR cId = do
       CourseSolveAcceptionTaskId <-. map entityKey tasks
       ] []
     return $ map (courseSolveAcceptionTaskId . entityVal) accept'
+  (taskRatio, (solvedTask, totalTasks)) <- runDB $ getCourseCompleteRatio cId getUserDetailsId
   defaultLayout $ do
     setTitle $ toHtml ("Курс: " <> unpack courseName)
     [whamlet|
 <div .container.pt-2.py-3>
   <h1 .title.pb-3> #{ courseName }
+  <div .box>
+    $if taskRatio == 0
+      <h2 .subtitle.is-3> У нас нет информации о вашем прогрессе. Самое время начать!
+    $else
+      $if taskRatio == 100
+        <h2 .subtitle.is-3> Вы прошли все задачи курса!
+      $else
+        <h2 .subtitle.is-3> Так держать! Вы прошли #{ solvedTask } из #{ totalTasks } задач курса!
+        <progress .progress.is-success.is-large value=#{show $ round taskRatio} max=100>
   <div .columns.is-multiline>
     $forall (Entity tId (CourseTask { .. })) <- tasks
       <div .column.is-full>
