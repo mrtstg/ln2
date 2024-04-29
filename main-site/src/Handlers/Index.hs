@@ -5,7 +5,6 @@ module Handlers.Index (getIndexR) where
 
 import           Crud.Course
 import           Crud.User
-import qualified Data.Map         as M
 import           Data.Models.User
 import           Foundation
 import           Handlers.Utils
