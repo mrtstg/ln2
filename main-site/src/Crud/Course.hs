@@ -8,24 +8,36 @@ module Crud.Course
   , getUserMembershipCourses
   , getUserCourses
   , linkUserAndCourses
+  , getCourseCompleteRatio
   ) where
 
 import           Api.Role
 import           Api.User
-import           Control.Monad      (unless)
-import qualified Data.Map           as M
+import           Control.Monad               (unless)
+import           Control.Monad.Trans.Reader
+import qualified Data.Map                    as M
 import           Data.Models.Course
 import           Data.Models.Role
 import           Data.Models.User
-import           Data.Text          (pack, unpack)
-import qualified Data.Text          as T
+import           Data.Text                   (pack, unpack)
+import qualified Data.Text                   as T
 import           Data.Time.Clock
-import           Data.UUID.V4       (nextRandom)
+import           Data.UUID.V4                (nextRandom)
 import           Database.Persist
+import           Database.Persist.Postgresql
 import           Foundation
+import           GHC.Float                   (int2Float)
 import           Handlers.Utils
 import           Yesod.Core
 import           Yesod.Persist
+
+getCourseCompleteRatio :: (MonadUnliftIO m) => CourseId -> Int -> ReaderT SqlBackend m (Float, (Int, Int))
+getCourseCompleteRatio courseId uId = do
+  courseTasks <- selectKeysList [CourseTaskCourse ==. courseId] []
+  courseTasksAmount <- count [CourseTaskCourse ==. courseId]
+  solvedTaskAmount <- count [CourseSolveAcceptionUserId ==. uId, CourseSolveAcceptionTaskId <-. courseTasks]
+  let ratio = if courseTasksAmount == 0 then 0 else int2Float solvedTaskAmount / int2Float courseTasksAmount * 100
+  return (ratio, (solvedTaskAmount, courseTasksAmount))
 
 linkUserAndCourses :: [Entity Course] -> M.Map Int (UserGetResult UserDetails) -> [(Entity Course, Maybe UserDetails)]
 linkUserAndCourses courses m = helper [] courses where
