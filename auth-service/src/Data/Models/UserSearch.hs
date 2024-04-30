@@ -17,5 +17,5 @@ instance FromJSON UserSearch where
   parseJSON = withObject "UserSearch" $ \v -> UserSearch
     <$> v .: "query"
     <*> v .:? "group" .!= ""
-    <*> v .:? "excludeGroups" .!= ""
+    <*> v .:? "excludeGroup" .!= ""
     <*> v .:? "page" .!= 1
