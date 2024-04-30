@@ -10,6 +10,7 @@ module Redis
   , deleteValue'
   , getJsonValue'
   , getOrCacheJsonValue
+  , defaultShortCacheTime
   ) where
 
 import           Control.Monad         (when)
@@ -22,6 +23,9 @@ import           Data.Text.Encoding    (encodeUtf8)
 import           Database.Redis
 import           Foundation
 import           Yesod.Core
+
+defaultShortCacheTime :: Integer
+defaultShortCacheTime = 5
 
 rewriteAuthToken' :: Maybe Integer -> Connection -> T.Text -> String -> IO ()
 rewriteAuthToken' timeout conn login token = do

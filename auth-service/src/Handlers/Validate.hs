@@ -33,7 +33,7 @@ postValidateTokenR = do
     Nothing -> sendStatusJSON status403 $ object [ "error" .= String "Unauthorized!" ]
     (Just v') -> do
       let userName = T.pack $ unpack v'
-      cacheRes <- getOrCacheJsonValue redisPool (Just 5) ("uDetails-" <> T.unpack userName) (getUserDetailsWrapper userName)
+      cacheRes <- getOrCacheJsonValue redisPool (Just defaultShortCacheTime) ("uDetails-" <> T.unpack userName) (getUserDetailsWrapper userName)
       case cacheRes of
         (Left _) -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
         (Right v) -> sendStatusJSON status200 $ toJSON v
