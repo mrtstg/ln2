@@ -4,6 +4,7 @@ module Handlers.Utils
   , defaultPageSize
   , requireAuth
   , requireApiAuth
+  , getBoolParameter
   ) where
 
 import           Api.Login
@@ -11,7 +12,7 @@ import qualified Api.Login                  as L
 import           Control.Exception          (catch)
 import           Control.Monad.Trans.Except (runExceptT)
 import           Data.Models.User
-import           Data.Text                  (unpack)
+import           Data.Text                  (Text, unpack)
 import           Foundation
 import           Network.HTTP.Simple
 import           Network.HTTP.Types
@@ -52,6 +53,13 @@ requireAuth = do
 
 defaultPageSize :: Int
 defaultPageSize = 15
+
+getBoolParameter :: Text -> Handler Bool
+getBoolParameter paramName = do
+  queryValue <- lookupGetParam paramName
+  return $ case queryValue of
+    Nothing  -> False
+    (Just v) -> v == "1"
 
 getPageNumber :: Handler Int
 getPageNumber = do
