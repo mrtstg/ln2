@@ -21,7 +21,8 @@ export type CommonCourseDetails = {
   authorId: number,
   createdAt: Date,
   id: string,
-  name: string
+  name: string,
+  description: string
 }
 
 export type CourseTaskCreate = {

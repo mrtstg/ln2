@@ -105,11 +105,11 @@ patchApiCourseIdR :: CourseId -> Handler Value
 patchApiCourseIdR cId = do
   d <- requireApiAuth
   _ <- validateApiCourseId cId d isUserCourseAdmin
-  (CourseCreate cName) <- requireCheckJsonBody
-  nameTaken <- runDB $ exists [CourseName ==. pack cName, CourseId !=. cId]
+  (CourseCreate cName cDesc) <- requireCheckJsonBody
+  nameTaken <- runDB $ exists [CourseName ==. cName, CourseId !=. cId]
   if nameTaken then sendStatusJSON status400 $ object [ "error" .= String "Invalid name" ] else do
     newCourse' <- runDB $ do
-      update cId [CourseName =. pack cName]
+      update cId [CourseName =. cName, CourseDescription =. cDesc]
       get cId
     case newCourse' of
       Nothing -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]

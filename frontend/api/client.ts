@@ -59,9 +59,12 @@ export class ApiClient {
     throw "Unreachable!"
   }
 
-  async patchCourse(courseId: string, courseName: string): Promise<CommonCourseDetails | string> {
+  async patchCourse(courseId: string, courseName: string, courseDesc: string): Promise<CommonCourseDetails | string> {
     try {
-      const { data, status } = await this.client.patch<CommonCourseDetails>("/api/courses/" + courseId, {name: courseName})
+      const { data, status } = await this.client.patch<CommonCourseDetails>("/api/courses/" + courseId, {
+        name: courseName,
+        description: courseDesc
+      })
       return data
     } catch (error) {
       if (error.response) {

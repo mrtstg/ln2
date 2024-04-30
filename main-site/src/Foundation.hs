@@ -42,6 +42,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Course
   Id String
   name Text
+  description Text default=''
   authorId Int
   createdAt UTCTime default=now()
   CourseUnique name
