@@ -59,6 +59,23 @@ export class ApiClient {
     throw "Unreachable!"
   }
 
+  async deleteCourse(courseId: string): Promise<string> {
+    try {
+      const res= await this.client.delete("/api/courses/" + courseId)
+      return "Ok"
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status == 403) {
+          return "Forbidden"
+        }
+        if (error.response.status == 404) {
+          return "Not found"
+        }
+      }
+      return "Unknown"
+    }
+  }
+
   async patchCourse(courseId: string, courseName: string, courseDesc: string): Promise<CommonCourseDetails | string> {
     try {
       const { data, status } = await this.client.patch<CommonCourseDetails>("/api/courses/" + courseId, {
