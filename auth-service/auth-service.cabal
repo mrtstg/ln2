@@ -31,9 +31,11 @@ library
       Data.Models.Role
       Data.Models.User
       Data.Models.UserAuthRequest
+      Data.Models.UserSearch
       Foundation
       Handlers.Auth
       Handlers.Logout
+      Handlers.Query
       Handlers.Role
       Handlers.User
       Handlers.UserDetail
