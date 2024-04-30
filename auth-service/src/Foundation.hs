@@ -47,6 +47,7 @@ Role
 RoleAssign
   user UserId DeleteCascade
   role RoleId DeleteCascade
+  Primary user role
   deriving Show
 |]
 
@@ -62,6 +63,7 @@ mkYesodData
 /auth AuthRouteR POST
 /logout LogoutRouteR POST
 /validate ValidateTokenR POST
+/query QueryR POST
 |]
 
 instance Yesod App where

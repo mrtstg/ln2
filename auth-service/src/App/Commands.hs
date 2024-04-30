@@ -20,6 +20,7 @@ import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.Auth
 import           Handlers.Logout
+import           Handlers.Query
 import           Handlers.Role
 import           Handlers.User
 import           Handlers.UserDetail
