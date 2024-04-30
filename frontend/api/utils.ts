@@ -24,6 +24,17 @@ export const courseTaskErrorToString = (error: string): string => {
   }
 }
 
+export const deleteCourseErrorToString = (error: string): string => {
+  switch (error) {
+    case 'Forbidden':
+      return 'У вас нет доступа к удалению курса!'
+    case 'Not found':
+      return 'Курс не найден!'
+    default:
+      return 'Неизвестная ошибка!'
+  }
+}
+
 export const taskStatusToString = (status: string): string => {
   switch (status) {
     case 'queued':
