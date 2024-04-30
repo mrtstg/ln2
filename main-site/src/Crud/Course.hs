@@ -72,12 +72,12 @@ getUserMembershipCourses roles pageN = let
 
 -- TODO: unify interface
 createCourse :: String -> Int -> CourseCreate -> Handler (Maybe (Entity Course))
-createCourse userName uId (CourseCreate courseName) = do
+createCourse userName uId (CourseCreate courseName courseDesc) = do
   courseUUID' <- liftIO nextRandom
   let courseUUID = show courseUUID'
   createTime <- liftIO getCurrentTime
   courseEntity' <- runDB $ do
-    insertKey (CourseKey courseUUID) (Course (pack courseName) uId createTime)
+    insertKey (CourseKey courseUUID) (Course courseName courseDesc uId createTime)
     get $ CourseKey courseUUID
   case courseEntity' of
     Nothing                    -> return Nothing

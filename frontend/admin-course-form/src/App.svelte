@@ -14,13 +14,14 @@
 
   // course form details
 
-  const patchCourseDetailsWrapper = async (courseID: string, courseName: string): Promise<CommonCourseDetails> => {
-    const res = await api.patchCourse(courseID, courseName)
+  const patchCourseDetailsWrapper = async (courseID: string, courseName: string, courseDesc: string): Promise<CommonCourseDetails> => {
+    const res = await api.patchCourse(courseID, courseName, courseDesc)
     if (typeof res === 'string') {
       throw res
     }
 
     courseName = res.name
+    courseDesc = res.description
     return res
   }
 
@@ -31,6 +32,7 @@
     }
 
     courseName = res.name
+    courseDesc = res.description
     return res
   }
 
@@ -46,8 +48,11 @@
   let courseName: string;
   $: courseName = ''
 
+  let courseDesc: string;
+  $: courseDesc = ''
+
   const courseUpdateButton = async () => {
-    coursePromise = patchCourseDetailsWrapper(courseID!, courseName)
+    coursePromise = patchCourseDetailsWrapper(courseID!, courseName, courseDesc)
   }
 
   // task form details
@@ -171,6 +176,12 @@
           <input class="input" type="text" maxlength="100" bind:value={courseName}/>
         </div>
         <p class="help"> Уникальное для всего сайта </p>
+      </div>
+      <div class="field">
+        <label class="label"> Описание курса </label>
+        <div class="control">
+          <textarea class="textarea" rows="3" maxlength="150" bind:value={courseDesc}></textarea>
+        </div>
       </div>
       <button class="is-success is-fullwidth button" on:click={courseUpdateButton}> Обновить курс </button>
     {:catch error}

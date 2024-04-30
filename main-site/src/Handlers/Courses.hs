@@ -29,7 +29,7 @@ courseList :: ([(Entity Course, Maybe UserDetails)], Int) -> Int -> (CourseId ->
 courseList (courses, cAmount) pageN coursePageR coursesR = do
   [whamlet|
   <div .columns.is-multiline>
-    $forall ((Entity cId (Course cName _ _)), d) <- courses
+    $forall ((Entity cId (Course cName _ _ _)), d) <- courses
       <div .column.is-full>
         <a href=@{coursePageR cId}>
           <div .card>
@@ -98,8 +98,7 @@ postApiCoursesR = do
   d@(UserDetails { getUserDetailsId = uId, getUserDetailsLogin = uLogin, getUserRoles = roles }) <- requireApiAuth
   c@(CourseCreate { .. }) <- requireCheckJsonBody
   if not $ isUserCourseManager roles then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
-    let courseName = pack getCourseCreateName
-    courseExists <- runDB $ exists [CourseName ==. courseName]
+    courseExists <- runDB $ exists [CourseName ==. getCourseCreateName]
     if courseExists then sendStatusJSON status400 $ object [ "error" .= String "Course with this name already exists!" ] else do
       createRes <- createCourse (unpack uLogin) uId c
       case createRes of
