@@ -6,6 +6,7 @@ import type {
   ContainerSummary, 
   CourseSolvesResponse, 
   CourseTaskCreate, 
+  CourseCreate,
   CourseTaskDetails,
   TaskCreateResponse
 } from "./types";
@@ -59,9 +60,26 @@ export class ApiClient {
     throw "Unreachable!"
   }
 
+  async createCourse(payload: CourseCreate): Promise<CommonCourseDetails | string> {
+    try {
+      const { data } = await this.client.post<CommonCourseDetails>("/api/courses/", payload)
+      return data
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status == 403) {
+          return "Forbidden"
+        }
+        if (error.response.status == 400) {
+          return "Bad request"
+        }
+      }
+      return "Unknown"
+    }
+  }
+
   async deleteCourse(courseId: string): Promise<string> {
     try {
-      const res= await this.client.delete("/api/courses/" + courseId)
+      const res = await this.client.delete("/api/courses/" + courseId)
       return "Ok"
     } catch (error) {
       if (error.response) {

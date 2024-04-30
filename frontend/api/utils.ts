@@ -11,6 +11,17 @@ export const courseErrorsToString = (error: string): string => {
   }
 }
 
+export const courseCreateErrorToString = (error: string): string => {
+  switch (error) {
+    case 'Forbidden':
+      return 'У вас нет доступа к созданию курсов!'
+    case 'Bad request':
+      return 'Курс с таким названием уже существует или произошла ошибка при создании курса!'
+    default:
+      return 'Неизвестная ошибка!'
+  }
+}
+
 export const courseTaskErrorToString = (error: string): string => {
   switch (error) {
     case 'Not found':

@@ -33,6 +33,11 @@ export type CourseTaskCreate = {
   standActions: CheckStage.StageData[]
 }
 
+export type CourseCreate = {
+  name: string,
+  description: string
+}
+
 // TODO: add course field
 export type CourseTaskDetails = {
   id: number,
