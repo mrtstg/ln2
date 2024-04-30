@@ -6,7 +6,7 @@
   import CheckStageWidget from "../../components/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
   import { type StageData, stageTypeList, type StageType, type CheckStage, defaultCheckStageData } from "../../api/check_stage" 
-  import { courseErrorsToString, courseTaskErrorToString } from "../../api/utils"
+  import { courseErrorsToString, courseTaskErrorToString, deleteCourseErrorToString } from "../../api/utils"
 
   // client declaration
   const url = API_URL;
@@ -22,6 +22,17 @@
 
     courseName = res.name
     courseDesc = res.description
+    return res
+  }
+
+  const deleteCourseWrapper = async (courseID: string): Promise<string> => {
+    const res = await api.deleteCourse(courseID)
+    if (res === 'Ok') {
+      window.location.replace("/courses/admin")
+      return ''
+    }
+
+    modalMessage = deleteCourseErrorToString(res)
     return res
   }
 
@@ -50,6 +61,11 @@
 
   let courseDesc: string;
   $: courseDesc = ''
+
+  // TODO: add confirmation
+  const courseDeleteButton = async () => {
+    await deleteCourseWrapper(courseID!)
+  }
 
   const courseUpdateButton = async () => {
     coursePromise = patchCourseDetailsWrapper(courseID!, courseName, courseDesc)
@@ -183,7 +199,8 @@
           <textarea class="textarea" rows="3" maxlength="150" bind:value={courseDesc}></textarea>
         </div>
       </div>
-      <button class="is-success is-fullwidth button" on:click={courseUpdateButton}> Обновить курс </button>
+      <button class="is-success is-fullwidth button mb-3" on:click={courseUpdateButton}> Обновить курс </button>
+      <button class="is-danger is-fullwidth button" on:click={courseDeleteButton}> Удалить курс </button>
     {:catch error}
       {#if typeof error === 'string'}
         <DangerMessage title="Ошибка!" description={courseErrorsToString(error)}/>
