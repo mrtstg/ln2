@@ -9,6 +9,7 @@ module Crud
   , getUserDetailsByName
   , getUserDetailsById
   , queryUsers
+  , countQueryUsers
   ) where
 
 import           Control.Monad.Trans.Reader
@@ -19,6 +20,33 @@ import           Database.Persist
 import           Database.Persist.Postgresql
 import           Foundation
 import           Yesod.Core
+
+-- TODO: made query functions more lowlevel
+countQueryUsers :: (MonadUnliftIO m) => UserSearch -> ReaderT SqlBackend m Int
+countQueryUsers (UserSearch { .. }) = let
+  q' = toPersistValue $ "%" <> getUserSearchQuery <> "%"
+  getQ :: [Key Role] -> [Key Role] -> (T.Text, [PersistValue])
+  getQ [] [] = ("SELECT COUNT(*) FROM public.user WHERE name LIKE ?", [q'])
+  getQ (desiredRole:_) [] =
+    ( "SELECT COUNT(*) FROM public.user WHERE name LIKE ? AND (id IN (SELECT b.user FROM role_assign AS b WHERE b.role = ?))"
+    , [q', toPersistValue desiredRole]
+    )
+  getQ [] (excludedRole:_) =
+    ( "SELECT COUNT(*) FROM public.user WHERE name LIKE ? AND (id NOT IN (SELECT b.user FROM role_assign AS b WHERE b.role = ?))"
+    , [q', toPersistValue excludedRole]
+    )
+  getQ (desiredRole:_) (excludedRole:_) =
+    ( "SELECT COUNT(*) FROM public.user WHERE name LIKE ? AND (id IN (SELECT b.user FROM role_assign AS b WHERE b.role = ?)) AND (id NOT IN (SELECT c.user FROM role_assign AS c WHERE c.role = ?))"
+    , [q', toPersistValue desiredRole, toPersistValue excludedRole]
+    )
+  in do
+  requiredGroupId <- if (not . T.null) getUserSearchGroup then selectKeysList [RoleName ==. getUserSearchGroup] [] else (return [])
+  excludeGroupId <- if (not . T.null) getUserSearchExcludeGroup then selectKeysList [RoleName ==. getUserSearchExcludeGroup] [] else (return [])
+  let (query, params) = getQ requiredGroupId excludeGroupId
+  d <- rawSql query params
+  case d of
+    (Single (PersistInt64 v):_) -> return $ fromIntegral v
+    _anyOther                   -> return 0
 
 queryUsers :: (MonadUnliftIO m) => UserSearch -> Int -> ReaderT SqlBackend m [Entity User]
 queryUsers (UserSearch { .. }) pageSize = let
