@@ -1,5 +1,5 @@
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Handlers.UserDetail
   ( getUserNameDetailR
   , deleteUserNameDetailR
@@ -7,13 +7,14 @@ module Handlers.UserDetail
   , deleteUserIdDetailR
   ) where
 
-import           Crud                        (getUserAssignedRoles)
+import           Crud
 import           Data.Aeson
 import           Data.Models.User            (userDetailsFromModel)
 import           Data.Text                   (Text, pack, unpack)
 import           Database.Persist.Postgresql
 import           Foundation
 import           Network.HTTP.Types
+import           Redis
 import           Yesod.Core
 import           Yesod.Persist
 
@@ -21,15 +22,16 @@ notFoundErr :: Value
 notFoundErr = object [ "error" .= String "Not found!" ]
 
 getUserIdDetailR :: UserId -> Handler Value
-getUserIdDetailR uId' = do
+getUserIdDetailR uId' = let
+  wrapper = runDB . getUserDetailsById
+  in do
   userExists <- runDB $ exists [ UserId ==. uId' ]
   if not userExists then sendStatusJSON status404 notFoundErr else do
-    userObj <- runDB $ selectFirst [ UserId ==. uId' ] []
-    case userObj of
-      Nothing  -> sendStatusJSON status404 notFoundErr
-      (Just e@(Entity uId _)) -> do
-        userRoles <- runDB $ getUserAssignedRoles uId
-        sendStatusJSON status200 $ userDetailsFromModel e userRoles
+    App { .. } <- getYesod
+    cacheRes <- getOrCacheJsonValue redisPool (Just defaultShortCacheTime) ("uDetailsId-" <> show uId') (wrapper uId')
+    case cacheRes of
+      (Left _) -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
+      (Right v) -> sendStatusJSON status200 $ toJSON v
 
 deleteUserIdDetailR :: UserId -> Handler Value
 deleteUserIdDetailR uId' = do
@@ -45,15 +47,16 @@ deleteUserIdDetailR uId' = do
         sendResponseStatus status204 ()
 
 getUserNameDetailR :: Text -> Handler Value
-getUserNameDetailR userLogin' = do
+getUserNameDetailR userLogin' = let
+  wrapper = runDB . getUserDetailsByName
+  in do
   userExists <- runDB $ exists [ UserLogin ==. userLogin' ]
   if not userExists then sendStatusJSON status404 notFoundErr else do
-    userObj <- runDB $ selectFirst [ UserLogin ==. userLogin' ] []
-    case userObj of
-      Nothing  -> sendStatusJSON status404 notFoundErr
-      (Just e@(Entity uId _)) -> do
-        userRoles <- runDB $ getUserAssignedRoles uId
-        sendStatusJSON status200 $ userDetailsFromModel e userRoles
+    App { .. } <- getYesod
+    cacheRes <- getOrCacheJsonValue redisPool (Just defaultShortCacheTime) ("uDetails-" <> unpack userLogin') (wrapper userLogin')
+    case cacheRes of
+      (Left _) -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
+      (Right v) -> sendStatusJSON status200 $ toJSON v
 
 deleteUserNameDetailR :: Text -> Handler Value
 deleteUserNameDetailR userLogin' = do
