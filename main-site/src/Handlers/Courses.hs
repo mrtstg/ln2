@@ -72,8 +72,10 @@ getAdminCoursesR = do
     setTitle "Администрируемые курсы"
     [whamlet|
 <div .container.pt-2.py-3>
-  <h1 .title.pb-3> Администрируемые курсы
+  <div #app>
+  <h1 .title.py-3> Администрируемые курсы
   ^{courseList (linkedCourses, amount) pageN AdminCourseR AdminCoursesR}
+<script src="/static/js/courseCreateForm.js">
 |]
 
 getApiCoursesR :: Handler Value
