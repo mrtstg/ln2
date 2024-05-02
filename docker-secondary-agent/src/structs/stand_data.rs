@@ -2,19 +2,19 @@ use crate::structs::stand_check::StandCheckStage;
 use serde::Deserialize;
 use std::collections::HashMap;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct StandData {
     pub containers: Vec<StandContainerData>,
     pub actions: Vec<StandCheckStage>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ContainerVolume {
     pub host: String,
     pub path: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct StandContainerData {
     pub name: String,
     pub image: String,
