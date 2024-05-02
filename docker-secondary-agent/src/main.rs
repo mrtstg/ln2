@@ -1,4 +1,5 @@
 mod consumer;
+mod deploy;
 mod structs;
 
 use amqprs::{
@@ -8,9 +9,10 @@ use amqprs::{
     connection::{Connection, OpenConnectionArguments},
 };
 use consumer::RabbitConsumer;
+use docker_api::docker::Docker;
 use dotenv::dotenv;
 use env_logger::{self, Env, Target};
-use log::{info, warn};
+use log::{debug, info, warn};
 use signal_hook::consts::SIGTERM;
 use signal_hook::iterator::Signals;
 use std::io::Read;
@@ -42,7 +44,13 @@ async fn main() {
     .await
     .unwrap();
 
+    info!("Creating clients!");
     let rabbit_chan = rabbit_conn.open_channel(None).await.unwrap();
+    let docker_client = Docker::new(app_env.clone().docker_url).unwrap();
+    match docker_client.ping().await {
+        Ok(docker_info) => debug!("{:?}", docker_info),
+        Err(e) => panic!("{}", e),
+    }
 
     info!("Declaring requestsQueue!");
     let (queue_name, _, _) = rabbit_chan
@@ -74,6 +82,7 @@ async fn main() {
             RabbitConsumer::new(
                 app_env.clone(),
                 BasicPublishArguments::new("resultsExchange", ""),
+                docker_client,
             ),
             args,
         )
