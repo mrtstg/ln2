@@ -1,6 +1,6 @@
 use serde::*;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(tag = "action")]
 pub enum StandCheckStage {
     #[serde(rename = "copy")]
@@ -13,7 +13,7 @@ pub enum StandCheckStage {
     DeclareVariable(DeclareVariableStage),
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct CopyFileStage {
     pub container: String,
     #[serde(rename = "fileContent")]
@@ -22,7 +22,7 @@ pub struct CopyFileStage {
     pub file_path: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ExecuteCommandStage {
     pub container: String,
     pub command: String,
@@ -34,14 +34,14 @@ pub struct ExecuteCommandStage {
     pub record_into: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct CompareResultsStage {
     pub first: String,
     pub second: String,
     pub score: u32,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct DeclareVariableStage {
     #[serde(rename = "variableName")]
     pub variable_name: String,
