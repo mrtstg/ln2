@@ -7,6 +7,7 @@ pub struct AppEnvironment {
     pub rabbit_host: String,
     pub rabbit_port: u16,
     pub agent_debug: bool,
+    pub docker_url: String,
 }
 
 pub fn get_app_environment() -> AppEnvironment {
@@ -22,11 +23,13 @@ pub fn get_app_environment() -> AppEnvironment {
         Ok(v) => v == "1",
         Err(_) => false,
     };
+    let docker_url = env::var("DOCKER_SOCKET_URL").expect("Failed to get docker socket URL!");
     AppEnvironment {
         rabbit_user,
         rabbit_pass,
         rabbit_host,
         rabbit_port,
         agent_debug,
+        docker_url,
     }
 }
