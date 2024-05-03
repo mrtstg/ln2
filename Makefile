@@ -1,5 +1,6 @@
 COMPOSE_BIN=docker compose
-BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --project-name ln2
+ENV_FILE=.env
+BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(ENV_FILE) --project-name ln2
 COMPOSE_FILE=deployment/docker-compose.yml
 
 build-frontend: ./static/js
