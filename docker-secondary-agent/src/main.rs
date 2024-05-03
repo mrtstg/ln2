@@ -4,7 +4,8 @@ mod structs;
 
 use amqprs::{
     channel::{
-        BasicConsumeArguments, BasicPublishArguments, QueueBindArguments, QueueDeclareArguments,
+        BasicConsumeArguments, BasicPublishArguments, ExchangeType, QueueBindArguments,
+        QueueDeclareArguments,
     },
     connection::{Connection, OpenConnectionArguments},
 };
@@ -64,6 +65,18 @@ async fn main() {
         .queue_declare(QueueDeclareArguments::durable_client_named("resultsQueue"))
         .await
         .unwrap()
+        .unwrap();
+
+    rabbit_chan
+        .exchange_declare(
+            amqprs::channel::ExchangeDeclareArguments::of_type(
+                "resultsExchange",
+                ExchangeType::Direct,
+            )
+            .durable(true)
+            .finish(),
+        )
+        .await
         .unwrap();
 
     rabbit_chan
