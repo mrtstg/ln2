@@ -42,3 +42,16 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/dev.conf:/etc/nginx/conf.d/site.conf:ro
       - ../static/:/static:ro
+  dev-pgadmin:
+    profiles: ['dev']
+    image: dpage/pgadmin4:8.6
+    container_name: ln2-dev-pgadmin
+    restart: unless-stopped
+    user: root
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.admin
+      PGADMIN_DEFAULT_PASSWORD: P@ssword
+    ports:
+      - 8080:80
+    volumes:
+      - ../pgadmin:/var/lib/pgadmin

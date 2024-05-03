@@ -1,5 +1,6 @@
 .env
 pgdata
+pgadmin
 docker-master-server/.env
 docker-master-server/stands
 frontend/node_modules
