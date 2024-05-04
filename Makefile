@@ -12,7 +12,7 @@ build-frontend: ./static/js
 	mkdir ./static/js -p
 
 procfile: Procfile
-	procodile start --dev
+	foreman start
 
 deploy-dev: $(COMPOSE_FILE)
 	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile dev up -d
