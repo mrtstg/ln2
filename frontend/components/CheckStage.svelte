@@ -114,6 +114,43 @@
         <input class="input" type="number" placeholder="Количество баллов" bind:value={data.data.score} on:change={async () => await updateCallback(data)}>
       </div>
     </div>
+  {:else if selectedType == StageType.PSQLQuery}
+    <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.container = v; await updateCallback(data) }}/>
+    <div class="field">
+      <label class="label"> SQL-запрос </label>
+      <div class="control">
+        <textarea class="textarea" bind:value={data.data.query} on:change={async () => await updateCallback(data) }></textarea>
+      </div>
+      </div>
+    <div class="field">
+      <label class="label"> Записать в переменную (<i>опционально</i>)</label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Название переменной, например result" maxlength="25" bind:value={data.data.recordInto} on:change={async () => await updateCallback(data)}>
+      </div>
+    </div>
+  {:else if selectedType == StageType.PSQLAnswerQuery}
+    <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.container = v; await updateCallback(data) }}/>
+    <div class="field">
+      <label class="label"> Записать в переменную (<i>опционально</i>)</label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Название переменной, например result" maxlength="25" bind:value={data.data.recordInto} on:change={async () => await updateCallback(data)}>
+      </div>
+    </div>
+  {:else if selectedType == StageType.PSQLExists}
+    <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.container = v; await updateCallback(data) }}/>
+    <div class="field">
+      <label class="label"> SQL-запрос </label>
+      <div class="control">
+        <textarea class="textarea" bind:value={data.data.query} on:change={async () => await updateCallback(data) }></textarea>
+      </div>
+      <p class="help"> Запрос должен выполнять поиск определенных данных в единичном количестве. Запрос будет автоматически подставлен. Не ставьте точку с запятой в конце. </p>
+    </div>
+    <div class="field">
+      <label class="label"> Количество зачтенных баллов, если данные в базе есть </label>
+      <div class="control">
+        <input class="input" type="number" placeholder="Количество баллов" bind:value={data.data.score} on:change={async () => await updateCallback(data)}>
+      </div>
+    </div>
   {:else}
     <DangerMessage title="Ошибка!" description="Неизвестный тип"/>
   {/if}

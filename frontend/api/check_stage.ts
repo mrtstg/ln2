@@ -3,7 +3,10 @@ export enum StageType {
   ExecuteCommand,
   CopyAnswer,
   DeclareVariable,
-  CompareResults
+  CompareResults,
+  PSQLExists,
+  PSQLQuery,
+  PSQLAnswerQuery
 }
 
 export const stageTypeList = [
@@ -11,7 +14,10 @@ export const stageTypeList = [
   StageType.ExecuteCommand, 
   StageType.CopyAnswer, 
   StageType.DeclareVariable,
-  StageType.CompareResults
+  StageType.CompareResults,
+  StageType.PSQLQuery,
+  StageType.PSQLAnswerQuery,
+  StageType.PSQLExists
 ]
 
 export interface StageData {
@@ -35,6 +41,12 @@ export const defaultCheckStageData = (stType: StageType): object => {
       return {action: "declare", variableName: "", variableValue: ""}
     case StageType.CompareResults:
       return {action: "compareVars", first: "", second: "", score: 0}
+    case StageType.PSQLAnswerQuery:
+      return {action: "psql_answer_query_macro", container: "", recordInto: ""}
+    case StageType.PSQLQuery:
+      return {action: "psql_query_macro", container: "", query: "", recordInto: ""}
+    case StageType.PSQLExists:
+      return {action: "psql_exists_macro", container: "", query: "", score: 0}
   }
 }
 
@@ -50,5 +62,11 @@ export const checkStageName = (stType: StageType): string => {
       return "Объявить переменную"
     case StageType.CompareResults:
       return "Сопоставить переменные"
+    case StageType.PSQLQuery:
+      return "Выполнить PostgreSQL запрос"
+    case StageType.PSQLExists:
+      return "Проверить наличие данных в PostgreSQL"
+    case StageType.PSQLAnswerQuery:
+      return "Выполнить ответ пользователя как запрос PostgreSQL"
   }
 }
