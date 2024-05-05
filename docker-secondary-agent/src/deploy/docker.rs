@@ -124,14 +124,18 @@ pub async fn execute_stand_check(
                         Ok((stdout, stderr, exit_code)) => {
                             if let Some(record_key) = payload.record_into {
                                 let record_out = if payload.format_output {
-                                    format_command_out(stdout)
+                                    format_command_out(stdout.clone())
                                 } else {
-                                    stdout
+                                    stdout.clone()
                                 };
                                 info!(
                                     "Exit code of command {} is {:?}",
                                     payload.command, exit_code
                                 );
+                                debug!("--- COMMAND {} ---", payload.command);
+                                debug!("Stdout: {}", stdout);
+                                debug!("Stderr: {}", stderr);
+                                debug!("Exit code: {:?}", exit_code);
                                 variable_stack.insert(record_key.clone(), record_out.clone());
                                 if payload.record_stdout {
                                     check_res
