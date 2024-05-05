@@ -113,7 +113,11 @@ impl AsyncConsumer for RabbitConsumer {
                                 check_actions.extend(queue_task.check);
                                 match timeout(
                                     Duration::from_secs(60),
-                                    execute_stand_check(&containers, check_actions),
+                                    execute_stand_check(
+                                        self.docker_client.clone(),
+                                        &containers,
+                                        check_actions,
+                                    ),
                                 )
                                 .await
                                 {
