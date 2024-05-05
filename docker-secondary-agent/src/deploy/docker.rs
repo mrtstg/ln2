@@ -8,6 +8,7 @@ use docker_api::opts::ContainerCreateOpts;
 use docker_api::opts::ExecCreateOpts;
 use docker_api::opts::ExecStartOpts;
 use docker_api::opts::NetworkCreateOpts;
+use docker_api::Exec;
 use futures_util::StreamExt;
 use log::*;
 use std::collections::HashMap;
@@ -44,42 +45,52 @@ pub async fn destroy_stand(network: Network, containers: Vec<&Container>) -> () 
 }
 
 pub async fn execute_docker_command(
+    docker: &Docker,
     container: &Container,
     command: Vec<&str>,
-) -> Result<(String, String), String> {
-    let exec_res = container
-        .exec(
-            &ExecCreateOpts::builder()
-                .command(command)
-                .attach_stdout(true)
-                .attach_stderr(true)
-                .build(),
-            &ExecStartOpts::builder().build(),
-        )
-        .await;
-    match exec_res {
-        Err(e) => Err(e.to_string()),
-        Ok(mut command_res) => {
-            let mut stdout: Vec<u8> = Vec::new();
-            let mut stderr: Vec<u8> = Vec::new();
-            while let Some(data_chunk) = command_res.next().await {
-                match data_chunk {
-                    Ok(d) => match d {
-                        TtyChunk::StdOut(bytes) => stdout.extend(bytes),
-                        TtyChunk::StdErr(bytes) => stderr.extend(bytes),
-                        _other => {}
-                    },
-                    Err(_) => continue,
+) -> Result<(String, String, Option<isize>), String> {
+    let exec_instance_res = Exec::create(
+        docker.clone(),
+        container.id(),
+        &ExecCreateOpts::builder()
+            .command(command)
+            .attach_stdout(true)
+            .attach_stderr(true)
+            .build(),
+    )
+    .await;
+    match exec_instance_res {
+        Err(e) => return Err(e.to_string()),
+        Ok(exec_instance) => match exec_instance.start(&ExecStartOpts::default()).await {
+            Err(e) => Err(e.to_string()),
+            Ok(mut command_res) => {
+                let mut stdout: Vec<u8> = Vec::new();
+                let mut stderr: Vec<u8> = Vec::new();
+                while let Some(data_chunk) = command_res.next().await {
+                    match data_chunk {
+                        Ok(d) => match d {
+                            TtyChunk::StdOut(bytes) => stdout.extend(bytes),
+                            TtyChunk::StdErr(bytes) => stderr.extend(bytes),
+                            _other => {}
+                        },
+                        Err(_) => continue,
+                    }
                 }
+                let stdout_str = String::from_utf8(stdout).unwrap_or(String::new());
+                let stderr_str = String::from_utf8(stderr).unwrap_or(String::new());
+                let exec_details = exec_instance.inspect().await;
+                let exit_code = match exec_details {
+                    Err(e) => None,
+                    Ok(details) => details.exit_code,
+                };
+                return Ok((stdout_str, stderr_str, exit_code));
             }
-            let stdout_str = String::from_utf8(stdout).unwrap_or(String::new());
-            let stderr_str = String::from_utf8(stderr).unwrap_or(String::new());
-            return Ok((stdout_str, stderr_str));
-        }
+        },
     }
 }
 
 pub async fn execute_stand_check(
+    docker: Docker,
     containers_map: &HashMap<String, Container>,
     actions: Vec<StandCheckStage>,
 ) -> (HashMap<String, String>, StandCheckResult) {
@@ -103,16 +114,24 @@ pub async fn execute_stand_check(
             }
             StandCheckStage::ExecuteCommand(payload) => {
                 if let Some(container) = containers_map.get(payload.container.as_str()) {
-                    match execute_docker_command(container, payload.command.split(" ").collect())
-                        .await
+                    match execute_docker_command(
+                        &docker.clone(),
+                        container,
+                        payload.command.split(" ").collect(),
+                    )
+                    .await
                     {
-                        Ok((stdout, stderr)) => {
+                        Ok((stdout, stderr, exit_code)) => {
                             if let Some(record_key) = payload.record_into {
                                 let record_out = if payload.format_output {
                                     format_command_out(stdout)
                                 } else {
                                     stdout
                                 };
+                                info!(
+                                    "Exit code of command {} is {:?}",
+                                    payload.command, exit_code
+                                );
                                 variable_stack.insert(record_key.clone(), record_out.clone());
                                 if payload.record_stdout {
                                     check_res
