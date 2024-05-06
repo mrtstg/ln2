@@ -21,6 +21,7 @@ import           Handlers.CourseTask
 import           Handlers.Index
 import           Handlers.Login
 import           Handlers.Logout
+import           Handlers.QueryCourse
 import           Handlers.TaskSolves
 import           Network.AMQP                (openConnection')
 import           Network.Socket              (PortNumber)
