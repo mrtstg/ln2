@@ -44,6 +44,7 @@ library
       Data.Models.StandCheckResult
       Data.Models.User
       Data.Models.UserAuthRequest
+      Data.Models.UserQuery
       Foundation
       Handlers.CoursePage
       Handlers.Courses
@@ -51,6 +52,7 @@ library
       Handlers.Index
       Handlers.Login
       Handlers.Logout
+      Handlers.QueryCourse
       Handlers.TaskSolves
       Handlers.Utils
       Rabbit
