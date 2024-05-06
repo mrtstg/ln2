@@ -84,7 +84,7 @@ mkYesodData
 /api/query/course/#Text QueryCourseR GET
 /api/courses/#CourseId ApiCourseIdR GET PATCH DELETE
 /api/course/#CourseId/task ApiCourseTaskR POST GET
-/api/task/#CourseTaskId ApiTaskR DELETE GET
+/api/task/#CourseTaskId ApiTaskR DELETE GET PATCH
 /api/task/#CourseTaskId/solves ApiTaskSolvesR GET POST
 |]
 

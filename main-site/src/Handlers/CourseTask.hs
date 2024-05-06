@@ -8,11 +8,11 @@ module Handlers.CourseTask
   , deleteApiTaskR
   , getApiTaskR
   , getCourseTaskR
+  , patchApiTaskR
   ) where
 
 import           Api.Markdown
 import           Crud.CourseTask
-import           Crud.User
 import           Data.Aeson
 import           Data.ByteString        (toStrict)
 import           Data.Models.CourseTask
@@ -116,6 +116,19 @@ getApiCourseTaskR cId = do
           , "pageSize" .= defaultPageSize
           , "objects" .= map (\e@(Entity ctId _) -> courseTaskDetailFromModels' e e' Nothing (ctId `elem` acceptedTasksId)) tasks
           ]
+
+patchApiTaskR :: CourseTaskId -> Handler Value
+patchApiTaskR ctId = do
+  (UserDetails { .. }) <- requireApiAuth
+  courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
+  case courseTaskRes of
+    Nothing -> sendStatusJSON status400 $ object [ "error" .= String "Task not found!" ]
+    (Just (Entity _ (CourseTask { courseTaskCourse = (CourseKey courseUUID) }))) -> do
+      let isAdmin = isUserCourseAdmin courseUUID getUserRoles
+      if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
+        taskPatch <- requireCheckJsonBody
+        runDB $ updateWhere [CourseTaskId ==. ctId] (courseTaskPatchToQuery taskPatch)
+        sendResponseStatus status204 ()
 
 deleteApiTaskR :: CourseTaskId -> Handler Value
 deleteApiTaskR ctId = do

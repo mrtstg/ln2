@@ -4,6 +4,7 @@ module Data.Models.CourseTask
   ( CourseTaskCreate(..)
   , CourseTaskDetails(..)
   , CourseTaskDetails'(..)
+  , CourseTaskPatch(..)
   , courseTaskDetailFromModels
   , courseTaskDetailFromModels'
   , courseSolveFromModel
@@ -19,6 +20,18 @@ import           Data.Text.Encoding
 import           Database.Persist
 import           Database.Persist.Sql
 import           Foundation
+
+data CourseTaskPatch = CourseTaskPatch
+  { getCourseTaskPatchName    :: !(Maybe Text)
+  , getCourseTaskPatchContent :: !(Maybe Text)
+  , getCourseTaskPatchOrder   :: !(Maybe Int)
+  }
+
+instance FromJSON CourseTaskPatch where
+  parseJSON = withObject "CourseTaskPatch" $ \v -> CourseTaskPatch
+    <$> v .:? "name"
+    <*> v .:? "content"
+    <*> v .:? "order"
 
 data CourseTaskCreate = CourseTaskCreate
   { getCourseTaskCreateName            :: !Text

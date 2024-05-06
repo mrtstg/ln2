@@ -4,13 +4,30 @@ module Crud.CourseTask
   , getCourseTaskDetails
   , getCourseTaskAccepted
   , getCourseAcceptedTasks
+  , courseTaskPatchToQuery
   ) where
 
+import           Data.Models.CourseTask
 import           Data.Models.User
+import           Data.Text              (Text)
 import           Database.Persist
 import           Foundation
 import           Handlers.Utils
 import           Yesod.Persist
+
+
+courseTaskPatchToQuery :: CourseTaskPatch -> [Update CourseTask]
+courseTaskPatchToQuery (CourseTaskPatch { .. }) = let
+  nameQ :: Maybe Text -> [Update CourseTask]
+  nameQ Nothing               = []
+  nameQ (Just courseTaskName) = [CourseTaskName =. courseTaskName]
+  contentQ :: Maybe Text -> [Update CourseTask]
+  contentQ Nothing                  = []
+  contentQ (Just courseTaskContent) = [CourseTaskContent =. courseTaskContent]
+  orderQ :: Maybe Int -> [Update CourseTask]
+  orderQ Nothing = []
+  orderQ (Just courseTaskOrderNumber) = [CourseTaskOrderNumber =. courseTaskOrderNumber]
+  in nameQ getCourseTaskPatchName ++ contentQ getCourseTaskPatchContent ++ orderQ getCourseTaskPatchOrder
 
 getCourseTasks :: CourseId -> Int -> Handler ([Entity CourseTask], Int)
 getCourseTasks cId pageV = do
