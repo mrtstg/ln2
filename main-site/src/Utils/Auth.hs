@@ -6,10 +6,11 @@ module Utils.Auth
   , adminRoleGranted
   , generateCourseAdminsGroup
   , generateCourseMembersGroup
+  , isUserAnyCourseAdmin
   ) where
 
 import           Data.Models.Role
-import           Data.Text        (pack)
+import           Data.Text        (pack, unpack)
 
 generateCourseAdminsGroup :: String -> String
 generateCourseAdminsGroup uid = "admins-" <> uid
@@ -19,6 +20,9 @@ generateCourseMembersGroup uid = "members-" <> uid
 
 adminRoleGranted :: [RoleDetails] -> Bool
 adminRoleGranted = any (\(RoleDetails name _) -> name == "admins")
+
+isUserAnyCourseAdmin :: [RoleDetails] -> Bool
+isUserAnyCourseAdmin = any (\(RoleDetails name _) -> take 7 (unpack name) == "admins-")
 
 isUserCourseManager :: [RoleDetails] -> Bool
 isUserCourseManager roles = any (\(RoleDetails name _) -> name == "course-creator") roles || adminRoleGranted roles
