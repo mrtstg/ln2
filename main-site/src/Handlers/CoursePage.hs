@@ -54,7 +54,7 @@ getAdminCourseR cId = do
 
 -- TODO: errors screens
 getCourseR :: CourseId -> Handler Html
-getCourseR cId = do
+getCourseR cId@(CourseKey courseUUID) = do
   userD@(UserDetails { .. }) <- requireAuth
   (Entity _ (Course { .. })) <- validateCourseId cId userD isUserCourseMember CoursesR
   pageV <- getPageNumber
@@ -66,6 +66,7 @@ getCourseR cId = do
       ] []
     return $ map (courseSolveAcceptionTaskId . entityVal) accept'
   (taskRatio, (solvedTask, totalTasks)) <- runDB $ getCourseCompleteRatio cId getUserDetailsId
+  let isAdmin = isUserCourseAdmin courseUUID getUserRoles
   defaultLayout $ do
     setTitle $ toHtml ("Курс: " <> unpack courseName)
     [whamlet|
@@ -87,6 +88,9 @@ getCourseR cId = do
           <div .card>
             <header .card-header>
               <p .card-header-title :elem tId acceptedTasks:.has-text-success> #{ courseTaskName }
+            $if isAdmin
+              <footer .card-footer>
+                <a .card-footer-item href=@{CourseTaskEditR cId tId}> Редактировать
   <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
     <a href=@{CourseR cId}?page=#{pageV - 1}>
       <button .button.is-primary.mx-3 :pageV == 1:disabled> Назад
