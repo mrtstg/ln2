@@ -18,6 +18,7 @@ import           Foundation
 import           Handlers.CoursePage
 import           Handlers.Courses
 import           Handlers.CourseTask
+import           Handlers.CourseTaskEdit
 import           Handlers.Index
 import           Handlers.Login
 import           Handlers.Logout

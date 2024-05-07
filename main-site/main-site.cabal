@@ -49,6 +49,7 @@ library
       Handlers.CoursePage
       Handlers.Courses
       Handlers.CourseTask
+      Handlers.CourseTaskEdit
       Handlers.Index
       Handlers.Login
       Handlers.Logout
