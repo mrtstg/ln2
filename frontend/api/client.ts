@@ -160,6 +160,23 @@ export class ApiClient {
     }
   }
 
+  async getCourseTask(taskId: number): Promise<CourseTaskDetails | string> {
+    try {
+      const { data } = await this.client.get<CourseTaskDetails>("/api/task/" + taskId)
+      return data
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status == 404) {
+          return "Not found"
+        }
+        if (error.response.status == 403) {
+          return "Forbidden"
+        }
+      }
+      return "Unknown"
+    }
+  }
+
   async postTaskSolve(taskId: number, answer: string): Promise<TaskCreateResponse | string> {
     try {
       const { data, status } = await this.client.post<TaskCreateResponse>("/api/task/" + taskId + "/solves", { answer: answer })
