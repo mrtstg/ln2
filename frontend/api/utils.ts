@@ -77,3 +77,14 @@ export const taskCreateErrorToString = (error: string): string => {
       return 'Неизвестная ошибка!'
   }
 }
+
+export const taskPatchErrorToString = (error: string): string => {
+  switch (error) {
+    case 'Not found':
+      return 'Задание не найдено!'
+    case 'Forbidden':
+      return 'У вас нет доступа на редактирование задания!'
+    default:
+      return 'Неизвестная ошибка!'
+  }
+}

@@ -8,7 +8,8 @@ import type {
   CourseTaskCreate, 
   CourseCreate,
   CourseTaskDetails,
-  TaskCreateResponse
+  TaskCreateResponse,
+  CourseTaskPatch
 } from "./types";
 
 export class ApiClient {
@@ -88,6 +89,23 @@ export class ApiClient {
         }
         if (error.response.status == 404) {
           return "Not found"
+        }
+      }
+      return "Unknown"
+    }
+  }
+  
+  async patchTask(taskId: number, data: CourseTaskPatch): Promise<string> {
+    try {
+      const _ = await this.client.patch<CourseTaskDetails>("/api/task/" + taskId, data)
+      return 'ok'
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status == 404) {
+          return "Not found"
+        }
+        if (error.response.status == 403) {
+          return "Forbidden"
         }
       }
       return "Unknown"

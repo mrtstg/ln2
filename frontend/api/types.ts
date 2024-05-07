@@ -75,3 +75,9 @@ export type TaskResult = {
 export type TaskCreateResponse = {
   uuid: string
 }
+
+export type CourseTaskPatch = {
+  name?: string,
+  content?: string,
+  order?: number
+}
