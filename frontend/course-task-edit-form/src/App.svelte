@@ -18,10 +18,12 @@
   $: taskOrder = 0
 
   let taskID: number | null = null
+  let courseID: string | null = null
   let taskPromise: Promise<CourseTaskDetails | string> | null = null
+  let taskDeletePromise: Promise<string> | null = null
   let taskUpdatePromise: Promise<string> | null = null
   const parsedURL = new URL(document.URL)
-  const taskIDMatch = parsedURL.pathname.match("\/task\/([0-9]*?)\/edit")
+  const taskIDMatch = parsedURL.pathname.match("\/task\/(.*?)\/([0-9]*?)\/edit")
 
   const updateTaskWrapper = async (): Promise<string> => {
     const res = await api.patchTask(taskID!, {
@@ -32,6 +34,15 @@
     if (res == 'ok') {
       taskPromise = getCourseTaskWrapper()
       taskUpdatePromise = null
+    }
+
+    return res
+  }
+
+  const deleteTaskWrapper = async (): Promise<string> => {
+    const res = await api.deleteTask(taskID!)
+    if (res == 'ok') {
+      window.location.replace("/course/" + courseID!)
     }
 
     return res
@@ -50,7 +61,8 @@
   }
 
   if (taskIDMatch != null && taskIDMatch.length > 1) {
-    taskID = parseInt(taskIDMatch[1])
+    courseID = taskIDMatch[1]
+    taskID = parseInt(taskIDMatch[2])
     taskPromise = getCourseTaskWrapper()
   }
 </script>
@@ -99,7 +111,19 @@
         <DangerMessage title="Ошибка!" description="Не удалось обновить задачу!" additionalStyle="is-fullwidth"/>
       {/await}
     {/if}
-    <button class="button is-fullwidth is-success" on:click={() => taskUpdatePromise = updateTaskWrapper()}> Обновить задачу </button>
+    <button class="button is-fullwidth is-success my-3" on:click={() => taskUpdatePromise = updateTaskWrapper()}> Обновить задачу </button>
+    {#if taskDeletePromise != null}
+      {#await taskDeletePromise}
+        <SuccessMessage title="Ожидайте..." description="Удаляем задачу..." additionalStyle="is-fullwidth"/>
+      {:then res}
+        {#if res != 'ok'}
+          <DangerMessage title="Ошибка!" description={taskPatchErrorToString(res)}/>
+        {/if}
+      {:catch}
+        <DangerMessage title="Ошибка!" description="Не удалось удалить задачу!" additionalStyle="is-fullwidth"/>
+      {/await}
+    {/if}
+    <button class="button is-fullwidth is-danger my-3" on:click={() => taskDeletePromise = deleteTaskWrapper()}> Удалить задачу </button>
   {:catch}
     <DangerMessage title="Ошибка!" description="Не удалось получить данные задания" additionalStyle="is-fullwidth"/>
   {/await}
