@@ -94,6 +94,23 @@ export class ApiClient {
       return "Unknown"
     }
   }
+
+  async deleteTask(taskId: number): Promise<string> {
+    try {
+      const _ = await this.client.delete("/api/task/" + taskId)
+      return 'ok'
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status == 404) {
+          return "Not found"
+        }
+        if (error.response.status == 403) {
+          return "Forbidden"
+        }
+      }
+      return "Unknown"
+    }
+  }
   
   async patchTask(taskId: number, data: CourseTaskPatch): Promise<string> {
     try {
