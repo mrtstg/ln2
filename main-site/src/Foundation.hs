@@ -80,7 +80,7 @@ mkYesodData
 /course/#CourseId CourseR GET
 /course/#CourseId/admin AdminCourseR GET
 /task/#CourseTaskId CourseTaskR GET
-/task/#CourseTaskId/edit CourseTaskEditR GET
+/task/#CourseId/#CourseTaskId/edit CourseTaskEditR GET
 /api/courses ApiCoursesR GET POST
 /api/query/course/#Text QueryCourseR GET
 /api/courses/#CourseId ApiCourseIdR GET PATCH DELETE

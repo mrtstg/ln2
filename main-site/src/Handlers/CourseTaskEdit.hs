@@ -9,8 +9,8 @@ import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
 
-getCourseTaskEditR :: CourseTaskId -> Handler Html
-getCourseTaskEditR ctId = do
+getCourseTaskEditR :: CourseId -> CourseTaskId -> Handler Html
+getCourseTaskEditR _ ctId = do
   (UserDetails { .. }) <- requireAuth
   courseTaskRes <- runDB $ get ctId
   case courseTaskRes of
