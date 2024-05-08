@@ -15,6 +15,7 @@ import qualified Data.ByteString.Char8       as BS
 import qualified Data.Text                   as T
 import           Database.Persist.Postgresql
 import           Foundation
+import           Handlers.AssignMember
 import           Handlers.CoursePage
 import           Handlers.Courses
 import           Handlers.CourseTask

@@ -82,6 +82,7 @@ mkYesodData
 /task/#CourseTaskId CourseTaskR GET
 /task/#CourseId/#CourseTaskId/edit CourseTaskEditR GET
 /api/courses ApiCoursesR GET POST
+/api/assign/#CourseId/#Text AssignMemberR GET
 /api/query/course/#Text QueryCourseR GET
 /api/courses/#CourseId ApiCourseIdR GET PATCH DELETE
 /api/course/#CourseId/task ApiCourseTaskR POST GET
