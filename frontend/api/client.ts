@@ -153,6 +153,15 @@ export class ApiClient {
     throw "Unreachable!"
   }
 
+  async assignCourseMember(courseId: string, userLogin: string): Promise<Boolean | null> {
+    try {
+      const { data } = await this.client.get("/api/assign/" + courseId + "/" + userLogin)
+      return data.assigned
+    } catch (error) {
+      return null
+    }
+  }
+
   async createCourseTask(courseId: string, payload: CourseTaskCreate): Promise<CourseTaskDetails | string> {
     try {
       const { data, status } = await this.client.post<CourseTaskDetails>("/api/course/" + courseId + "/task", payload)
