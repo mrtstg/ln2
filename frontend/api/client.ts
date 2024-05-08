@@ -9,7 +9,8 @@ import type {
   CourseCreate,
   CourseTaskDetails,
   TaskCreateResponse,
-  CourseTaskPatch
+  CourseTaskPatch,
+  UserQuery
 } from "./types";
 
 export class ApiClient {
@@ -229,6 +230,20 @@ export class ApiClient {
         }
       }
       return "unknown"
+    }
+  }
+  
+  async queryCourseUsers(courseId: string, query: string, getMembers: boolean, getAdmins: boolean, page: number): Promise<UserQuery | null> {
+    try {
+      const { data } = await this.client.get("/api/query/course/" + courseId, {params: {
+        getMembers: getMembers ? '1' : '0',
+        getAdmins: getAdmins ? '1' : '0',
+        query: query,
+        page: page
+      }})
+      return data
+    } catch (error) {
+      return null
     }
   }
 }

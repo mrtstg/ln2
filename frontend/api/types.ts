@@ -12,8 +12,15 @@ export type RoleDetails = {
 
 export type UserDetails = {
   id: number,
+  name: string,
   login: string,
   roles: [RoleDetails]
+}
+
+export type UserQuery = {
+  total: number,
+  pageSize: number,
+  objects: [UserDetails]
 }
 
 export type CommonCourseDetails = {
