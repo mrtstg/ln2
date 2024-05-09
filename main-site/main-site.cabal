@@ -47,6 +47,7 @@ library
       Data.Models.UserQuery
       Foundation
       Handlers.AssignMember
+      Handlers.CourseMembers
       Handlers.CoursePage
       Handlers.Courses
       Handlers.CourseTask

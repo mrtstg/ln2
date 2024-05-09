@@ -16,6 +16,7 @@ import qualified Data.Text                   as T
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.AssignMember
+import           Handlers.CourseMembers
 import           Handlers.CoursePage
 import           Handlers.Courses
 import           Handlers.CourseTask
