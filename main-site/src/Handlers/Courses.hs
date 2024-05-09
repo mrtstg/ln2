@@ -25,20 +25,25 @@ import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
 
-courseList :: ([(Entity Course, Maybe UserDetails)], Int) -> Int -> (CourseId -> Route App) -> Route App -> WidgetFor App ()
-courseList (courses, cAmount) pageN coursePageR coursesR = do
+courseList :: ([(Entity Course, Maybe UserDetails)], Int) -> Bool -> Int -> (CourseId -> Route App) -> Route App -> WidgetFor App ()
+courseList (courses, cAmount) isAdmin pageN coursePageR coursesR = do
   [whamlet|
   <div .columns.is-multiline>
     $forall ((Entity cId (Course cName _ _ _)), d) <- courses
       <div .column.is-full>
-        <a href=@{coursePageR cId}>
-          <div .card>
+        <div .card>
+          <a href=@{coursePageR cId}>
             <header .card-header>
               <p .card-header-title>  #{cName}
-            <div .card-content>
+          <div .card-content>
+            <div .content>
               $case d
                 $of Just (UserDetails { getUserDetailsName = authorName })
                   <p> Автор: #{ authorName }
+          $if isAdmin
+            <footer .card-footer>
+              <a href=@{CourseMembersR cId} .card-footer-item> Участники
+              <a href=@{AdminCourseR cId} .card-footer-item> Редактировать
   <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
     <a href=@{coursesR}?page=#{pageN - 1}>
       <button .button.is-primary.mx-3 :pageN == 1:disabled> Назад
@@ -58,7 +63,7 @@ getCoursesR = do
     [whamlet|
 <div .container.pt-2.py-3>
   <h1 .title.pb-3> Доступные курсы
-  ^{courseList (linkedCourses, amount) pageN CourseR CoursesR}
+  ^{courseList (linkedCourses, amount) False pageN CourseR CoursesR}
 |]
 
 getAdminCoursesR :: Handler Html
@@ -74,7 +79,7 @@ getAdminCoursesR = do
 <div .container.pt-2.py-3>
   <div #app>
   <h1 .title.py-3> Администрируемые курсы
-  ^{courseList (linkedCourses, amount) pageN AdminCourseR AdminCoursesR}
+  ^{courseList (linkedCourses, amount) True pageN CourseR AdminCoursesR}
 <script src="/static/js/courseCreateForm.js">
 |]
 
