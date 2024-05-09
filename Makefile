@@ -8,6 +8,7 @@ build-frontend: ./static/js
 	make -C frontend/course-task-form build
 	make -C frontend/course-create-form build
 	make -C frontend/course-task-edit-form build
+	make -C frontend/course-members-form build
 
 ./static/js:
 	mkdir ./static/js -p
