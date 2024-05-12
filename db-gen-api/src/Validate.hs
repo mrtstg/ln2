@@ -2,15 +2,46 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Validate (validateDatabase, validateTable) where
 
-import           Control.Monad              (when)
 import           Control.Monad.Except
-import           Control.Monad.Trans.Except
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
+import           Data.Text             (Text)
+import qualified Data.Text             as T
 import           Types.Column
 import           Types.Database
 import           Types.Table
 import           Types.ValidationError
+
+type TableName = Text
+type ColumnName = Text
+
+splitColumnReference :: TableName -> ColumnName -> Text -> ValidationMonad (Text, Text)
+splitColumnReference tName cName reference = case T.count "." reference of
+  1         -> do
+    let res = T.splitOn "." reference
+    return (head res, res !! 1)
+  _anyOther -> throwError (InvalidRefenceFormat tName cName)
+
+validateColumnReference :: DatabaseData -> TableData -> ColumnData -> ValidationMonad ()
+validateColumnReference db (TableData tName _) (ColumnData { getColumnName = colName, getColumnReferenceOn = colRef, getColumnType = colType }) = do
+  case colRef of
+    Nothing -> return ()
+    (Just r) -> do
+      (tName', cName') <- splitColumnReference tName colName r
+      if tName' == tName then throwError (ReferenceLoop tName colName) else do
+        case lookupField tName' cName' db of
+          Nothing -> throwError (MissingReferenceColumn tName colName tName' cName')
+          (Just
+            (ColumnData
+              { getColumnType = colType'
+              , getColumnPrimary = colPrimary
+              , getColumnUnique = colUnique }
+            )) -> if not (colType `referencableType` colType') then throwError (ReferenceTypeMismatch tName colName tName' cName') else do
+              when (not colPrimary && not colUnique) $ throwError (ReferenceConstraintsFailure tName' cName')
+
+validateTableRefences :: DatabaseData -> TableData -> ValidationMonad ()
+validateTableRefences db t@(TableData { getTableColumns = cols }) = mapM_ (validateColumnReference db t) cols
+
+validateDatabaseReferences :: DatabaseData -> ValidationMonad ()
+validateDatabaseReferences db@(DatabaseData tables) = mapM_ (validateTableRefences db) tables
 
 validateTable :: TableData -> ValidationMonad ()
 validateTable (TableData { getTableColumns = columns, getTableName = tName }) = let
@@ -28,7 +59,7 @@ validateTable (TableData { getTableColumns = columns, getTableName = tName }) = 
       return ()
 
 validateDatabase :: DatabaseData -> ValidationMonad ()
-validateDatabase (DatabaseData tables) = let
+validateDatabase db@(DatabaseData tables) = let
   checkTableDuplicates :: [Text] -> [TableData] -> ValidationMonad ()
   checkTableDuplicates _ [] = return ()
   checkTableDuplicates acc ((TableData { getTableName = tName }):cls) = if tName `elem` acc then
@@ -36,5 +67,6 @@ validateDatabase (DatabaseData tables) = let
     else checkTableDuplicates (tName:acc) cls
   in do
   () <- checkTableDuplicates [] tables
-  _ <- mapM validateTable tables
+  mapM_ validateTable tables
+  () <- validateDatabaseReferences db
   return ()
