@@ -27,6 +27,7 @@ library
       App.Parser
       App.Types
       Foundation
+      Handlers.Create
       Render
       Types.Column
       Types.Database
