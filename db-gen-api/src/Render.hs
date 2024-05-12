@@ -2,12 +2,12 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Render (renderColumn, renderTableCreate, renderDatabaseCreate) where
 
-import           Data.List      (intercalate)
-import           Data.Text      (unpack)
-import qualified Data.Text      as T
-import           Types.Column
-import           Types.Database
-import           Types.Table
+import           Data.List            (intercalate)
+import           Data.Models.Column
+import           Data.Models.Database
+import           Data.Models.Table
+import           Data.Text            (unpack)
+import qualified Data.Text            as T
 
 renderColumn :: ColumnData -> String
 renderColumn (ColumnData { .. }) =

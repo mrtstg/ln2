@@ -26,13 +26,13 @@ library
       App.Commands
       App.Parser
       App.Types
+      Data.Models.Column
+      Data.Models.Database
+      Data.Models.Table
+      Data.Models.ValidationError
       Foundation
       Handlers.Create
       Render
-      Types.Column
-      Types.Database
-      Types.Table
-      Types.ValidationError
       Validate
   other-modules:
       Paths_db_gen_api

@@ -3,12 +3,12 @@
 module Validate (validateDatabase, validateTable) where
 
 import           Control.Monad.Except
-import           Data.Text             (Text)
-import qualified Data.Text             as T
-import           Types.Column
-import           Types.Database
-import           Types.Table
-import           Types.ValidationError
+import           Data.Models.Column
+import           Data.Models.Database
+import           Data.Models.Table
+import           Data.Models.ValidationError
+import           Data.Text                   (Text)
+import qualified Data.Text                   as T
 
 type TableName = Text
 type ColumnName = Text

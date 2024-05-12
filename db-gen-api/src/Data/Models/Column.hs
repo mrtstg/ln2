@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Types.Column
+module Data.Models.Column
   ( ColumnType(..)
   , ColumnData(..)
   , defaultColumn
