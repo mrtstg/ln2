@@ -1,5 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Types.Column (ColumnType(..), ColumnData(..)) where
+module Types.Column
+  ( ColumnType(..)
+  , ColumnData(..)
+  , defaultColumn
+  , defaultPrimaryKey
+  , defaultReference
+  , referencableType
+  ) where
 
 import           Data.Aeson
 import qualified Data.Aeson.KeyMap as K
@@ -7,6 +14,14 @@ import           Data.Text         (Text)
 import           Numeric.Natural
 
 data ColumnType = CharVariable !(Maybe Natural) | Char !(Maybe Natural) | Serial | Boolean | Integer | Text deriving (Eq)
+
+type ReferenceType = ColumnType
+type TargetReferenceType = ColumnType
+
+referencableType :: ReferenceType -> TargetReferenceType -> Bool
+referencableType Serial _       = False
+referencableType Integer Serial = True
+referencableType a b            = a == b
 
 instance FromJSON ColumnType where
   parseJSON = withObject "ColumnType" $ \v -> case K.lookup "type" v of
@@ -34,11 +49,12 @@ type IsNull = Bool
 type IsUnique = Bool
 
 data ColumnData = ColumnData
-  { getColumnName     :: !Text
-  , getColumnType     :: !ColumnType
-  , getColumnPrimary  :: !IsPrimary
-  , getColumnNullable :: !IsNull
-  , getColumnUnique   :: !IsUnique
+  { getColumnName        :: !Text
+  , getColumnType        :: !ColumnType
+  , getColumnPrimary     :: !IsPrimary
+  , getColumnNullable    :: !IsNull
+  , getColumnUnique      :: !IsUnique
+  , getColumnReferenceOn :: !(Maybe Text)
   } deriving (Show)
 
 instance FromJSON ColumnData where
@@ -48,3 +64,13 @@ instance FromJSON ColumnData where
     <*> v .:? "primary" .!= False
     <*> v .:? "null" .!= False
     <*> v .:? "unique" .!= False
+    <*> v .:? "references"
+
+defaultColumn :: Text -> ColumnType -> ColumnData
+defaultColumn name t = ColumnData name t False False False Nothing
+
+defaultPrimaryKey :: Text -> ColumnType -> ColumnData
+defaultPrimaryKey name t = ColumnData name t True False False Nothing
+
+defaultReference :: Text -> ColumnType -> Text -> ColumnData
+defaultReference name t ref = ColumnData name t False False False (Just ref)
