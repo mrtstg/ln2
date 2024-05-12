@@ -12,6 +12,7 @@ module App.Commands (
 import           App.Types
 import           Control.Monad.Logger        (runStdoutLoggingT)
 import qualified Data.ByteString.Char8       as BS
+import           Data.Models.Endpoints
 import qualified Data.Text                   as T
 import           Database.Persist.Postgresql
 import           Foundation
@@ -71,23 +72,29 @@ runServerCommand port = do
           putStrLn "No RabbitMQ connection data!"
           exitWith $ ExitFailure 1
         Just rabbitCreds -> do
-          rabbitConn <- openConnection'
-            (getRConHost rabbitCreds)
-            (read $ (show . getRConPort) rabbitCreds :: PortNumber)
-            "/"
-            ((T.pack . getRConUser) rabbitCreds)
-            ((T.pack . getRConPass) rabbitCreds)
-          postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-          let app = App postgresPool rabbitConn
-          _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
-          devMode <- isDevEnabled
-          let corsOrigins = ["http://localhost:5173", "http://localhost"]
-          waiApp <- toWaiApp app
-          run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
-            { corsOrigins = if devMode then Just (corsOrigins, True) else Nothing
-            , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH"]
-            , corsRequestHeaders = simpleHeaders
-            }) waiApp
+          endpoints' <- getEndpointsFromEnv
+          case endpoints' of
+            Nothing -> do
+              putStrLn "No service endpoints configuration!"
+              exitWith $ ExitFailure 1
+            Just endpoints -> do
+              rabbitConn <- openConnection'
+                (getRConHost rabbitCreds)
+                (read $ (show . getRConPort) rabbitCreds :: PortNumber)
+                "/"
+                ((T.pack . getRConUser) rabbitCreds)
+                ((T.pack . getRConPass) rabbitCreds)
+              postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
+              let app = App postgresPool rabbitConn endpoints
+              _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
+              devMode <- isDevEnabled
+              let corsOrigins = ["http://localhost:5173", "http://localhost"]
+              waiApp <- toWaiApp app
+              run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
+                { corsOrigins = if devMode then Just (corsOrigins, True) else Nothing
+                , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH"]
+                , corsRequestHeaders = simpleHeaders
+                }) waiApp
 
 runCommand :: AppOpts -> IO ()
 runCommand (AppOpts _ CreateDatabase) = runCreateDatabaseCommand

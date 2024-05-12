@@ -38,6 +38,7 @@ library
       Crud.User
       Data.Models.Course
       Data.Models.CourseTask
+      Data.Models.Endpoints
       Data.Models.QueueTaskResponse
       Data.Models.Role
       Data.Models.StandCheck

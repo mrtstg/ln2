@@ -22,6 +22,7 @@ module Foundation where
 import           Api.Login
 import           Data.ByteString.Char8
 import           Data.Maybe                  (isJust, isNothing)
+import           Data.Models.Endpoints
 import           Data.Models.User
 import           Data.Pool                   (Pool)
 import           Data.Text
@@ -34,8 +35,9 @@ import           Yesod.Form
 import           Yesod.Persist
 
 data App = App
-  { postgresqlPool   :: !(Pool SqlBackend)
-  , rabbitConnection :: !R.Connection
+  { postgresqlPool         :: !(Pool SqlBackend)
+  , rabbitConnection       :: !R.Connection
+  , endpointsConfiguration :: !EndpointsConfiguration
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
