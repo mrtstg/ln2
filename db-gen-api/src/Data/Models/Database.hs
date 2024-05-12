@@ -12,6 +12,9 @@ instance FromJSON DatabaseData where
   parseJSON = withObject "DatabaseData" $ \v -> DatabaseData
     <$> v .: "tables"
 
+instance ToJSON DatabaseData where
+  toJSON (DatabaseData tables) = object ["tables" .= tables]
+
 type TableName = Text
 type FieldName = Text
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Data.Models.Column
   ( ColumnType(..)
   , ColumnData(..)
@@ -34,6 +35,14 @@ instance FromJSON ColumnType where
     (Just (String "text"))    -> pure Text
     _wrongType                -> fail "Wrong column type!"
 
+instance ToJSON ColumnType where
+  toJSON (CharVariable size) = object ["type" .= String "varchar", "size" .= size]
+  toJSON (Char size) = object ["type" .= String "char", "size" .= size]
+  toJSON Serial = object ["type" .= String "serial"]
+  toJSON Boolean = object ["type" .= String "boolean"]
+  toJSON Integer = object ["type" .= String "integer"]
+  toJSON Text = object ["type" .= String "text"]
+
 instance Show ColumnType where
   show (CharVariable Nothing)     = "VARCHAR"
   show (CharVariable (Just size)) = "VARCHAR(" <> show size <> ")"
@@ -65,6 +74,16 @@ instance FromJSON ColumnData where
     <*> v .:? "null" .!= False
     <*> v .:? "unique" .!= False
     <*> v .:? "references"
+
+instance ToJSON ColumnData where
+  toJSON (ColumnData { .. }) = object
+    [ "name" .= getColumnName
+    , "type" .= getColumnType
+    , "primary" .= getColumnPrimary
+    , "null" .= getColumnNullable
+    , "unique" .= getColumnUnique
+    , "references" .= getColumnReferenceOn
+    ]
 
 defaultColumn :: Text -> ColumnType -> ColumnData
 defaultColumn name t = ColumnData name t False False False Nothing
