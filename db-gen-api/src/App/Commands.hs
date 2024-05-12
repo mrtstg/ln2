@@ -11,13 +11,8 @@ module App.Commands (
 
 import           App.Types
 import           Foundation
+import           Handlers.Create
 import           Yesod.Core
-
-postCheckCreateR :: Handler Value
-postCheckCreateR = undefined
-
-postConvertCreateR :: Handler Value
-postConvertCreateR = undefined
 
 mkYesodDispatch "App" resourcesApp
 
