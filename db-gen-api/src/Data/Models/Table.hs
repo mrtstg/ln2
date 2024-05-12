@@ -14,3 +14,6 @@ instance FromJSON TableData where
   parseJSON = withObject "TableData" $ \v -> TableData
     <$> v .: "name"
     <*> v .: "columns"
+
+instance ToJSON TableData where
+  toJSON (TableData name cols) = object ["name" .= name, "columns" .= cols]
