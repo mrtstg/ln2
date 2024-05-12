@@ -4,10 +4,10 @@ module Handlers.Create (postCheckCreateR, postConvertCreateR) where
 import           Control.Monad.Identity
 import           Control.Monad.Trans.Except
 import           Data.Aeson
+import           Data.Models.Database
 import           Foundation
 import           Network.HTTP.Types
 import           Render
-import           Types.Database
 import           Validate
 import           Yesod.Core
 

@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Types.Database (DatabaseData (..), lookupField) where
+module Data.Models.Database (DatabaseData (..), lookupField) where
 
 import           Data.Aeson
-import           Data.Text    (Text)
-import           Types.Column
-import           Types.Table
+import           Data.Models.Column
+import           Data.Models.Table
+import           Data.Text          (Text)
 
 newtype DatabaseData = DatabaseData [TableData] deriving Show
 

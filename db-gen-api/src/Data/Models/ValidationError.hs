@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Types.ValidationError (ValidationError(..), ValidationMonad) where
+module Data.Models.ValidationError (ValidationError(..), ValidationMonad) where
 
 import           Control.Monad.Trans.Except
 import           Data.Text                  (Text, unpack)

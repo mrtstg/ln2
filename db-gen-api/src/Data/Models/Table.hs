@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Types.Table (TableData(..)) where
+module Data.Models.Table (TableData(..)) where
 
 import           Data.Aeson
-import           Data.Text    (Text)
-import           Types.Column
+import           Data.Models.Column
+import           Data.Text          (Text)
 
 data TableData = TableData
   { getTableName    :: !Text
