@@ -6,8 +6,8 @@ import           Data.Text    (Text)
 import           Types.Column
 
 data TableData = TableData
-  { getTableColumns :: ![ColumnData]
-  , getTableName    :: !Text
+  { getTableName    :: !Text
+  , getTableColumns :: ![ColumnData]
   } deriving (Show)
 
 instance FromJSON TableData where
