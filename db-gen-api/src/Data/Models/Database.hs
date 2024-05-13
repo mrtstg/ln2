@@ -4,9 +4,11 @@ module Data.Models.Database
   ( DatabaseData (..)
   , lookupField
   , getReferences
+  , orderTableByReferences
   ) where
 
 import           Data.Aeson
+import           Data.List          (sortOn)
 import           Data.Maybe
 import           Data.Models.Column
 import           Data.Models.Table
@@ -43,4 +45,5 @@ getReferences (DatabaseData tables) = helper [] tables where
     cols :: [ColumnData]
     cols = filter (isJust . getColumnReferenceOn) getTableColumns
 
-
+orderTableByReferences :: DatabaseData -> DatabaseData
+orderTableByReferences (DatabaseData tables) = DatabaseData $ sortOn getTableRefencesAmount tables
