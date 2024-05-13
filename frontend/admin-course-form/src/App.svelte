@@ -3,7 +3,7 @@
   import { ApiClient } from "../../api/client"
   import type { ContainerSummary, CommonCourseDetails } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
-  import CheckStageWidget from "./lib/CheckStage.svelte"
+  import CheckStageWidget from "../../components/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
   import { type StageData, stageTypeList, StageType, type CheckStage, defaultCheckStageData } from "../../api/check_stage" 
   import { courseErrorsToString, courseTaskErrorToString, deleteCourseErrorToString } from "../../api/utils"
