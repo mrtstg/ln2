@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { TableData, DatabaseData, ColumnData, ColumnType } from "../../../api/db"
-  import { allTypes } from "../../../api/db";
+  import type { TableData, DatabaseData, ColumnData, ColumnType } from "../api/db"
+  import { allTypes } from "../api/db";
 
   export let changeCallback: (tables: Array<TableData>) => void = () => {};
   export let dbData: DatabaseData = {tables: []}

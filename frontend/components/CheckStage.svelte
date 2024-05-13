@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { CheckStage, StageData } from "../../../api/check_stage"
-  import { StageType } from "../../../api/check_stage"
-  import { stageTypeList, defaultCheckStageData, checkStageName } from "../../../api/check_stage"
-  import DangerMessage from "../../../components/DangerMessage.svelte"
-  import SelectField from "../../../components/SelectField.svelte"
+  import type { CheckStage, StageData } from "../api/check_stage"
+  import { StageType } from "../api/check_stage"
+  import { stageTypeList, defaultCheckStageData, checkStageName } from "../api/check_stage"
+  import DangerMessage from "./DangerMessage.svelte"
+  import SelectField from "./SelectField.svelte"
   import DBConstructor from "./DBConstructor.svelte"
 
   export let data: CheckStage
