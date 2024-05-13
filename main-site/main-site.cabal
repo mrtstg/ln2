@@ -24,6 +24,7 @@ source-repository head
 
 library
   exposed-modules:
+      Api.DBApi
       Api.Login
       Api.Markdown
       Api.Role
@@ -36,13 +37,16 @@ library
       Crud.CourseTask
       Crud.TaskSolves
       Crud.User
+      Data.Models.Column
       Data.Models.Course
       Data.Models.CourseTask
+      Data.Models.Database
       Data.Models.Endpoints
       Data.Models.QueueTaskResponse
       Data.Models.Role
       Data.Models.StandCheck
       Data.Models.StandCheckResult
+      Data.Models.Table
       Data.Models.User
       Data.Models.UserAuthRequest
       Data.Models.UserQuery
