@@ -6,7 +6,8 @@ export enum StageType {
   CompareResults,
   PSQLExists,
   PSQLQuery,
-  PSQLAnswerQuery
+  PSQLAnswerQuery,
+  PSQLGenerateDatabase
 }
 
 export const stageTypeList = [
@@ -17,7 +18,8 @@ export const stageTypeList = [
   StageType.CompareResults,
   StageType.PSQLQuery,
   StageType.PSQLAnswerQuery,
-  StageType.PSQLExists
+  StageType.PSQLExists,
+  StageType.PSQLGenerateDatabase
 ]
 
 export interface StageData {
@@ -47,6 +49,8 @@ export const defaultCheckStageData = (stType: StageType): object => {
       return {action: "psql_query_macro", container: "", query: "", recordInto: ""}
     case StageType.PSQLExists:
       return {action: "psql_exists_macro", container: "", query: "", score: 0}
+    case StageType.PSQLGenerateDatabase:
+      return {action: "psql_generate_database", container: "", database: {tables: []}}
   }
 }
 
@@ -68,5 +72,7 @@ export const checkStageName = (stType: StageType): string => {
       return "Проверить наличие данных в PostgreSQL"
     case StageType.PSQLAnswerQuery:
       return "Выполнить ответ пользователя как запрос PostgreSQL"
+    case StageType.PSQLGenerateDatabase:
+      return "Создать БД через визуальный конструктор"
   }
 }

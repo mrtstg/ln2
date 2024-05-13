@@ -1,9 +1,10 @@
 <script lang="ts">
-  import type { CheckStage, StageData } from "../api/check_stage"
-  import { StageType } from "../api/check_stage"
-  import { stageTypeList, defaultCheckStageData, checkStageName } from "../api/check_stage"
-  import DangerMessage from "../components/DangerMessage.svelte"
-  import SelectField from "../components/SelectField.svelte"
+  import type { CheckStage, StageData } from "../../../api/check_stage"
+  import { StageType } from "../../../api/check_stage"
+  import { stageTypeList, defaultCheckStageData, checkStageName } from "../../../api/check_stage"
+  import DangerMessage from "../../../components/DangerMessage.svelte"
+  import SelectField from "../../../components/SelectField.svelte"
+  import DBConstructor from "./DBConstructor.svelte"
 
   export let data: CheckStage
   export let containers: string[]
@@ -151,6 +152,11 @@
         <input class="input" type="number" placeholder="Количество баллов" bind:value={data.data.score} on:change={async () => await updateCallback(data)}>
       </div>
     </div>
+  {:else if selectedType == StageType.PSQLGenerateDatabase}
+    <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.container = v; await updateCallback(data) }}/>
+    <DBConstructor dbData={data.data.database} changeCallback={(t) => data.data.database.tables = t}/>
+    <br>
+    { JSON.stringify(data.data.database) }
   {:else}
     <DangerMessage title="Ошибка!" description="Неизвестный тип"/>
   {/if}
