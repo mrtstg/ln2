@@ -16,7 +16,7 @@ validateDatabaseRequest = do
   d@(DatabaseData {}) <- requireCheckJsonBody
   case (runIdentity . runExceptT) (validateDatabase d) of
     (Left e)   -> sendStatusJSON status400 $ object ["error" .= show e]
-    (Right ()) -> return d
+    (Right ()) -> return $ orderTableByReferences d
 
 postCheckCreateR :: Handler Value
 postCheckCreateR = do

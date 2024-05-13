@@ -1,7 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Data.Models.Table (TableData(..)) where
+module Data.Models.Table
+  ( TableData(..)
+  , getTableRefencesAmount
+  ) where
 
 import           Data.Aeson
+import           Data.Maybe
 import           Data.Models.Column
 import           Data.Text          (Text)
 
@@ -17,3 +21,6 @@ instance FromJSON TableData where
 
 instance ToJSON TableData where
   toJSON (TableData name cols) = object ["name" .= name, "columns" .= cols]
+
+getTableRefencesAmount :: TableData -> Int
+getTableRefencesAmount (TableData { getTableColumns = cols }) = length $ filter (isJust . getColumnReferenceOn) cols
