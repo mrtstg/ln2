@@ -3,9 +3,9 @@
   import { ApiClient } from "../../api/client"
   import type { ContainerSummary, CommonCourseDetails } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
-  import CheckStageWidget from "../../components/CheckStage.svelte"
+  import CheckStageWidget from "./lib/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
-  import { type StageData, stageTypeList, type StageType, type CheckStage, defaultCheckStageData } from "../../api/check_stage" 
+  import { type StageData, stageTypeList, StageType, type CheckStage, defaultCheckStageData } from "../../api/check_stage" 
   import { courseErrorsToString, courseTaskErrorToString, deleteCourseErrorToString } from "../../api/utils"
 
   // client declaration
@@ -116,6 +116,11 @@
 
     if (stages.length == 0) {
       modalMessage = "Проверка задачи должна содержать как минимум один этап!"
+      return
+    }
+
+    if (stages.map(el => el.type).filter(el => el == StageType.PSQLGenerateDatabase).length > 1) {
+      modalMessage = "В задаче может быть только один этап генерации базы данных!"
       return
     }
 
