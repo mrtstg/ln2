@@ -18,8 +18,10 @@ data ValidationError =
   | MissingReferenceColumn !TableName !ColumnName !TableName !ColumnName
   | ReferenceLoop !TableName !ColumnName
   | InvalidRefenceFormat !TableName !ColumnName
+  | CurricularReference !TableName !TableName
 
 instance Show ValidationError where
+  show (CurricularReference tName tName') = unpack $ "Циклические ссылки между таблицами " <> tName <> " и " <> tName' <> "!"
   show (TooManyPrimaryKeys tName) = unpack $ "У таблицы " <> tName <> " больше одного первичного ключа!"
   show (DuplicateTable tName) = unpack $ "Создано несколько таблиц с именем " <> tName <> "!"
   show (DuplicateColumn tName cName) = unpack $ "В таблице " <> tName <> " две колонки с именем " <> cName <> "!"
