@@ -20,6 +20,12 @@ splitColumnReference tName cName reference = case T.count "." reference of
     return (head res, res !! 1)
   _anyOther -> throwError (InvalidRefenceFormat tName cName)
 
+validateRefenceCycles :: DatabaseData -> ValidationMonad ()
+validateRefenceCycles db = helper [] (getReferences db) where
+  helper :: [(TableName, TableName)] -> [(TableName, TableName)] -> ValidationMonad ()
+  helper _ [] = return ()
+  helper acc ((t, t'):rs) = if (t', t) `elem` acc then throwError (CurricularReference t t') else helper ((t,t'):acc) rs
+
 validateColumnReference :: DatabaseData -> TableData -> ColumnData -> ValidationMonad ()
 validateColumnReference db (TableData tName _) (ColumnData { getColumnName = colName, getColumnReferenceOn = colRef, getColumnType = colType }) = do
   case colRef of
@@ -69,4 +75,5 @@ validateDatabase db@(DatabaseData tables) = let
   () <- checkTableDuplicates [] tables
   mapM_ validateTable tables
   () <- validateDatabaseReferences db
+  () <- validateRefenceCycles db
   return ()
