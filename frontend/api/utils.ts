@@ -31,7 +31,7 @@ export const courseTaskErrorToString = (error: string): string => {
     case 'Unknown':
       return 'Неизвестная ошибка!'
     default:
-      return 'Неизвестная ошибка!'
+      return error
   }
 }
 

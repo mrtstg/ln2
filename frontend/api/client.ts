@@ -168,6 +168,12 @@ export class ApiClient {
       return data
     } catch (error) {
       if (error.response) {
+        if (error.response.status == 400) {
+          if (error.response.data.error != undefined) {
+            return error.response.data.error
+          }
+          return "Unknown"
+        }
         if (error.response.status == 404) {
           return "Not found"
         }
