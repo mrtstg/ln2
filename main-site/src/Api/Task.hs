@@ -10,6 +10,7 @@ import           Control.Exception          (catch)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.ByteString.Lazy       as LBS
+import           Data.Models.Endpoints
 import           Data.Models.StandCheck
 import           Data.Text                  (Text)
 import           Network.HTTP.Simple
@@ -33,8 +34,13 @@ data TaskResult a = TaskResult !a | TaskError !String deriving (Show, Eq)
 taskHandler' :: HttpException -> IO (Either HttpException (TaskResult a))
 taskHandler' _ = return $ Right (TaskError "Unknown error!")
 
-createTask'' :: Text -> StandName -> [StandCheckStage] -> IO (TaskResult String)
-createTask'' answer standName standActions = createTask' standName (convertStandCheckList answer standActions)
+createTask'' :: EndpointsConfiguration -> Text -> StandName -> [StandCheckStage] -> IO (TaskResult String)
+createTask'' endpoints answer standName standActions = do
+  convertRes <- convertStandCheckList endpoints answer standActions
+  case convertRes of
+    (Left e) -> return $ TaskError e
+    (Right actions) -> do
+      createTask' standName actions
 
 createTask' :: StandName -> [StandCheckStage] -> IO (TaskResult String)
 createTask' standName standActions = do

@@ -11,11 +11,13 @@ module Handlers.CourseTask
   , patchApiTaskR
   ) where
 
+import           Api.DBApi
 import           Api.Markdown
 import           Crud.CourseTask
 import           Data.Aeson
 import           Data.ByteString        (toStrict)
 import           Data.Models.CourseTask
+import           Data.Models.StandCheck
 import           Data.Models.User
 import qualified Data.Text              as T
 import           Database.Persist
@@ -26,11 +28,25 @@ import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
 
+checkStages :: [StandCheckStage] -> Handler ()
+checkStages = helper where
+  helper :: [StandCheckStage] -> Handler ()
+  helper [] = return ()
+  helper ((PSQLGenerateDatabase { .. }):stages) = do
+    App { .. } <- getYesod
+    res <- liftIO $ checkCreateDB' endpointsConfiguration getDatabaseInfo
+    case res of
+      (DBApiResult ()) -> helper stages
+      (DBApiError err) -> sendStatusJSON status400 $ object ["error" .= err]
+      _otherError -> sendStatusJSON status400 $ object ["error" .= String "Неизвестная ошибка при обработке данных!"]
+  helper (_:stages) = helper stages
+
 -- TODO: stand identifier existence check
 postApiCourseTaskR :: CourseId -> Handler Value
 postApiCourseTaskR cId = do
   (UserDetails { .. }) <- requireApiAuth
   (CourseTaskCreate { .. }) <- requireCheckJsonBody
+  () <- checkStages getCourseTaskCreateStandActions
   courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
   case courseRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ]
