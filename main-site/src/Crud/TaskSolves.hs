@@ -42,6 +42,7 @@ getTaskSolves pageN (UserDetails { .. }) ctId = do
 
 createTaskSolve :: T.Text -> UserDetails -> Entity CourseTask -> Handler (Int, String)
 createTaskSolve answer (UserDetails { .. }) (Entity ctId (CourseTask { .. })) = do
+  App { endpointsConfiguration = endpoints } <- getYesod
   reqTime <- liftIO getCurrentTime
   courseRes <- runDB $ selectFirst [ CourseId ==. courseTaskCourse ] []
   case courseRes of
@@ -52,11 +53,10 @@ createTaskSolve answer (UserDetails { .. }) (Entity ctId (CourseTask { .. })) = 
         case eitherDecode . fromStrict $ courseTaskStandActions :: Either String [StandCheckStage] of
           (Left _) -> return (400, "Invalid task data!")
           (Right taskActions) -> do
-            taskCRes <- liftIO $ createTask'' answer courseTaskStandIdentifier taskActions
+            taskCRes <- liftIO $ createTask'' endpoints answer courseTaskStandIdentifier taskActions
             case taskCRes of
               (TaskError e) -> do
-                let errorResponse = "Task launch error: " <> e
-                return (400, errorResponse)
+                return (400, e)
               (TaskResult taskUUID) -> do
                 runDB $ insertKey (CourseSolvesKey taskUUID) (CourseSolves getUserDetailsId ctId (encodeUtf8 answer) reqTime False)
                 return (200, taskUUID)
