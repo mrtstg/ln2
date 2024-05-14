@@ -58,9 +58,20 @@ validateTable (TableData { getTableColumns = columns, getTableName = tName }) = 
     else checkTableDuplicates (colName:acc) cls
   isTableEmpty :: ValidationMonad ()
   isTableEmpty = when (null columns) $ throwError (EmptyTable tName)
+  allowedSyms = ['а'..'я'] ++ ['a'..'z'] ++ ['_']
+  isTableNameValid :: ValidationMonad ()
+  isTableNameValid = if T.null tName then throwError EmptyTableName else do
+    when (any (`notElem` allowedSyms) (T.unpack $ T.toLower tName)) $ throwError (InvalidTableName tName)
+  isColsValid :: ValidationMonad ()
+  isColsValid = case filter (any (`notElem` allowedSyms) . fst) $ map (\el -> ((T.unpack . T.toLower . getColumnName) el, el)) columns of
+    []             -> return ()
+    ((_, cName):_) -> throwError $ InvalidColumnName tName (getColumnName cName)
   in do
     if (length . filter getColumnPrimary) columns > 1 then throwError (TooManyPrimaryKeys tName) else do
+      () <- when (any (T.null . T.strip . getColumnName) columns) $ throwError (EmptyColumnAt tName)
       () <- isTableEmpty
+      () <- isColsValid
+      () <- isTableNameValid
       () <- checkTableDuplicates [] columns
       return ()
 
