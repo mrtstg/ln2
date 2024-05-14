@@ -100,6 +100,8 @@ pub async fn execute_stand_check(
         match action {
             StandCheckStage::CopyFile(payload) => {
                 if let Some(container) = containers_map.get(payload.container.as_str()) {
+                    debug!("Copying into {}", payload.clone().file_path);
+                    debug!("{}", payload.clone().file_content);
                     match container
                         .copy_file_into(payload.clone().file_path, payload.file_content.as_bytes())
                         .await
