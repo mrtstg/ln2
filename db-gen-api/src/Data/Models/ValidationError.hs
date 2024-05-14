@@ -19,8 +19,16 @@ data ValidationError =
   | ReferenceLoop !TableName !ColumnName
   | InvalidRefenceFormat !TableName !ColumnName
   | CurricularReference !TableName !TableName
+  | EmptyColumnAt !TableName
+  | EmptyTableName
+  | InvalidTableName !TableName
+  | InvalidColumnName !TableName !ColumnName
 
 instance Show ValidationError where
+  show (InvalidColumnName tName cName) = unpack $ "Название столбца " <> tName <> "(" <> cName <> ") содержит запрещенные символы!"
+  show (InvalidTableName tName) = unpack $ "Название таблицы " <> tName <> " содержит запрещенные символы!"
+  show EmptyTableName = "Таблица с пустым именем"
+  show (EmptyColumnAt tName) = unpack $ "Колонка с пустым именем в таблице " <> tName
   show (CurricularReference tName tName') = unpack $ "Циклические ссылки между таблицами " <> tName <> " и " <> tName' <> "!"
   show (TooManyPrimaryKeys tName) = unpack $ "У таблицы " <> tName <> " больше одного первичного ключа!"
   show (DuplicateTable tName) = unpack $ "Создано несколько таблиц с именем " <> tName <> "!"
