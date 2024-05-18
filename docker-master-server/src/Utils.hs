@@ -40,7 +40,7 @@ validateStandCheck d = helper [] where
     () <- standContainerExists d containerName
     () <- standFilePathValid filePath
     helper stack ls
-  helper stack ((ExecuteCommand containerName cmd _ _ rValue):ls) = do
+  helper stack ((ExecuteCommand containerName cmd _ _ rValue _):ls) = do
     () <- standContainerExists d containerName
     () <- standCommandValid cmd
     case rValue of

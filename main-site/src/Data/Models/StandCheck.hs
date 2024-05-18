@@ -24,6 +24,7 @@ data StandCheckStage = CopyFile
   , getStandRecordStdout    :: !Bool
   , getStandFormattedOutput :: !Bool
   , getStandRecordVariable  :: !(Maybe T.Text)
+  , getErrorReported        :: !Bool
   }
   | CopyAnswer
   { getStageContainer :: !ContainerName
@@ -59,13 +60,14 @@ data StandCheckStage = CopyFile
 
 instance ToJSON StandCheckStage where
   toJSON (CopyFile container file path) = object ["action" .= String "copy", "container" .= container, "fileContent" .= file, "filePath" .= path]
-  toJSON (ExecuteCommand container command recordStdout formatOut recordVar) = object
+  toJSON (ExecuteCommand container command recordStdout formatOut recordVar reportError) = object
     [ "action" .= String "command"
     , "container" .= container
     , "command" .= command
     , "recordStdout" .= recordStdout
     , "formatOutput" .= formatOut
     , "recordInto" .= recordVar
+    , "reportError" .= reportError
     ]
   toJSON (CopyAnswer container path) = object
     [ "action" .= String "copyAnswer"
@@ -115,6 +117,7 @@ instance FromJSON StandCheckStage where
       <*> v .:? "recordStdout" .!= True
       <*> v .:? "formatOutput" .!= False
       <*> v .:? "recordInto"
+      <*> v .:? "reportError" .!= True
     (Just (String "copyAnswer")) -> CopyAnswer
       <$> v .: "container"
       <*> v .: "filePath"
@@ -154,14 +157,14 @@ convertStandCheckList endpoints answer stages = do
     case resp of
       (DBApiResult query) -> return $ return
         [ CopyFile container query "/db.sql"
-        , ExecuteCommand container "psql -f /db.sql" False True (Just "db-creation")
+        , ExecuteCommand container "psql -f /db.sql" False True (Just "db-creation") False
         ]
       (DBApiError err) -> return $ Left ("Ошибка проверки БД: " <> T.unpack err)
       _anyOther -> return $ Left "Неизвестная ошибка со стороны проверки БД"
   f (CopyAnswer container filePath) = return $ return [CopyFile container answer filePath]
   f (PSQLExists container query score) = return $ return
     [ CopyFile container ("select (CASE WHEN EXISTS(" <> query' <> ") THEN 1 ELSE 0 END);") scriptName
-    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv -t") False True (Just scriptName')
+    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv -t") False True (Just scriptName') False
     , DeclareVariable (scriptName' <> "-correct") (String "1")
     , CompareResults (scriptName' <> "-correct") scriptName' score
     ] where
@@ -170,13 +173,13 @@ convertStandCheckList endpoints answer stages = do
       scriptName' = T.pack scriptName
   f (PSQLQuery container query recordInto) = return $ return
     [ CopyFile container query scriptName
-    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv") False True recordInto
+    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv") False True recordInto False
     ] where
       scriptName = "/" <> unsafeRandomString 14 <> ".sql"
       scriptName' = T.pack scriptName
   f (PSQLAnswerQuery container recordInto) = return $ return
     [ CopyFile container answer scriptName
-    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv") False True recordInto
+    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv") False True recordInto True
     ] where
       scriptName = "/" <> unsafeRandomString 14 <> ".sql"
       scriptName' = T.pack scriptName

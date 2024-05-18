@@ -20,6 +20,7 @@ data StandCheckStage = CopyFile
   , getStandRecordStdout    :: !Bool
   , getStandFormattedOutput :: !Bool
   , getStandRecordVariable  :: !(Maybe T.Text)
+  , getErrorReported        :: !Bool
   }
   | CompareResults
   { getFirstCompareV  :: !T.Text
@@ -33,13 +34,14 @@ data StandCheckStage = CopyFile
 
 instance ToJSON StandCheckStage where
   toJSON (CopyFile container file path) = object ["action" .= String "copy", "container" .= container, "fileContent" .= file, "filePath" .= path]
-  toJSON (ExecuteCommand container command recordStdout formatOut recordVar) = object
+  toJSON (ExecuteCommand container command recordStdout formatOut recordVar reportError) = object
     [ "action" .= String "command"
     , "container" .= container
     , "command" .= command
     , "recordStdout" .= recordStdout
     , "formatOutput" .= formatOut
     , "recordInto" .= recordVar
+    , "reportError" .= reportError
     ]
   toJSON (CompareResults fvar svar score) = object
     [ "action" .= String "compareVars"
@@ -63,6 +65,7 @@ instance FromJSON StandCheckStage where
       <*> v .:? "recordStdout" .!= True
       <*> v .:? "formatOutput" .!= False
       <*> v .:? "recordInto"
+      <*> v .:? "reportError" .!= True
     (Just (String "compareVars")) -> CompareResults
       <$> v .: "first"
       <*> v .: "second"

@@ -124,6 +124,13 @@ pub async fn execute_stand_check(
                     .await
                     {
                         Ok((stdout, stderr, exit_code)) => {
+                            if payload.report_error && !stderr.is_empty() {
+                                check_res.messages.push(format!(
+                                    "Команда завершилась с ошибкой ({}):\n{}",
+                                    exit_code.unwrap_or(1),
+                                    stderr,
+                                ))
+                            }
                             if let Some(record_key) = payload.record_into {
                                 let record_out = if payload.format_output {
                                     format_command_out(stdout.clone())

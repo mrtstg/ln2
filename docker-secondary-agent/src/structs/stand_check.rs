@@ -32,6 +32,8 @@ pub struct ExecuteCommandStage {
     pub format_output: bool,
     #[serde(rename = "recordInto")]
     pub record_into: Option<String>,
+    #[serde(rename = "reportError")]
+    pub report_error: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]
