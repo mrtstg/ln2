@@ -156,7 +156,6 @@
     <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.container = v; await updateCallback(data) }}/>
     <DBConstructor dbData={data.data.database} changeCallback={(t) => data.data.database.tables = t}/>
     <br>
-    { JSON.stringify(data.data.database) }
   {:else}
     <DangerMessage title="Ошибка!" description="Неизвестный тип"/>
   {/if}
