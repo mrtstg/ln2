@@ -36,7 +36,7 @@ export const defaultCheckStageData = (stType: StageType): object => {
     case StageType.CopyFile:
       return {action: "copy", container: "", fileContent: "", filePath: ""}
     case StageType.ExecuteCommand:
-      return {action: "command", container: "", command: "", recordInto: "", formatOutput: true}
+      return {action: "command", container: "", command: "", recordInto: "", formatOutput: true, reportError: true}
     case StageType.CopyAnswer:
       return {action: "copyAnswer", container: "", filePath: ""}
     case StageType.DeclareVariable:

@@ -69,6 +69,10 @@
       <input type="checkbox" bind:checked={data.data.formatOutput} on:change={async () => await updateCallback(data)}/>
       Форматировать вывод
     </label>
+    <label class="checkbox">
+      <input type="checkbox" bind:checked={data.data.reportError} on:change={async () => await updateCallback(data)}/>
+      Сообщать пользователю об ошибках в процессе выполнения
+    </label>
     <div class="field">
       <label class="label"> Записать в переменную (<i>опционально</i>)</label>
       <div class="control">
