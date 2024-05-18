@@ -8,6 +8,7 @@ pub struct StandCheckResult {
     #[serde(rename = "maxScore")]
     pub max_score: u32,
     pub values: HashMap<String, Value>,
+    pub messages: Vec<String>,
 }
 
 impl Default for StandCheckResult {
@@ -16,6 +17,7 @@ impl Default for StandCheckResult {
             score: 0,
             max_score: 0,
             values: HashMap::new(),
+            messages: Vec::new(),
         }
     }
 }

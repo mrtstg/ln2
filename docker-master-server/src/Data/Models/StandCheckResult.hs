@@ -3,18 +3,21 @@ module Data.Models.StandCheckResult (StandCheckResult(..), defaultCheckResult) w
 
 import           Data.Aeson
 import qualified Data.Aeson.KeyMap as K
+import           Data.Text         (Text)
 
 data StandCheckResult = StandCheckResult
   { getCheckScore     :: !Int
   , getMaxCheckScore  :: !Int
   , getRecordedValues :: !(K.KeyMap Value)
+  , getUserMessages   :: ![Text]
   } deriving (Show, Eq)
 
 instance ToJSON StandCheckResult where
-  toJSON (StandCheckResult score maxScore vals) = object
+  toJSON (StandCheckResult score maxScore vals messages) = object
     [ "score" .= score
     , "maxScore" .= maxScore
     , "values" .= vals
+    , "messages" .= messages
     ]
 
 instance FromJSON StandCheckResult where
@@ -22,6 +25,7 @@ instance FromJSON StandCheckResult where
     <$> v .: "score"
     <*> v .: "maxScore"
     <*> v .: "values"
+    <*> v .: "messages"
 
 defaultCheckResult :: StandCheckResult
-defaultCheckResult = StandCheckResult 0 0 K.empty
+defaultCheckResult = StandCheckResult 0 0 K.empty []
