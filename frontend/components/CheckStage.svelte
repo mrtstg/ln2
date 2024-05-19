@@ -160,6 +160,58 @@
     <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.container = v; await updateCallback(data) }}/>
     <DBConstructor dbData={data.data.database} changeCallback={(t) => data.data.database.tables = t}/>
     <br>
+  {:else if selectedType == StageType.PSQLTableExists}
+    <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.container = v; await updateCallback(data) }}/>
+    <div class="field">
+      <label class="label"> Название таблицы </label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Название таблицы, без кавычек" bind:value={data.data.tableName} on:change={async () => await updateCallback(data)}>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label"> Количество зачтенных баллов, если таблица есть </label>
+      <div class="control">
+        <input class="input" type="number" placeholder="Количество баллов" bind:value={data.data.score} on:change={async () => await updateCallback(data)}>
+      </div>
+    </div>
+    <div class="field">
+      <label class="checkbox">
+        <input type="checkbox" bind:checked={data.data.reportError} on:change={async () => await updateCallback(data)}/>
+        Вывести ошибку пользователю, если таблица не найдена
+      </label>
+    </div>
+  {:else if selectedType == StageType.PSQLColumnTypeCheck}
+    <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.container = v; await updateCallback(data) }}/>
+    <div class="field">
+      <label class="label"> Название таблицы </label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Название таблицы, без кавычек" bind:value={data.data.tableName} on:change={async () => await updateCallback(data)}>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label"> Название столбца </label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Название столбца" bind:value={data.data.columnName} on:change={async () => await updateCallback(data)}>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label"> Ожидаемый тип </label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Тип данных" bind:value={data.data.awaitedType} on:change={async () => await updateCallback(data)}>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label"> Количество зачтенных баллов, если тип совпал </label>
+      <div class="control">
+        <input class="input" type="number" placeholder="Количество баллов" bind:value={data.data.score} on:change={async () => await updateCallback(data)}>
+      </div>
+    </div>
+    <div class="field">
+      <label class="checkbox">
+        <input type="checkbox" bind:checked={data.data.reportError} on:change={async () => await updateCallback(data)}/>
+        Вывести ошибку пользователю, если тип не совпадает
+      </label>
+    </div>
   {:else}
     <DangerMessage title="Ошибка!" description="Неизвестный тип"/>
   {/if}

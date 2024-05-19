@@ -31,9 +31,10 @@ data StandCheckStage = CopyFile
   , getStageFilePath  :: !FilePath
   }
   | CompareResults
-  { getFirstCompareV  :: !T.Text
-  , getSecondCompareV :: !T.Text
-  , getCompareScore   :: !Int
+  { getFirstCompareV         :: !T.Text
+  , getSecondCompareV        :: !T.Text
+  , getCompareScore          :: !Int
+  , getCompareFailureMessage :: !T.Text
   }
   | DeclareVariable
   { getStandDeclaringVariable :: !T.Text
@@ -56,7 +57,23 @@ data StandCheckStage = CopyFile
   | PSQLGenerateDatabase
   { getStageContainer :: !ContainerName
   , getDatabaseInfo   :: !DatabaseData
-  }deriving Show
+  }
+  | PSQLTableExists
+  { getStageContainer :: !ContainerName
+  , getDatabaseSchema :: !T.Text
+  , getTableName      :: !T.Text
+  , getCheckScore     :: !Int
+  , getErrorReported  :: !Bool
+  }
+  | PSQLColumnTypeCheck
+  { getStageContainer    :: !ContainerName
+  , getDatabaseSchema    :: !T.Text
+  , getTableName         :: !T.Text
+  , getColumnName        :: !T.Text
+  , getColumnAwaitedType :: !T.Text
+  , getCheckScore        :: !Int
+  , getErrorReported     :: !Bool
+  } deriving Show
 
 instance ToJSON StandCheckStage where
   toJSON (CopyFile container file path) = object ["action" .= String "copy", "container" .= container, "fileContent" .= file, "filePath" .= path]
@@ -74,11 +91,12 @@ instance ToJSON StandCheckStage where
     , "container" .= container
     , "filePath" .= path
     ]
-  toJSON (CompareResults fvar svar score) = object
+  toJSON (CompareResults fvar svar score failureMessage) = object
     [ "action" .= String "compareVars"
     , "first" .= String fvar
     , "second" .= String svar
     , "score" .= score
+    , "failureMessage" .= failureMessage
     ]
   toJSON (DeclareVariable varname varvalue) = object
     [ "action" .= String "declare"
@@ -106,6 +124,24 @@ instance ToJSON StandCheckStage where
     , "container" .= container
     , "database" .= db
     ]
+  toJSON (PSQLTableExists container schema name score reportError) = object
+    [ "action" .= String "psql_table_exists"
+    , "container" .= container
+    , "schema" .= schema
+    , "tableName" .= name
+    , "score" .= score
+    , "reportError" .= reportError
+    ]
+  toJSON (PSQLColumnTypeCheck container schema tableName colName awaitedType score reportError) = object
+    [ "action" .= String "psql_column_type_check"
+    , "container" .= container
+    , "schema" .= schema
+    , "tableName" .= tableName
+    , "columnName" .= colName
+    , "score" .= score
+    , "reportError" .= reportError
+    , "awaitedType" .= awaitedType
+    ]
 
 instance FromJSON StandCheckStage where
   parseJSON = withObject "StandCheckStage" $ \v -> case K.lookup "action" v of
@@ -125,6 +161,7 @@ instance FromJSON StandCheckStage where
       <$> v .: "first"
       <*> v .: "second"
       <*> v .: "score"
+      <*> v .:? "failureMessage" .!= ""
     (Just (String "declare")) -> DeclareVariable
       <$> v .: "variableName"
       <*> v .: "variableValue"
@@ -142,6 +179,20 @@ instance FromJSON StandCheckStage where
     (Just (String "psql_generate_database")) -> PSQLGenerateDatabase
       <$> v .: "container"
       <*> v .: "database"
+    (Just (String "psql_table_exists")) -> PSQLTableExists
+      <$> v .: "container"
+      <*> v .: "schema"
+      <*> v .: "tableName"
+      <*> v .: "score"
+      <*> v .: "reportError"
+    (Just (String "psql_column_type_check")) -> PSQLColumnTypeCheck
+      <$> v .: "container"
+      <*> v .: "schema"
+      <*> v .: "tableName"
+      <*> v .: "columnName"
+      <*> v .: "awaitedType"
+      <*> v .: "score"
+      <*> v .: "reportError"
     _anyOther -> fail "Wrong action type, excepted string!"
 
 -- развертка макросов в простые составные блоки
@@ -162,11 +213,39 @@ convertStandCheckList endpoints answer stages = do
       (DBApiError err) -> return $ Left ("Ошибка проверки БД: " <> T.unpack err)
       _anyOther -> return $ Left "Неизвестная ошибка со стороны проверки БД"
   f (CopyAnswer container filePath) = return $ return [CopyFile container answer filePath]
+  f (PSQLTableExists container schema name score reportError) = return $ return
+    [ CopyFile container ("SELECT CASE WHEN EXISTS(SELECT * FROM pg_tables WHERE tablename = '" <> name <> "' AND schemaname = '" <> schema <> "') THEN 1 ELSE 0 END;") scriptName
+    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv -t") False True (Just scriptName') False
+    , DeclareVariable (scriptName' <> "-correct") (String "1")
+    , CompareResults (scriptName' <> "-correct") scriptName' score compareError
+    ] where
+      scriptName = "/" <> unsafeRandomString 16 <> ".sql"
+      scriptName' = T.pack scriptName
+      compareError = if reportError then "Критерий не пройден: таблица " <> name <> " не существует." else ""
+  f (PSQLColumnTypeCheck container schema tableName colName awaitedType score reportError) = return $ return
+    [ CopyFile container (
+      "SELECT CASE WHEN ((SELECT data_type FROM information_schema.columns WHERE table_name = '"
+      <> tableName
+      <> "' AND column_name = '"
+      <> colName
+      <> "' AND table_schema = '"
+      <> schema
+      <> "') = '"
+      <> awaitedType
+      <> "') THEN 1 ELSE 0 END;"
+      ) scriptName
+    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv -t") False True (Just scriptName') False
+    , DeclareVariable (scriptName' <> "-correct") (String "1")
+    , CompareResults (scriptName' <> "-correct") scriptName' score compareError
+    ] where
+      scriptName = "/" <> unsafeRandomString 16 <> ".sql"
+      scriptName' = T.pack scriptName
+      compareError = if reportError then "Критерий не пройден: колонка " <> tableName <> "(" <> colName <> ") не прошла проверку типа" else ""
   f (PSQLExists container query score) = return $ return
     [ CopyFile container ("select (CASE WHEN EXISTS(" <> query' <> ") THEN 1 ELSE 0 END);") scriptName
     , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv -t") False True (Just scriptName') False
     , DeclareVariable (scriptName' <> "-correct") (String "1")
-    , CompareResults (scriptName' <> "-correct") scriptName' score
+    , CompareResults (scriptName' <> "-correct") scriptName' score ""
     ] where
       query' = if T.last query == ';' then T.init query else query
       scriptName = "/" <> unsafeRandomString 15 <> ".sql"
