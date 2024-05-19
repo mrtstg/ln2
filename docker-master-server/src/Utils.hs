@@ -48,7 +48,7 @@ validateStandCheck d = helper [] where
       (Just v) -> helper (v:stack) ls
   -- TODO: score upper bound
   -- TODO: forbid variable overflow
-  helper stack ((CompareResults fst' snd' score):ls) = do
+  helper stack ((CompareResults fst' snd' score _):ls) = do
     () <- stackVariableDeclared fst' stack
     () <- stackVariableDeclared snd' stack
     () <- if score > 0 then Right () else Left "Score can't be negative or zero!"

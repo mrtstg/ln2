@@ -169,6 +169,11 @@ pub async fn execute_stand_check(
                     if let Some(second_v) = variable_stack.get(payload.second.as_str()) {
                         if first_v == second_v {
                             check_res.score += payload.score;
+                        } else if !payload.on_failure_message.is_empty() {
+                            let mut msg = CheckMessage::new("Ошибка!".to_string());
+                            msg.blocks
+                                .push(CheckMessageBlock::new_message(payload.on_failure_message));
+                            check_res.messages.push(msg);
                         }
                     }
                 }

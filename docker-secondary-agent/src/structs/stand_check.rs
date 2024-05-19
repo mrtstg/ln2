@@ -41,6 +41,8 @@ pub struct CompareResultsStage {
     pub first: String,
     pub second: String,
     pub score: u32,
+    #[serde(rename = "failureMessage")]
+    pub on_failure_message: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]

@@ -23,9 +23,10 @@ data StandCheckStage = CopyFile
   , getErrorReported        :: !Bool
   }
   | CompareResults
-  { getFirstCompareV  :: !T.Text
-  , getSecondCompareV :: !T.Text
-  , getCompareScore   :: !Int
+  { getFirstCompareV         :: !T.Text
+  , getSecondCompareV        :: !T.Text
+  , getCompareScore          :: !Int
+  , getCompareFailureMessage :: !T.Text
   }
   | DeclareVariable
   { getStandDeclaringVariable :: !T.Text
@@ -43,11 +44,12 @@ instance ToJSON StandCheckStage where
     , "recordInto" .= recordVar
     , "reportError" .= reportError
     ]
-  toJSON (CompareResults fvar svar score) = object
+  toJSON (CompareResults fvar svar score failureMessage) = object
     [ "action" .= String "compareVars"
     , "first" .= String fvar
     , "second" .= String svar
     , "score" .= score
+    , "failureMessage" .= failureMessage
     ]
   toJSON (DeclareVariable varname varvalue) = object
     [ "action" .= String "declare"
@@ -70,6 +72,7 @@ instance FromJSON StandCheckStage where
       <$> v .: "first"
       <*> v .: "second"
       <*> v .: "score"
+      <*> v .:? "failureMessage" .!= ""
     (Just (String "declare")) -> DeclareVariable
       <$> v .: "variableName"
       <*> v .: "variableValue"
