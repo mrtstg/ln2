@@ -2,15 +2,15 @@
 module Data.Models.StandCheckResult (StandCheckResult(..), defaultCheckResult) where
 
 import           Data.Aeson
-import qualified Data.Aeson.KeyMap as K
-import           Data.Text         (Text)
+import qualified Data.Aeson.KeyMap        as K
+import           Data.Models.CheckMessage (CheckMessage)
 
 data StandCheckResult = StandCheckResult
   { getCheckScore     :: !Int
   , getMaxCheckScore  :: !Int
   , getRecordedValues :: !(K.KeyMap Value)
-  , getUserMessages   :: ![Text]
-  } deriving (Show, Eq)
+  , getUserMessages   :: ![CheckMessage]
+  } deriving Show
 
 instance ToJSON StandCheckResult where
   toJSON (StandCheckResult score maxScore vals messages) = object

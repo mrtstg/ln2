@@ -27,6 +27,7 @@ library
       App.Commands
       App.Parser
       App.Types
+      Data.Models.CheckMessage
       Data.Models.QueueTask
       Data.Models.QueueTaskResponse
       Data.Models.Stand

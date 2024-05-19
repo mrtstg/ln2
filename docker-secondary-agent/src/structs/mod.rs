@@ -1,4 +1,5 @@
 pub mod app_env;
+pub mod check_message;
 pub mod check_result;
 pub mod queue_response;
 pub mod queue_task;

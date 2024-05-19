@@ -1,3 +1,8 @@
+use crate::structs::check_message::*;
+use crate::structs::check_result::StandCheckResult;
+use crate::structs::stand_check::StandCheckStage;
+use crate::structs::stand_data::StandContainerData;
+use crate::structs::stand_data::StandData;
 use containers_api::conn::tty::TtyChunk;
 use docker_api::api::container::*;
 use docker_api::api::network::*;
@@ -14,11 +19,6 @@ use log::*;
 use std::collections::HashMap;
 use std::time::Duration;
 use tokio::time::sleep;
-
-use crate::structs::check_result::StandCheckResult;
-use crate::structs::stand_check::StandCheckStage;
-use crate::structs::stand_data::StandContainerData;
-use crate::structs::stand_data::StandData;
 
 pub async fn create_network(docker: Docker, network_name: String) -> Result<Network, String> {
     let network_api = Networks::new(docker);
@@ -125,11 +125,14 @@ pub async fn execute_stand_check(
                     {
                         Ok((stdout, stderr, exit_code)) => {
                             if payload.report_error && !stderr.is_empty() {
-                                check_res.messages.push(format!(
-                                    "Команда завершилась с ошибкой ({}):\n{}",
-                                    exit_code.unwrap_or(1),
-                                    stderr,
-                                ))
+                                let mut msg =
+                                    CheckMessage::new("Ошибка выполнения команды!".to_string());
+                                msg.blocks.push(CheckMessageBlock::new_message(format!(
+                                    "Команда завершилась с ошибкой ({}):",
+                                    exit_code.unwrap_or(1)
+                                )));
+                                msg.blocks.push(CheckMessageBlock::new_code(stderr.clone()));
+                                check_res.messages.push(msg);
                             }
                             if let Some(record_key) = payload.record_into {
                                 let record_out = if payload.format_output {

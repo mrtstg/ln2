@@ -37,6 +37,7 @@ library
       Crud.CourseTask
       Crud.TaskSolves
       Crud.User
+      Data.Models.CheckMessage
       Data.Models.Column
       Data.Models.Course
       Data.Models.CourseTask

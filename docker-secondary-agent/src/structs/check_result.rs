@@ -1,3 +1,4 @@
+use crate::structs::check_message::CheckMessage;
 use serde::*;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -8,7 +9,7 @@ pub struct StandCheckResult {
     #[serde(rename = "maxScore")]
     pub max_score: u32,
     pub values: HashMap<String, Value>,
-    pub messages: Vec<String>,
+    pub messages: Vec<CheckMessage>,
 }
 
 impl Default for StandCheckResult {
