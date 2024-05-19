@@ -73,10 +73,21 @@ export type TaskResultWrapper = {
   status: string
 }
 
+export type CheckMessageBlock = {
+  type: string,
+  content: string
+}
+
+export type CheckMessage = {
+  title: string,
+  blocks: [CheckMessageBlock]
+}
+
 export type TaskResult = {
   score: number,
   maxScore: number,
-  values: object
+  values: object,
+  messages: [CheckMessage]
 }
 
 export type TaskCreateResponse = {

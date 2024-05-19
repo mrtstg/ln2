@@ -5,7 +5,8 @@
   import DangerMessage from "../../components/DangerMessage.svelte"
   import WarningMessage from "../../components/WarningMessage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
-
+  import CheckMessageForm from "../../components/CheckMessage.svelte"
+  
   // client
   const url = API_URL;
   const api = new ApiClient(url)
@@ -106,6 +107,12 @@
                   <p> Статус проверки: { taskStatusToString(result.status) } </p>
                   {#if result.result != null}
                     <p> Набрано баллов: { result.result.score } из { result.result.maxScore } </p>
+                    {#if result.result.messages.length > 0}
+                      <h3 class="subtitle is-5 pt-5"> Сообщения </h3>
+                      {#each result.result.messages as message}
+                        <CheckMessageForm messageData={message} messageStyles="is-fullwidth"/>
+                      {/each}
+                    {/if}
                   {/if}
               {/if}
             {:catch e}
