@@ -15,6 +15,7 @@ import           Api.Role
 import           Api.User
 import           Control.Monad               (unless)
 import           Control.Monad.Trans.Reader
+import           Crud.User                   (getUserMemberCourses)
 import qualified Data.Map                    as M
 import           Data.Models.Course
 import           Data.Models.Role
@@ -60,15 +61,12 @@ getUserCourses pageN (UserDetails { getUserDetailsId = uId, getUserRoles = roles
     return (courses, coursesAmount)
 
 getUserMembershipCourses :: [RoleDetails] -> Int -> Handler ([Entity Course], Int)
-getUserMembershipCourses roles pageN = let
-  memberCourses :: [CourseId]
-  memberCourses = map (\(RoleDetails name _) -> (CourseKey . unpack . T.drop 8) name) $
-    filter (\(RoleDetails name _) -> T.take 8 name == "members-") roles
-  in runDB $ do
-    let opts = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize, Desc CourseCreatedAt]
-    courses <- selectList [ CourseId <-. memberCourses ] opts
-    coursesAmount <- count [ CourseId <-. memberCourses ]
-    return (courses, coursesAmount)
+getUserMembershipCourses roles pageN = runDB $ do
+  let memberCourses = getUserMemberCourses roles
+  let opts = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize, Desc CourseCreatedAt]
+  courses <- selectList [ CourseId <-. memberCourses ] opts
+  coursesAmount <- count [ CourseId <-. memberCourses ]
+  return (courses, coursesAmount)
 
 -- TODO: unify interface
 createCourse :: String -> Int -> CourseCreate -> Handler (Maybe (Entity Course))
