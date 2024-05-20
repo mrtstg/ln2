@@ -3,6 +3,7 @@ module Crud.User
   ( retrieveCourseUsers
   , getUserMemberCourses
   , getUserAdminCourses
+  , retrieveUsers
   ) where
 
 import           Api.User
@@ -21,6 +22,17 @@ getUserAdminCourses roles = map (\(RoleDetails name _) -> (CourseKey . unpack . 
 getUserMemberCourses :: [RoleDetails] -> [CourseId]
 getUserMemberCourses roles = map (\(RoleDetails name _) -> (CourseKey . unpack . T.drop 8) name) $
     filter (\(RoleDetails name _) -> T.take 8 name == "members-") roles
+
+retrieveUsers :: [Int] -> IO (M.Map Int (UserGetResult UserDetails))
+retrieveUsers uids = helper M.empty uids where
+  helper :: M.Map Int (UserGetResult UserDetails) -> [Int] -> IO (M.Map Int (UserGetResult UserDetails))
+  helper acc [] = return acc
+  helper acc (uid:ids) = do
+    case M.lookup uid acc of
+      Nothing -> do
+        v <- getUserById' uid
+        helper (M.insert uid v acc) ids
+      _valueExists -> helper acc ids
 
 retrieveCourseUsers :: [Entity Course] -> IO (M.Map Int (UserGetResult UserDetails))
 retrieveCourseUsers = helper M.empty where
