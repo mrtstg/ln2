@@ -1,21 +1,26 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Crud.TaskSolves
   ( getTaskSolves
   , createTaskSolve
   , isUserReachedSolveTimeout
+  , getAvailableUserSolvedCourses
+  , getAvailableCourseSolveUserIds
   ) where
-
 
 import           Api.Task
 import           Crud.User
 import           Data.Aeson             (eitherDecode)
 import           Data.ByteString.Lazy   (fromStrict)
+import           Data.List              (intersect)
+import           Data.Models.Role
 import           Data.Models.StandCheck
 import           Data.Models.User
 import qualified Data.Text              as T
 import           Data.Text.Encoding     (encodeUtf8)
 import           Data.Time.Clock
 import           Database.Persist
+import           Database.Persist.Sql
 import           Foundation
 import           Handlers.Utils
 import           Utils.Auth
@@ -32,6 +37,33 @@ isUserReachedSolveTimeout (UserDetails { .. }) compareDate = do
     (Just (Entity _ CourseSolves { .. })) -> do
       let diff = round $ diffUTCTime compareDate courseSolvesCreatedAt :: Int
       return $ diff < 10
+
+type TargetRoles = [RoleDetails]
+type RequesterRoles = [RoleDetails]
+getAvailableUserSolvedCourses :: Int -> TargetRoles -> RequesterRoles -> Handler ([Entity Course], Int)
+getAvailableUserSolvedCourses pageN targetRoles requesterRoles = do
+  let targetMemberCourses = getUserMemberCourses targetRoles
+  let userAdminCourses = getUserAdminCourses requesterRoles
+  let intersectCourses = if adminRoleGranted requesterRoles then targetMemberCourses else targetMemberCourses `intersect` userAdminCourses
+  let params = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize]
+  runDB $ do
+    ca <- count [CourseId <-. intersectCourses]
+    cs <- selectList [CourseId <-. intersectCourses] params
+    return (cs, ca)
+
+getAvailableCourseSolveUserIds :: Int -> CourseId -> Handler ([Int], Int)
+getAvailableCourseSolveUserIds pageN courseId = let
+  countQuery = "SELECT COUNT(DISTINCT user_id) FROM course_solves WHERE task_id IN (SELECT id FROM course_task WHERE course = ?);"
+  query = "SELECT DISTINCT user_id FROM course_solves WHERE task_id IN (SELECT id FROM course_task WHERE course = ?) LIMIT ? OFFSET ?;"
+  unpackValues :: [Int] -> [Single PersistValue] -> [Int]
+  unpackValues acc (Single (PersistInt64 v):ls) = unpackValues (fromIntegral v:acc) ls
+  unpackValues acc (_:ls) = unpackValues acc ls
+  unpackValues acc [] = acc
+  in do
+    runDB $ do
+      res <- rawSql query [toPersistValue courseId, toPersistValue defaultPageSize, toPersistValue $ (pageN - 1) * defaultPageSize]
+      am <- rawSql countQuery [toPersistValue courseId]
+      return (unpackValues [] res, head $ unpackValues [] am)
 
 getTaskSolves :: Int -> UserId -> CourseTaskId -> Handler ([Entity CourseSolves], Int)
 getTaskSolves pageN uid ctId = do
