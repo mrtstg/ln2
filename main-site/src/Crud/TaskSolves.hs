@@ -22,6 +22,8 @@ import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
 
+type UserId = Int
+
 isUserReachedSolveTimeout :: UserDetails -> UTCTime -> Handler Bool
 isUserReachedSolveTimeout (UserDetails { .. }) compareDate = do
   lastTask' <- runDB $ selectFirst [CourseSolvesUserId ==. getUserDetailsId] [Desc CourseSolvesCreatedAt]
@@ -31,11 +33,11 @@ isUserReachedSolveTimeout (UserDetails { .. }) compareDate = do
       let diff = round $ diffUTCTime compareDate courseSolvesCreatedAt :: Int
       return $ diff < 10
 
-getTaskSolves :: Int -> UserDetails -> CourseTaskId -> Handler ([Entity CourseSolves], Int)
-getTaskSolves pageN (UserDetails { .. }) ctId = do
+getTaskSolves :: Int -> UserId -> CourseTaskId -> Handler ([Entity CourseSolves], Int)
+getTaskSolves pageN uid ctId = do
   runDB $ do
     let params = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize, Desc CourseSolvesCreatedAt]
-    let filters = [CourseSolvesUserId ==. getUserDetailsId, CourseSolvesTaskId ==. ctId]
+    let filters = [CourseSolvesUserId ==. uid, CourseSolvesTaskId ==. ctId]
     solves <- selectList filters params
     solvesAmount <- count filters
     return (solves, solvesAmount)

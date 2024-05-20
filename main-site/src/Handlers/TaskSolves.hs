@@ -25,7 +25,7 @@ instance FromJSON TaskAnswer where
 
 getApiTaskSolvesR :: CourseTaskId -> Handler Value
 getApiTaskSolvesR ctId = do
-  d@(UserDetails { .. }) <- requireApiAuth
+  UserDetails { .. } <- requireApiAuth
   pageN <- getPageNumber
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
@@ -38,7 +38,7 @@ getApiTaskSolvesR ctId = do
           let isMember = isUserCourseMember courseUUID getUserRoles
           if not isMember then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
             -- TODO: получение
-            (solves, solvesA) <- getTaskSolves pageN d ctId
+            (solves, solvesA) <- getTaskSolves pageN getUserDetailsId ctId
             sendStatusJSON status200 $ object
               [ "total" .= solvesA
               , "pageSize" .= defaultPageSize
