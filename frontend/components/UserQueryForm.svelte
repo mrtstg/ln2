@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ApiClient } from "../api/client"
-  import type { UserQuery } from "../api/types"
+  import type { UserDetails, UserQuery } from "../api/types"
   import DangerMessage from "./DangerMessage.svelte"
   import SuccessMessage from "./SuccessMessage.svelte"
 
@@ -10,7 +10,7 @@
   export let getAdmins: boolean = false
   export let pageNumber: number = 1
   export let actionText: string = ''
-  export let actionCallback: (login: string) => Promise<void> = async (_) => {}
+  export let actionCallback: (data: UserDetails) => Promise<void> = async (_) => {}
 
   let client = new ApiClient(apiUrl)
 
@@ -56,7 +56,7 @@
           <div class="is-flex is-align-items-center is-flex-direction-row is-justify-content-space-between is-fullwidth">
             <span> { userData.name } </span>
             {#if actionText.length > 0}
-              <button class="button" on:click={async () => await actionCallback(userData.login)}> { actionText } </button>
+              <button class="button" on:click={async () => await actionCallback(userData)}> { actionText } </button>
             {/if}
           </div>
         </div>

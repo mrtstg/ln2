@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ApiClient } from "../../api/client"
+  import type { UserDetails } from "../../api/types";
   import UserQueryForm from "../../components/UserQueryForm.svelte"
 
   const url = API_URL;
@@ -17,8 +18,8 @@
     usersUpdate()
   }
 
-  const userCallback = async (login: string) => {
-    await api.assignCourseMember(courseID!, login)
+  const userCallback = async (data: UserDetails) => {
+    await api.assignCourseMember(courseID!, data.login)
     updateWindows()   
   }
 
