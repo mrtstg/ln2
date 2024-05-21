@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { ApiClient } from "../../../api/client"
-  import type { UserQuery } from "../../../api/types"
-  import DangerMessage from "../../../components/DangerMessage.svelte"
-  import SuccessMessage from "../../../components/SuccessMessage.svelte"
+  import { ApiClient } from "../api/client"
+  import type { UserQuery } from "../api/types"
+  import DangerMessage from "./DangerMessage.svelte"
+  import SuccessMessage from "./SuccessMessage.svelte"
 
   export let apiUrl: string
   export let courseId: string

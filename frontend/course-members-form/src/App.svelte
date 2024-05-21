@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ApiClient } from "../../api/client"
-  import UserQueryForm from "./lib/UserQueryForm.svelte"
+  import UserQueryForm from "../../components/UserQueryForm.svelte"
 
   const url = API_URL;
   const api = new ApiClient(url)
