@@ -20,6 +20,7 @@ import           Handlers.AssignMember
 import           Handlers.CourseMembers
 import           Handlers.CoursePage
 import           Handlers.Courses
+import           Handlers.CourseSolves
 import           Handlers.CourseTask
 import           Handlers.CourseTaskEdit
 import           Handlers.Index
