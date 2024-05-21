@@ -107,6 +107,14 @@ instance Yesod App where
     <div>
       <p .title> Страница не найдена!
 |]
+  errorHandler (PermissionDenied err) = fmap toTypedContent $ defaultLayout $ do
+    setTitle "Нет доступа!"
+    toWidget [hamlet|
+<section .hero.is-danger.is-medium>
+  <div .hero-body>
+    <div>
+      <p .title> #{err}
+|]
   errorHandler e = defaultErrorHandler e
   defaultLayout widget = do
     d' <- checkAuth
