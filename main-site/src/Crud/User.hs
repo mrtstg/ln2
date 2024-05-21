@@ -4,6 +4,7 @@ module Crud.User
   , getUserMemberCourses
   , getUserAdminCourses
   , retrieveUsers
+  , unwrapUserMap
   ) where
 
 import           Api.User
@@ -23,8 +24,16 @@ getUserMemberCourses :: [RoleDetails] -> [CourseId]
 getUserMemberCourses roles = map (\(RoleDetails name _) -> (CourseKey . unpack . T.drop 8) name) $
     filter (\(RoleDetails name _) -> T.take 8 name == "members-") roles
 
+unwrapUserMap :: M.Map Int (UserGetResult UserDetails) -> [UserDetails]
+unwrapUserMap = reverse . helper [] . M.toList where
+  helper :: [UserDetails] -> [(Int, UserGetResult UserDetails)] -> [UserDetails]
+  helper acc [] = acc
+  helper acc ((_, res):ls) = case res of
+    (UserGetResult d) -> helper (d:acc) ls
+    _anyError         -> helper acc ls
+
 retrieveUsers :: [Int] -> IO (M.Map Int (UserGetResult UserDetails))
-retrieveUsers uids = helper M.empty uids where
+retrieveUsers = helper M.empty where
   helper :: M.Map Int (UserGetResult UserDetails) -> [Int] -> IO (M.Map Int (UserGetResult UserDetails))
   helper acc [] = return acc
   helper acc (uid:ids) = do
