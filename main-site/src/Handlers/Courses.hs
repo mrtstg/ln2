@@ -43,6 +43,7 @@ courseList (courses, cAmount) isAdmin pageN coursePageR coursesR = do
           $if isAdmin
             <footer .card-footer>
               <a href=@{CourseMembersR cId} .card-footer-item> Участники
+              <a href=@{CourseSolvesR cId} .card-footer-item> Решения
               <a href=@{AdminCourseR cId} .card-footer-item> Редактировать
   <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
     <a href=@{coursesR}?page=#{pageN - 1}>
