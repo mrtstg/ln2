@@ -11,9 +11,13 @@ export default defineConfig(({ command, mode }) => {
     build: {
       rollupOptions: {
         output: {
-          entryFileNames: '[name].js'
+          entryFileNames: '[name].js',
+          assetFileNames: '[name].css'
         }
       }
+    },
+    optimizeDeps: {
+      exclude: ["codemirror"]
     }
   }
 })
