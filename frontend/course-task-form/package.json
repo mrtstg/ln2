@@ -17,5 +17,9 @@
     "tslib": "^2.6.2",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
+  },
+  "dependencies": {
+    "codemirror": "^6.0.1",
+    "svelte-codemirror-editor": "^1.4.0"
   }
 }
