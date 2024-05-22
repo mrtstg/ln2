@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CodeMirror from "svelte-codemirror-editor"
   import { taskStatusToString, taskCreateErrorToString } from "../../api/utils"
   import { ApiClient } from "../../api/client"
   import type { CourseTaskSolve, CourseSolvesResponse, TaskResult, TaskResultWrapper, TaskCreateResponse } from "../../api/types"
@@ -92,7 +93,14 @@
         <h2 class="subtitle is-4"> Решение { selectedTask.id } </h2>
         <div class="field">
           <label class="label"> Ответ пользователя </label>
-          <textarea class="textarea" rows="{Math.min(25, selectedTask.input.split('\n').length)}" readonly>{ selectedTask.input }</textarea>
+          <CodeMirror styles={{
+            "&": {
+              "font-size": "1rem"
+            }
+          }} 
+          bind:value={selectedTask.input}
+          readonly={true}
+          />
         </div>
         <button class="button is-danger is-fullwidth" on:click={unselectTask}> Назад </button>
         {#if taskResultPromise != null}
@@ -169,7 +177,11 @@
   {/if}
   <div class="field required">
     <label class="label"> Решение </label>
-    <textarea class="textarea" bind:value={answer}></textarea>
+    <CodeMirror styles={{
+      "&": {
+        "font-size": "1rem"
+      }
+    }} bind:value={answer}/>
   </div>
   {#if sendPromise == null}
     <button class="button is-fullwidth is-success" on:click={async () => { sendSolution() }}> Отправить решение </button>
