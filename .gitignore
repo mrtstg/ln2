@@ -12,3 +12,4 @@ logs
 pids
 static/js/*
 !static/js/navbar.js
+static/css/*
