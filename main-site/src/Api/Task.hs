@@ -4,18 +4,21 @@ module Api.Task
   , TaskResult(..)
   , createTask''
   , createTask'
+  , getTask'
+  , getTask
   ) where
 
-import           Control.Exception          (catch)
+import           Control.Exception            (catch)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
-import           Data.ByteString.Lazy       as LBS
+import           Data.ByteString.Lazy         as LBS
 import           Data.Models.Endpoints
 import           Data.Models.StandCheck
-import           Data.Text                  (Text)
+import           Data.Models.StandCheckResult
+import           Data.Text                    (Text)
 import           Network.HTTP.Simple
 import           System.Environment
-import           Yesod.Core                 (liftIO)
+import           Yesod.Core                   (liftIO)
 
 type StandName = Text
 
@@ -47,6 +50,27 @@ createTask' standName standActions = do
   r <- runExceptT (createTask standName standActions) `catch` taskHandler'
   case r of
     ~(Right v) -> return v
+
+getTask' :: EndpointsConfiguration -> String -> IO (TaskResult StandCheckResult)
+getTask' e t = do
+  r <- runExceptT (getTask e t) `catch` taskHandler'
+  case r of
+    ~(Right v) -> return v
+
+getTask :: EndpointsConfiguration -> String -> ExceptT HttpException IO (TaskResult StandCheckResult)
+getTask EndpointsConfiguration { getDockerMasterUrl = apiUrl } taskUUID = do
+  let reqString = "GET " <> apiUrl <> "/task/" <> taskUUID
+  request <- parseRequest reqString
+  response <- httpBS request
+  let requestBody = getResponseBody response
+  case getResponseStatusCode response of
+    404 -> return $ TaskError "Not found!"
+    200 -> do
+      let parseRes = (eitherDecode . LBS.fromStrict) requestBody
+      case parseRes of
+        (Left e)                        -> return $ TaskError e
+        (Right d@(StandCheckResult {})) -> return $ TaskResult d
+    _unexpectedCode -> return $ TaskError "Unexpected response code"
 
 createTask :: StandName -> [StandCheckStage] -> ExceptT HttpException IO (TaskResult String)
 createTask standName standActions = do
