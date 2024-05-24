@@ -35,6 +35,7 @@ library
       App.Types
       Crud.Course
       Crud.CourseTask
+      Crud.Task
       Crud.TaskSolves
       Crud.User
       Data.Models.CheckMessage
