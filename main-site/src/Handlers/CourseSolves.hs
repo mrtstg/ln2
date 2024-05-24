@@ -116,16 +116,18 @@ getUserTaskSolvesR ctId uId = do
     <tbody>
       $forall (Entity (CourseSolvesKey csId) (CourseSolves { .. })) <- solves
         <tr>
-          <td> #{ csId }
           $case M.lookup csId tasksMap
             $of Nothing
+              <td> #{ csId }
               <td> -/-
               <td> Неизвестно
             $of (Just (StandCheckResultWrapper { .. }))
               $case getWrapperResult
                 $of Nothing
+                  <td> #{ csId }
                   <td> -
                 $of (Just (StandCheckResult { .. }))
+                  <td><a href=@{UserSolveR (CourseSolvesKey csId)}> #{csId}
                   <td> #{getCheckScore} / #{getMaxCheckScore}
               <td> #{ taskStatusToText getWrapperStatus }
   <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
