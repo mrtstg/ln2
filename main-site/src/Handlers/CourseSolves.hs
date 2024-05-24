@@ -9,6 +9,7 @@ module Handlers.CourseSolves
   , getUserSolveR
   ) where
 
+import           Api.Task
 import           Api.User
 import           Crud.CourseTask              (getCourseTasks)
 import           Crud.Task
@@ -110,9 +111,10 @@ getUserTaskSolvesR ctId uId = do
   <table .table.is-fullwidth>
     <thead>
       <tr>
-        <th> Решение </th>
-        <th> Количество баллов </th>
-        <th> Статус проверки </th>
+        <th> Решение
+        <th> Количество баллов
+        <th> Статус проверки
+        <th> Принято
     <tbody>
       $forall (Entity (CourseSolvesKey csId) (CourseSolves { .. })) <- solves
         <tr>
@@ -130,6 +132,10 @@ getUserTaskSolvesR ctId uId = do
                   <td><a href=@{UserSolveR (CourseSolvesKey csId)}> #{csId}
                   <td> #{getCheckScore} / #{getMaxCheckScore}
               <td> #{ taskStatusToText getWrapperStatus }
+          $if courseSolvesCorrect
+            <td .has-text-success> Да
+          $else
+            <td> Нет
   <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
     <a href=@{UserTaskSolvesR ctId uId}?page=#{pageN - 1}>
       <button .button.is-primary.mx-3 :pageN == 1:disabled> Назад
@@ -139,7 +145,28 @@ getUserTaskSolvesR ctId uId = do
         _anyError -> redirect $ CourseSolvesR cId
 
 getUserSolveR :: CourseSolvesId -> Handler Html
-getUserSolveR ctId = undefined
+getUserSolveR csId@(CourseSolvesKey csId') = do
+  (UserDetails { getUserRoles = roles }) <- requireAuth
+  courseSolve' <- runDB $ get csId
+  case courseSolve' of
+    Nothing -> notFound
+    (Just (CourseSolves { .. })) -> do
+      courseTask' <- runDB $ get courseSolvesTaskId
+      case courseTask' of
+        Nothing -> notFound
+        (Just (CourseTask { courseTaskCourse = cId@(CourseKey cId') , .. })) -> do
+          if not $ isUserCourseAdmin cId' roles then permissionDenied "У вас нет доступа к курсу!" else do
+            App { endpointsConfiguration = endpoints } <- getYesod
+            taskRes <- liftIO $ getTask' endpoints csId'
+            defaultLayout $ do
+              setTitle (toHtml $ "Решение " <> csId')
+              [whamlet|
+<div .container.pt-2.py-3>
+  <h1 .title.pb-3> Решение #{csId'}
+  $case taskRes
+    $of (TaskResult (StandCheckResultWrapper { .. }))
+      <div>
+|]
 
 getUserSolvesR :: Int -> Handler Html
 getUserSolvesR = undefined
