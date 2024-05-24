@@ -30,3 +30,6 @@ start-dev: $(COMPOSE_FILE)
 
 destroy-dev: $(COMPOSE_FILE)
 	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile dev down
+
+download-bulma: ./static/css/
+	wget https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css -O ./static/css/bulma.min.css

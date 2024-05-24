@@ -127,7 +127,7 @@ $doctype 5
     <meta charset=utf-8>
     ^{pageHead pc}
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <link rel="stylesheet" href="/static/css/bulma.min.css">
   <body>
     <nav .navbar.p-3.mb-3 role="navigation" aria-label="Main navigation">
       <div .navbar-brand>
