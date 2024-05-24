@@ -6,11 +6,11 @@ module Crud.Task
 import           Api.Task
 import qualified Data.Map                     as M
 import           Data.Models.Endpoints        (EndpointsConfiguration)
-import           Data.Models.StandCheckResult (StandCheckResult)
+import           Data.Models.StandCheckResult (StandCheckResultWrapper (..))
 
-retrieveTasks :: EndpointsConfiguration -> [String] -> IO (M.Map String (TaskResult StandCheckResult))
+retrieveTasks :: EndpointsConfiguration -> [String] -> IO (M.Map String (TaskResult StandCheckResultWrapper))
 retrieveTasks e = helper M.empty where
-  helper :: M.Map String (TaskResult StandCheckResult) -> [String] -> IO (M.Map String (TaskResult StandCheckResult))
+  helper :: M.Map String (TaskResult StandCheckResultWrapper) -> [String] -> IO (M.Map String (TaskResult StandCheckResultWrapper))
   helper acc [] = return acc
   helper acc (tid:ids) = do
     case M.lookup tid acc of
