@@ -1,9 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Data.Models.StandCheckResult (StandCheckResult(..), defaultCheckResult) where
+module Data.Models.StandCheckResult
+  ( StandCheckResult(..)
+  , defaultCheckResult
+  , StandCheckResultWrapper(..)
+  ) where
 
 import           Data.Aeson
 import qualified Data.Aeson.KeyMap        as K
 import           Data.Models.CheckMessage (CheckMessage)
+
+data StandCheckResultWrapper = StandCheckResultWrapper
+  { getWrapperResult :: !(Maybe StandCheckResult)
+  , getWrapperStatus :: !String
+  } deriving Show
+
+instance FromJSON StandCheckResultWrapper where
+  parseJSON = withObject "StandCheckResultWrapper" $ \v -> StandCheckResultWrapper
+    <$> v .: "result"
+    <*> v .: "status"
 
 data StandCheckResult = StandCheckResult
   { getCheckScore     :: !Int

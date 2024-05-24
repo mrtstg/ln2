@@ -51,13 +51,13 @@ createTask' standName standActions = do
   case r of
     ~(Right v) -> return v
 
-getTask' :: EndpointsConfiguration -> String -> IO (TaskResult StandCheckResult)
+getTask' :: EndpointsConfiguration -> String -> IO (TaskResult StandCheckResultWrapper)
 getTask' e t = do
   r <- runExceptT (getTask e t) `catch` taskHandler'
   case r of
     ~(Right v) -> return v
 
-getTask :: EndpointsConfiguration -> String -> ExceptT HttpException IO (TaskResult StandCheckResult)
+getTask :: EndpointsConfiguration -> String -> ExceptT HttpException IO (TaskResult StandCheckResultWrapper)
 getTask EndpointsConfiguration { getDockerMasterUrl = apiUrl } taskUUID = do
   let reqString = "GET " <> apiUrl <> "/task/" <> taskUUID
   request <- parseRequest reqString
@@ -68,8 +68,8 @@ getTask EndpointsConfiguration { getDockerMasterUrl = apiUrl } taskUUID = do
     200 -> do
       let parseRes = (eitherDecode . LBS.fromStrict) requestBody
       case parseRes of
-        (Left e)                        -> return $ TaskError e
-        (Right d@(StandCheckResult {})) -> return $ TaskResult d
+        (Left e)                               -> return $ TaskError e
+        (Right d@(StandCheckResultWrapper {})) -> return $ TaskResult d
     _unexpectedCode -> return $ TaskError "Unexpected response code"
 
 createTask :: StandName -> [StandCheckStage] -> ExceptT HttpException IO (TaskResult String)
