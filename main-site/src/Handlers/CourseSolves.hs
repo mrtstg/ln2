@@ -20,6 +20,7 @@ import qualified Data.Map                     as M
 import           Data.Maybe                   (isJust)
 import           Data.Models.StandCheckResult
 import           Data.Models.User
+import           Data.Text.Encoding           (decodeUtf8)
 import           Database.Persist
 import           Foundation
 import           Handlers.Utils
@@ -163,9 +164,25 @@ getUserSolveR csId@(CourseSolvesKey csId') = do
               [whamlet|
 <div .container.pt-2.py-3>
   <h1 .title.pb-3> Решение #{csId'}
+  <h2 .subtitle> Ответ пользователя
+  <pre>
+    <code>
+      #{ decodeUtf8 courseSolvesUserInput }
+  <h2 .subtitle> Результат проверки
   $case taskRes
     $of (TaskResult (StandCheckResultWrapper { .. }))
-      <div>
+      <p> Статус проверки: #{ taskStatusToText getWrapperStatus }
+      $case getWrapperResult
+        $of (Just (StandCheckResult { .. }))
+          <p> Баллов: #{getCheckScore} / #{getMaxCheckScore}
+          $forall message <- getUserMessages
+            ^{generateCheckMessage message}
+    $of anyError
+      <article .message.is-warning>
+        <div .message-header>
+          <p> Ошибка!
+        <div .message-body>
+          Решение не удалось загрузить или оно более не хранится в базе.
 |]
 
 getUserSolvesR :: Int -> Handler Html
