@@ -1,16 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Handlers.Utils
   ( getPageNumber
   , defaultPageSize
   , requireAuth
   , requireApiAuth
   , getBoolParameter
+  , generateCheckMessage
   ) where
 
 import           Api.Login
 import qualified Api.Login                  as L
 import           Control.Exception          (catch)
 import           Control.Monad.Trans.Except (runExceptT)
+import           Data.Models.CheckMessage
 import           Data.Models.User
 import           Data.Text                  (Text, unpack)
 import           Foundation
@@ -24,6 +28,21 @@ authHandler _ = return $ Right L.InternalError -- MUST return Right
 
 api403Error :: Value
 api403Error = object [ "error" .= String "Unauthorized!" ]
+
+generateCheckMessage :: CheckMessage -> WidgetFor m ()
+generateCheckMessage (CheckMessage { .. }) = [whamlet|
+<article .message>
+  <div .message-header>
+    <p> #{getMessageTitle}
+  <div .message-body>
+    $forall (CheckMessageBlock { .. }) <- getMessageBlocks
+      $case getBlockType
+        $of Message
+          <p> #{getBlockContent}
+        $of Code
+          <pre>
+            #{getBlockContent}
+|]
 
 requireApiAuth :: Handler UserDetails
 requireApiAuth = do
