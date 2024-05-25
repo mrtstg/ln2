@@ -1,7 +1,11 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.CheckMessage (CheckMessage(..)) where
+module Data.Models.CheckMessage
+  ( CheckMessage(..)
+  , CheckMessageBlock(..)
+  , CheckBlockType(..)
+  ) where
 
 import           Data.Aeson
 import           Data.Text  (Text)
@@ -19,7 +23,7 @@ instance FromJSON CheckBlockType where
     _ -> fail "Invalid CheckBlockType!"
 
 data CheckMessageBlock = CheckMessageBlock
-  { getBlockType    :: !Text
+  { getBlockType    :: !CheckBlockType
   , getBlockContent :: !Text
   } deriving Show
 
