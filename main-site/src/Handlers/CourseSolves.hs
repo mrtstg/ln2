@@ -5,7 +5,6 @@ module Handlers.CourseSolves
   ( getCourseSolvesR
   , getCourseUserTasksR
   , getUserTaskSolvesR
-  , getUserSolvesR
   , getUserSolveR
   ) where
 
@@ -189,6 +188,3 @@ getUserSolveR csId@(CourseSolvesKey csId') = do
         <div .message-body>
           Решение не удалось загрузить или оно более не хранится в базе.
 |]
-
-getUserSolvesR :: Int -> Handler Html
-getUserSolvesR = undefined

@@ -86,7 +86,6 @@ mkYesodData
 /solves/tasks/#CourseId/#Int/ CourseUserTasksR GET
 /solves/task/#CourseTaskId/#Int/ UserTaskSolvesR GET
 /solves/solve/#CourseSolvesId UserSolveR GET
-/solves/user/#Int UserSolvesR GET
 /task/#CourseTaskId CourseTaskR GET
 /task/#CourseId/#CourseTaskId/edit CourseTaskEditR GET
 /api/courses ApiCoursesR GET POST
