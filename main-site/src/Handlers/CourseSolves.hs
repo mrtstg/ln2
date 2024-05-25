@@ -90,6 +90,7 @@ getUserTaskSolvesR ctId uId = do
           if not $ isUserCourseAdmin cId' roles then permissionDenied "У вас нет доступа к курсу!" else do
             pageN <- getPageNumber
             (solves, solvesTotal) <- getTaskSolves pageN uId ctId
+            taskAccepted <- runDB $ exists [ CourseSolveAcceptionTaskId ==. ctId, CourseSolveAcceptionUserId ==. uId ]
 
             App { endpointsConfiguration = endpoints } <- getYesod
             let solvesIds = map ((\(CourseSolvesKey tId) -> tId) . entityKey) solves
@@ -108,6 +109,10 @@ getUserTaskSolvesR ctId uId = do
         <p> Внимание!
       <div .message-body>
         Часть заданий уже не сохранена в базе или не была загружена. Баллы для таких заданий не отображаются
+  $if taskAccepted
+    <article .message.is-success>
+      <div .message-body>
+        Данное занятие принято системой как решенное.
   <a class="button is-link" href=@{CourseTaskR ctId}> Открыть задание
   <table .table.is-fullwidth>
     <thead>
