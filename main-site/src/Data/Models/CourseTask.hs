@@ -33,7 +33,7 @@ instance FromJSON CourseTaskPatch where
     <$> v .:? "name"
     <*> v .:? "content"
     <*> v .:? "order"
-    <*> v .:? "actions"
+    <*> v .:? "standActions"
 
 data CourseTaskCreate = CourseTaskCreate
   { getCourseTaskCreateName            :: !Text
