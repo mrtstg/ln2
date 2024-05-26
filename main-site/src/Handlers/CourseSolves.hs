@@ -112,7 +112,13 @@ getUserTaskSolvesR ctId uId = do
     <article .message.is-success>
       <div .message-body>
         Данное занятие принято системой как решенное.
-  <a class="button is-link" href=@{CourseTaskR ctId}> Открыть задание
+  <div .buttons>
+    <a class="button is-link" href=@{CourseTaskR ctId}> Открыть задание
+    <a class="button is-link" href=@{ApiAcceptTaskR ctId uId}?redirect=1>
+      $if taskAccepted
+        Снять зачет задания
+      $else
+        Зачесть задание
   <table .table.is-fullwidth>
     <thead>
       <tr>
