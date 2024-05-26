@@ -40,6 +40,12 @@ getCourseSolvesR cId@(CourseKey cId') = do
            setTitle (toHtml $ "Решения пользователей: " <> courseName)
            [whamlet|
 <div .container.pt-2.py-3>
+  <nav .breadcrumb>
+    <ul>
+      <li>
+        <a href=@{AdminCoursesR}> Курсы
+      <li .is-active>
+        <a href=#> #{courseName}
   <h1 .title.pb-3> #{courseName}: решения пользователей
   <div #app>
 <script src=/static/js/userSolvesForm.js>
@@ -62,6 +68,14 @@ getCourseUserTasksR cId@(CourseKey cId') uId = do
                setTitle (toHtml $ "Решения пользователей: " <> courseName)
                [whamlet|
 <div .container.pt-2.py-3>
+  <nav .breadcrumb>
+    <ul>
+      <li>
+        <a href=@{AdminCoursesR}> Курсы
+      <li>
+        <a href=@{CourseSolvesR cId}> #{courseName}
+      <li .is-active>
+        <a href=#> #{getUserDetailsName}
   <h1 .title.pb-3> #{courseName}: #{getUserDetailsName}
   $forall (Entity tId (CourseTask { .. })) <- tasks
     <a href=@{UserTaskSolvesR tId uId}>
@@ -101,6 +115,16 @@ getUserTaskSolvesR ctId uId = do
               setTitle (toHtml $ courseTaskName <> ": " <> getUserDetailsName)
               [whamlet|
 <div .container.pt-2.py-3>
+  <nav .breadcrumb>
+    <ul>
+      <li>
+        <a href=@{AdminCoursesR}> Курсы
+      <li>
+        <a href=@{CourseSolvesR cId}> Выбранный курс
+      <li>
+        <a href=@{CourseUserTasksR cId uId}> Выбранный пользователь
+      <li .is-active>
+        <a href=#> #{courseTaskName}
   <h1 .title.pb-3> #{getUserDetailsName}: решения задачи #{courseTaskName}
   $if not tasksFullyLoaded
     <article .message.is-warning>
@@ -173,6 +197,18 @@ getUserSolveR csId@(CourseSolvesKey csId') = do
               setTitle (toHtml $ "Решение " <> csId')
               [whamlet|
 <div .container.pt-2.py-3>
+  <nav .breadcrumb>
+    <ul>
+      <li>
+        <a href=@{AdminCoursesR}> Курсы
+      <li>
+        <a href=@{CourseSolvesR cId}> Выбранный курс
+      <li>
+        <a href=@{CourseUserTasksR cId courseSolvesUserId}> Выбранный пользователь
+      <li>
+        <a href=@{UserTaskSolvesR courseSolvesTaskId courseSolvesUserId}> #{courseTaskName}
+      <li .is-active>
+        <a href=#> Решение #{csId'}
   <h1 .title.pb-3> Решение #{csId'}
   <h2 .subtitle> Ответ пользователя
   <pre>
