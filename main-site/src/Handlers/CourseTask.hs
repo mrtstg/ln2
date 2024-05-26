@@ -125,15 +125,14 @@ getCourseTaskR ctId = do
 |]
               [whamlet|
 <div .container.pt-2.py-3>
-  <div .container.pt-2.py-3>
-    <nav .breadcrumb>
-      <ul>
-        <li>
-          <a href=@{CoursesR}> Курсы
-        <li>
-          <a href=@{CourseR courseTaskCourse}> Выбранный курс
-        <li .is-active>
-          <a href=#> #{courseTaskName}
+  <nav .breadcrumb>
+    <ul>
+      <li>
+        <a href=@{CoursesR}> Курсы
+      <li>
+        <a href=@{CourseR courseTaskCourse}> Выбранный курс
+      <li .is-active>
+        <a href=#> #{courseTaskName}
   <h1 .title.pb-3> #{ courseTaskName }
   $if taskAccepted
     <div .notification.is-primary>

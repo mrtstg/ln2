@@ -10,7 +10,7 @@ import           Yesod.Core
 import           Yesod.Persist
 
 getCourseTaskEditR :: CourseId -> CourseTaskId -> Handler Html
-getCourseTaskEditR _ ctId = do
+getCourseTaskEditR cId ctId = do
   (UserDetails { .. }) <- requireAuth
   courseTaskRes <- runDB $ get ctId
   case courseTaskRes of
@@ -22,6 +22,14 @@ getCourseTaskEditR _ ctId = do
           setTitle $ toHtml courseTaskName
           [whamlet|
 <div .container.pt-2.py-3>
+  <nav .breadcrumb>
+    <ul>
+      <li>
+        <a href=@{CoursesR}> Курсы
+      <li>
+        <a href=@{CourseR cId}> Выбранный курс
+      <li .is-active>
+        <a href=#> #{courseTaskName}
   <div #app>
 <script src=/static/js/courseTaskEditForm.js>
 |]
