@@ -185,7 +185,10 @@ patchApiTaskR ctId = do
     (Just (Entity _ (CourseTask { courseTaskCourse = (CourseKey courseUUID) }))) -> do
       let isAdmin = isUserCourseAdmin courseUUID getUserRoles
       if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
-        taskPatch <- requireCheckJsonBody
+        taskPatch@(CourseTaskPatch { .. }) <- requireCheckJsonBody
+        () <- case getCourseTaskPatchActions of
+          Nothing        -> return ()
+          (Just actions) -> checkStages actions
         runDB $ updateWhere [CourseTaskId ==. ctId] (courseTaskPatchToQuery taskPatch)
         sendResponseStatus status204 ()
 
