@@ -12,6 +12,35 @@ export enum StageType {
   PSQLColumnTypeCheck
 }
 
+export const actionToStageType = (action: string): StageType | null => {
+  switch (action) {
+    case 'copy':
+      return StageType.CopyFile
+    case 'command':
+      return StageType.ExecuteCommand
+    case 'copyAnswer':
+      return StageType.CopyAnswer
+    case 'declare':
+      return StageType.DeclareVariable
+    case 'compareVars':
+      return StageType.CompareResults
+    case 'psql_answer_query_macro':
+      return StageType.PSQLAnswerQuery
+    case 'psql_query_macro':
+      return StageType.PSQLQuery
+    case 'psql_exists_macro':
+      return StageType.PSQLExists
+    case 'psql_generate_database':
+      return StageType.PSQLGenerateDatabase
+    case 'psql_column_type_check':
+      return StageType.PSQLColumnTypeCheck
+    case 'psql_table_exists':
+      return StageType.PSQLTableExists
+    default:
+      return null
+  }
+}
+
 export const stageTypeList = [
   StageType.CopyFile, 
   StageType.ExecuteCommand, 
@@ -28,6 +57,14 @@ export const stageTypeList = [
 
 export interface StageData {
   [key: string]: any
+}
+
+export const stageDataToCheckStage = (data: StageData): CheckStage | null => {
+  const t = actionToStageType(data.action)
+  if (t != null) {
+    return {type: t, data: data}
+  }
+  return null
 }
 
 export type CheckStage = {
