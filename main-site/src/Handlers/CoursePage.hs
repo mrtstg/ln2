@@ -71,6 +71,12 @@ getCourseR cId@(CourseKey courseUUID) = do
     setTitle $ toHtml ("Курс: " <> unpack courseName)
     [whamlet|
 <div .container.pt-2.py-3>
+  <nav .breadcrumb>
+    <ul>
+      <li>
+        <a href=@{CoursesR}> Курсы
+      <li .is-active>
+        <a href=#> #{courseName}
   <h1 .title.pb-3> #{ courseName }
   <div .box>
     $if taskRatio == 0
@@ -91,6 +97,7 @@ getCourseR cId@(CourseKey courseUUID) = do
             $if isAdmin
               <footer .card-footer>
                 <a .card-footer-item href=@{CourseTaskEditR cId tId}> Редактировать
+                <a .card-footer-item href=@{CourseSolvesR cId}> Решения
   <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
     <a href=@{CourseR cId}?page=#{pageV - 1}>
       <button .button.is-primary.mx-3 :pageV == 1:disabled> Назад
