@@ -10,9 +10,8 @@
   export let containers: string[]
   export let updateCallback: (data: CheckStage) => Promise<void>
   export let deleteCallback: () => void = (() => {})
+  export let selectedActionIndex: number = stageTypeList.indexOf(data.type)
 
-  let selectedActionIndex: number
-  $: selectedActionIndex = 0
   let selectedType: StageType
   $: selectedType = stageTypeList[selectedActionIndex]
   for (let i = 0; i < stageTypeList.length; i++) {
@@ -22,8 +21,7 @@
     }
   }
 
-  const updateCheckStage = async (v: string) => {
-    selectedActionIndex = parseInt(v)
+  const updateCheckStage = async () => {
     data.type = stageTypeList[selectedActionIndex]
     data.data = defaultCheckStageData(data.type)
     await updateCallback(data)
@@ -35,7 +33,7 @@
     <label class="label"> Тип действия </label>
     <div class="control">
       <div class="select">
-        <select on:change={async (event) => { await updateCheckStage(event.target.value) }}>
+        <select bind:value={selectedActionIndex} on:change={async (event) => { await updateCheckStage() }}>
           {#each stageTypeList as stageType, stageIndex}
             <option value={stageIndex}> {checkStageName(stageType)} </option>
           {/each}
