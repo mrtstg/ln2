@@ -4,20 +4,17 @@
 
   export let changeCallback: (tables: Array<TableData>) => void = () => {};
   export let dbData: DatabaseData = {tables: []}
-
-  let tableData: Array<TableData>
-  $: tableData = [...dbData.tables]
-
+  
   let allFields: Array<String>
 
   const updateReferences = () => {
-    let tableNames = tableData.map(el => el.name)
-    for (let i = 0; i < tableData.length; i++) {
-      for (let ci = 0; ci < tableData[i].columns.length; ci++) {
-        if (tableData[i].columns[ci].references != null) {
-          let refTable = tableData[i].columns[ci].references!.split(".")[0]
+    let tableNames = dbData.tables.map(el => el.name)
+    for (let i = 0; i < dbData.tables.length; i++) {
+      for (let ci = 0; ci < dbData.tables[i].columns.length; ci++) {
+        if (dbData.tables[i].columns[ci].references != null) {
+          let refTable = dbData.tables[i].columns[ci].references!.split(".")[0]
           if (!tableNames.includes(refTable)) {
-            tableData[i].columns[ci].references = null
+            dbData.tables[i].columns[ci].references = null
           }
         }
       }
@@ -25,48 +22,51 @@
   }
 
   const correctTableName = (tableIndex: number) => {
-    tableData[tableIndex].name = tableData[tableIndex].name.replace(".", "").replace(" ", "")
+    dbData.tables[tableIndex].name = dbData.tables[tableIndex].name.replace(".", "").replace(" ", "")
   }
 
   const updateAllFields = () => {
-    allFields = tableData.map(el => el.columns.map(col => el.name + "." + col.name)).flat()
+    allFields = dbData.tables.map(el => el.columns.map(col => el.name + "." + col.name)).flat()
   }
   
   const addTable = () => {
-    tableData = [...tableData, {name: "Впишите имя таблицы", columns: []}]
-    changeCallback(tableData)
+    dbData.tables = [...dbData.tables, {name: "Впишите имя таблицы", columns: []}]
+    changeCallback(dbData.tables)
   }
 
   const addCell = (tableIndex: number) => {
-    tableData[tableIndex].columns = [
-      ...tableData[tableIndex].columns,
+    dbData.tables[tableIndex].columns = [
+      ...dbData.tables[tableIndex].columns,
       {name: "", type: { type: "varchar" }, primary: false, unique: false, null: false, references: null}
     ]
-    changeCallback(tableData)
+    changeCallback(dbData.tables)
     updateAllFields()
   }
 
   const deleteTable = (tableIndex: number) => {
-    tableData.splice(tableIndex, 1)
-    tableData = [...tableData]
-    changeCallback(tableData)
+    dbData.tables.splice(tableIndex, 1)
+    dbData.tables = [...dbData.tables]
+    changeCallback(dbData.tables)
     updateAllFields()
   }
 
   const removeCell = (tableIndex: number, cellIndex: number) => {
-    tableData[tableIndex].columns.splice(cellIndex, 1)
-    tableData[tableIndex] = tableData[tableIndex]
-    changeCallback(tableData)
+    dbData.tables[tableIndex].columns.splice(cellIndex, 1)
+    dbData.tables[tableIndex] = dbData.tables[tableIndex]
+    changeCallback(dbData.tables)
     updateAllFields()
   }
+
+  updateAllFields()
+  updateReferences()
 </script>
 
 <button class="button is-fullwidth" on:click={addTable}> Добавить таблицу </button>
-{#each tableData as table, tableIndex}
+{#each dbData.tables as table, tableIndex}
 <div class="py-5">
   <div class="is-flex is-flex-direction-row is-fullwidth">
     <button class="button is-danger mr-3" on:click={() => deleteTable(tableIndex)}> X </button>
-    <input class="input is-fullwidth" bind:value={table.name} on:change={() => { updateReferences(); changeCallback(tableData); updateAllFields()}}/>
+    <input class="input is-fullwidth" bind:value={table.name} on:change={() => { updateReferences(); changeCallback(dbData.tables); updateAllFields()}}/>
   </div>  
   <table class="table is-fullwidth">
     <thead>
@@ -84,11 +84,11 @@
         <tr>
           <th class="is-flex is-flex-direction-row">
             <button class="button is-danger mr-3" on:click={() => removeCell(tableIndex, colIndex)}> X </button>
-            <input class="input" bind:value={column.name} on:change={() => { correctTableName(colIndex); changeCallback(tableData); updateAllFields()}}/>
+            <input class="input" bind:value={column.name} on:change={() => { correctTableName(colIndex); changeCallback(dbData.tables); updateAllFields()}}/>
           </th>
           <th>
             <div class="select">
-              <select bind:value={column.type.type} on:change={() => changeCallback(tableData)}>
+              <select bind:value={column.type.type} on:change={() => changeCallback(dbData.tables)}>
                 {#each allTypes as opt}
                   <option value={opt}> { opt } </option>
                 {/each}
@@ -97,22 +97,22 @@
           </th>
           <th>
             <label class="checkbox">
-              <input type="checkbox" bind:checked={column.primary} on:change={() => changeCallback(tableData)}>
+              <input type="checkbox" bind:checked={column.primary} on:change={() => changeCallback(dbData.tables)}>
             </label>
           </th>
           <th>
             <label class="checkbox">
-              <input type="checkbox" bind:checked={column.unique} on:change={() => changeCallback(tableData)}>
+              <input type="checkbox" bind:checked={column.unique} on:change={() => changeCallback(dbData.tables)}>
             </label>
           </th>
           <th>
             <label class="checkbox">
-              <input type="checkbox" bind:checked={column.null} on:change={() => changeCallback(tableData)}>
+              <input type="checkbox" bind:checked={column.null} on:change={() => changeCallback(dbData.tables)}>
             </label>
           </th>
           <th>
             <div class="select">
-              <select bind:value={column.references} on:change={() => changeCallback(tableData)}>
+              <select bind:value={column.references} on:change={() => changeCallback(dbData.tables)}>
                 <option value={null}></option>
                 {#each allFields as field}
                   <option value={field}> {field}</option>
