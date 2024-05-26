@@ -7,7 +7,10 @@ module Crud.CourseTask
   , courseTaskPatchToQuery
   ) where
 
+import           Data.Aeson             (encode)
+import           Data.ByteString.Char8  (toStrict)
 import           Data.Models.CourseTask
+import           Data.Models.StandCheck
 import           Data.Models.User
 import           Data.Text              (Text)
 import           Database.Persist
@@ -27,7 +30,13 @@ courseTaskPatchToQuery (CourseTaskPatch { .. }) = let
   orderQ :: Maybe Int -> [Update CourseTask]
   orderQ Nothing = []
   orderQ (Just courseTaskOrderNumber) = [CourseTaskOrderNumber =. courseTaskOrderNumber]
-  in nameQ getCourseTaskPatchName ++ contentQ getCourseTaskPatchContent ++ orderQ getCourseTaskPatchOrder
+  actionsQ :: Maybe [StandCheckStage] -> [Update CourseTask]
+  actionsQ Nothing       = []
+  actionsQ (Just stages) = [CourseTaskStandActions =. (toStrict . encode) stages]
+  in nameQ getCourseTaskPatchName
+    ++ contentQ getCourseTaskPatchContent
+    ++ orderQ getCourseTaskPatchOrder
+    ++ actionsQ getCourseTaskPatchActions
 
 getCourseTasks :: CourseId -> Int -> Handler ([Entity CourseTask], Int)
 getCourseTasks cId pageV = do

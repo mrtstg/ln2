@@ -25,6 +25,7 @@ data CourseTaskPatch = CourseTaskPatch
   { getCourseTaskPatchName    :: !(Maybe Text)
   , getCourseTaskPatchContent :: !(Maybe Text)
   , getCourseTaskPatchOrder   :: !(Maybe Int)
+  , getCourseTaskPatchActions :: !(Maybe [StandCheckStage])
   }
 
 instance FromJSON CourseTaskPatch where
@@ -32,6 +33,7 @@ instance FromJSON CourseTaskPatch where
     <$> v .:? "name"
     <*> v .:? "content"
     <*> v .:? "order"
+    <*> v .:? "actions"
 
 data CourseTaskCreate = CourseTaskCreate
   { getCourseTaskCreateName            :: !Text
