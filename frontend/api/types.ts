@@ -53,7 +53,7 @@ export type CourseTaskDetails = {
   order: number,
   accepted?: Boolean,
   standIdentifier?: string,
-  standActions?: [object]
+  standActions: CheckStage.StageData[]
 }
 
 export type CourseSolvesResponse = {
@@ -98,4 +98,5 @@ export type CourseTaskPatch = {
   name?: string,
   content?: string,
   order?: number
+  standActions?: CheckStage.StageData[]
 }
