@@ -9,10 +9,13 @@ module Handlers.CourseTask
   , getApiTaskR
   , getCourseTaskR
   , patchApiTaskR
+  , getApiAcceptTaskR
   ) where
 
 import           Api.DBApi
 import           Api.Markdown
+import           Api.User
+import           Control.Monad          (unless, when)
 import           Crud.CourseTask
 import           Data.Aeson
 import           Data.ByteString        (toStrict)
@@ -40,6 +43,34 @@ checkStages = helper where
       (DBApiError err) -> sendStatusJSON status400 $ object ["error" .= err]
       _otherError -> sendStatusJSON status400 $ object ["error" .= String "Неизвестная ошибка при обработке данных!"]
   helper (_:stages) = helper stages
+
+getApiAcceptTaskR :: CourseTaskId -> Int -> Handler Value
+getApiAcceptTaskR ctId uId = do
+  redirect' <- getBoolParameter "redirect"
+  (UserDetails { .. }) <- if redirect' then requireAuth else requireApiAuth
+  courseTask' <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
+  case (courseTask', redirect') of
+    (Nothing, True) -> notFound
+    (Nothing, False) -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
+    (Just (Entity _ (CourseTask { courseTaskCourse = (CourseKey cId') })), _) -> do
+      let isAdmin = isUserCourseAdmin cId' getUserRoles
+      case (isAdmin, redirect') of
+        (False, True) -> permissionDenied "У вас нет доступа к курсу!"
+        (False, False) -> sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ]
+        (True, _) -> do
+          targetUser' <- liftIO $ getUserById' uId
+          case (targetUser', redirect') of
+            (UserGetResult _, _) -> do
+              taskAccepted <- runDB $ exists [ CourseSolveAcceptionTaskId ==. ctId, CourseSolveAcceptionUserId ==. uId ]
+              when taskAccepted $ do
+                runDB $ deleteWhere [ CourseSolveAcceptionUserId ==. uId, CourseSolveAcceptionTaskId ==. ctId ]
+              unless taskAccepted $ do
+                runDB $ do
+                  _ <- insert (CourseSolveAcception uId ctId)
+                  return ()
+              if redirect' then redirect (UserTaskSolvesR ctId uId) else sendStatusJSON status200 $ object [ "solved" .= not taskAccepted ]
+            (_smthWrong, True) -> notFound
+            (_smthWrong, False) -> sendStatusJSON status404 $ object [ "error" .= String "User not found!" ]
 
 -- TODO: stand identifier existence check
 postApiCourseTaskR :: CourseId -> Handler Value
