@@ -57,6 +57,7 @@ data CourseTaskDetails = CourseTaskDetails
   , getCourseTaskDCourse       :: !CourseDetails
   , getCourseTaskDStand        :: !Text
   , getCourseTaskDStandActions :: ![StandCheckStage]
+  , getCourseTaskDAccepted     :: !Bool
   }
 
 data CourseTaskDetails' = CourseTaskDetails'
@@ -103,6 +104,7 @@ instance ToJSON CourseTaskDetails where
     , "course" .= getCourseTaskDCourse
     , "standIdentifier" .= getCourseTaskDStand
     , "standActions" .= getCourseTaskDStandActions
+    , "accepted" .= getCourseTaskDAccepted
     ]
 
 courseTaskDetailFromModels' :: Entity CourseTask -> Entity Course -> Maybe UserDetails -> Bool -> CourseTaskDetails'
@@ -111,8 +113,8 @@ courseTaskDetailFromModels' (Entity ctId (CourseTask { .. })) e userDetails acce
   courseDetails = courseDetailsFromModel e userDetails
   in CourseTaskDetails' (fromIntegral taskId) courseTaskName courseTaskContent courseTaskOrderNumber courseDetails accepted
 
-courseTaskDetailFromModels :: Entity CourseTask -> Entity Course -> Maybe UserDetails -> Either String CourseTaskDetails
-courseTaskDetailFromModels (Entity ctId (CourseTask { .. })) e userDetails = let
+courseTaskDetailFromModels :: Entity CourseTask -> Entity Course -> Maybe UserDetails -> Bool -> Either String CourseTaskDetails
+courseTaskDetailFromModels (Entity ctId (CourseTask { .. })) e userDetails accepted = let
   taskId = fromSqlKey ctId
   courseDetails = courseDetailsFromModel e userDetails
   standActions = case (eitherDecode . fromStrict) courseTaskStandActions :: Either String [StandCheckStage] of
@@ -120,4 +122,4 @@ courseTaskDetailFromModels (Entity ctId (CourseTask { .. })) e userDetails = let
                   (Right r) -> Right r
   in do
     actions' <- standActions
-    return $  CourseTaskDetails (fromIntegral taskId) courseTaskName courseTaskContent courseTaskOrderNumber courseDetails courseTaskStandIdentifier actions'
+    return $  CourseTaskDetails (fromIntegral taskId) courseTaskName courseTaskContent courseTaskOrderNumber courseDetails courseTaskStandIdentifier actions' accepted

@@ -97,7 +97,7 @@ postApiCourseTaskR cId = do
         case cTaskRes of
           Nothing -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
           (Just courseTask) -> do
-            case courseTaskDetailFromModels (Entity cTaskId courseTask) (Entity cId course) Nothing of
+            case courseTaskDetailFromModels (Entity cTaskId courseTask) (Entity cId course) Nothing False of
               (Left parseE) -> do
                 $logError . T.pack $ "Course task detail parse error: " <> parseE
                 sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
@@ -220,6 +220,12 @@ getApiTaskR ctId = do
         Nothing -> error "Unreachable pattern!"
         (Just cE@(Entity (CourseKey courseUUID) _)) -> do
           let isMember = isUserCourseMember courseUUID getUserRoles
-          if not isMember then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
+          let isAdmin = isUserCourseAdmin courseUUID getUserRoles
+          if not isMember && not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
             taskAccepted <- getCourseTaskAccepted d cT
-            sendStatusJSON status200 $ courseTaskDetailFromModels' cT cE Nothing taskAccepted
+            if not isAdmin then
+              sendStatusJSON status200 $ courseTaskDetailFromModels' cT cE Nothing taskAccepted
+            else
+              case courseTaskDetailFromModels cT cE Nothing taskAccepted of
+                (Left e)  -> sendStatusJSON status400 $ object ["error" .= e]
+                (Right r) -> sendStatusJSON status200 r
