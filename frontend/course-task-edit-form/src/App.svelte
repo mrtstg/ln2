@@ -1,6 +1,8 @@
 <script lang="ts">
   import { ApiClient } from "../../api/client"
-  import type { CommonCourseDetails, CourseTaskDetails } from "../../api/types";
+  import { StageType, stageDataToCheckStage, stageTypeList, defaultCheckStageData } from "../../api/check_stage"
+  import type { CheckStage, StageData } from "../../api/check_stage";
+  import type { CommonCourseDetails, CourseTaskDetails, ContainerSummary } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
   import CheckStageWidget from "../../components/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
@@ -16,6 +18,14 @@
   $: taskContent = ''
   let taskOrder: number
   $: taskOrder = 0
+  let stages: CheckStage[]
+  $: stages = []
+  let selectedStand: string;
+  $: selectedStand = ''
+  let modalMessage: string;
+  $: modalMessage = ''
+  let modalHideable: boolean;
+  modalHideable = true
 
   let taskID: number | null = null
   let courseID: string | null = null
@@ -26,10 +36,36 @@
   const taskIDMatch = parsedURL.pathname.match("\/task\/(.*?)\/([0-9]*?)\/edit")
 
   const updateTaskWrapper = async (): Promise<string> => {
+    if (taskTitle.length == 0) {
+      return "Заполните название задачи!"
+    }
+
+    if (taskContent.length == 0) {
+      return "Заполните условие задачи!"
+    }
+
+    if (stages.length == 0) {
+      return "Проверка задачи должна содержать как минимум один этап!"
+    }
+
+    if (stages.map(el => el.type).filter(el => el == StageType.PSQLGenerateDatabase).length > 1) {
+      return "В задаче может быть только один этап генерации базы данных!"
+    }
+
+    const processStage = (data: StageData): StageData => {
+      let ndata = { ...data }
+      if (ndata.action === 'command' && ndata.recordInto.length == 0) {
+        ndata.recordInto = null
+      }
+      return ndata
+    }
+
+    let stagesToSend = stages.map(v => v.data).map(processStage)
     const res = await api.patchTask(taskID!, {
       name: taskTitle,
       content: taskContent,
-      order: taskOrder
+      order: taskOrder,
+      standActions: stagesToSend
     })
     if (res == 'ok') {
       taskPromise = getCourseTaskWrapper()
@@ -37,6 +73,15 @@
     }
 
     return res
+  }
+
+  const addStage = () => {
+    stages = [...stages, {type: stageTypeList[0], data: defaultCheckStageData(stageTypeList[0])}]
+  }
+
+  const deleteStage = (index: number) => {
+    stages.splice(index, 1)
+    stages = [...stages]
   }
 
   const deleteTaskWrapper = async (): Promise<string> => {
@@ -57,7 +102,24 @@
     taskTitle = res.name
     taskContent = res.content
     taskOrder = res.order
+    if (res.standIdentifier != undefined && res.standActions != undefined) {
+      res.standActions.forEach(el => {
+        let res = stageDataToCheckStage(el)
+        console.log(res)
+        if (res != null) {
+          stages = [...stages, res]
+        }
+      })
+      selectedStand = res.standIdentifier
+      containersPromise = api.getStandContainers(selectedStand)
+    }
     return res
+  }
+
+  const hideModal = () => {
+    if (modalHideable) {
+      modalMessage = ''
+    }
   }
 
   if (taskIDMatch != null && taskIDMatch.length > 1) {
@@ -65,7 +127,21 @@
     taskID = parseInt(taskIDMatch[2])
     taskPromise = getCourseTaskWrapper()
   }
+
+  let containersPromise: Promise<Array<ContainerSummary>> | null = null
 </script>
+
+{#if modalMessage.length > 0}
+  <div class="modal is-active">
+    <div class="modal-background" on:click={hideModal}></div>
+    <div class="modal-content">
+      <div class="box">
+        <p> { modalMessage } </p>
+      </div>
+    </div>
+    <button class="modal-close is-large" aria-label="close" on:click={hideModal}></button>
+  </div>
+{/if}
 
 {#if taskPromise != null}
   <section class="hero is-info p-3 my-3">
@@ -94,6 +170,25 @@
       </div>
       <p class="help"> Меньше - выше в списке задач </p>
     </div>
+    <h2 class="title is-4"> Схема проверки </h2>
+    {#if containersPromise != null}
+      {#await containersPromise}
+        <SuccessMessage title="Ожидайте..." description="Загружаем данные..."/>
+      {:then containersData}
+        {#each stages as stage, stageIndex (stage)}
+          <CheckStageWidget 
+            data={stage} 
+            containers={containersData.map(v => v.name)} 
+            updateCallback={async (v) => { stages[stageIndex] = v }}
+            deleteCallback={() => deleteStage(stageIndex)}
+          />
+        {/each}
+        <button on:click={addStage} class="is-link button is-fullwidth"> Добавить </button>
+      {:catch error}
+        <DangerMessage title="Ошибка!" description="Не удалось загрузить данные стенда."/>
+      {/await}
+    {/if}
+
     {#if taskUpdatePromise != null}
       {#await taskUpdatePromise}
         <SuccessMessage title="Ожидайте..." description="Обновляем задачу..." additionalStyle="is-fullwidth"/>
