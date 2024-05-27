@@ -19,6 +19,9 @@ build-frontend: ./static/js ./static/css
 procfile: Procfile
 	foreman start
 
+build-lib-image: deployment/Dockerfile
+	docker build -t ln2-haskell -f deployment/Dockerfile .
+
 deploy-dev: $(COMPOSE_FILE)
 	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile dev up -d
 

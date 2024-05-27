@@ -1,0 +1,12 @@
+**/.stack-work
+pgdata
+Makefile
+Procfile
+.env
+sample.env
+static
+pids
+pgadmin
+frontend
+logs
+docker-secondary-agent
