@@ -27,7 +27,8 @@ import           System.Directory            (createDirectory,
                                               doesDirectoryExist)
 import           System.Environment
 import           System.Exit
-import           Utils                       (constructPostgreStringFromEnv)
+import           Utils                       (constructPostgreStringFromEnv,
+                                              createRedisConnectionFromEnv)
 import           Yesod.Core
 
 mkYesodDispatch "App" resourcesApp
@@ -77,20 +78,26 @@ runServerCommand port = do
           putStrLn "No postgreSQL connection parameters!"
           exitWith $ ExitFailure 1
         Just postgresString -> do
-          postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-          dirExists <- doesDirectoryExist standsFolder
-          unless dirExists $ createDirectory standsFolder
-          let app = App standsFolder rabbitConn postgresPool
-          _ <- prepareRabbitQuery rabbitConn
-          _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
-          devMode <- isDevEnabled
-          let corsOrigins = ["http://localhost:5173" | devMode]
-          waiApp <- toWaiApp app
-          run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
-            { corsOrigins = Just (corsOrigins, True)
-            , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH"]
-            , corsRequestHeaders = simpleHeaders ++ ["Authorization", "Cookie"]
-            }) waiApp
+          redisConnection' <- createRedisConnectionFromEnv
+          case redisConnection' of
+            Nothing -> do
+              putStrLn "No redis connection data!"
+              exitWith $ ExitFailure 1
+            Just redisConnection -> do
+              postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
+              dirExists <- doesDirectoryExist standsFolder
+              unless dirExists $ createDirectory standsFolder
+              let app = App standsFolder rabbitConn redisConnection postgresPool
+              _ <- prepareRabbitQuery rabbitConn
+              _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
+              devMode <- isDevEnabled
+              let corsOrigins = ["http://localhost:5173" | devMode]
+              waiApp <- toWaiApp app
+              run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
+                { corsOrigins = Just (corsOrigins, True)
+                , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH"]
+                , corsRequestHeaders = simpleHeaders ++ ["Authorization", "Cookie"]
+                }) waiApp
 
 runCommand :: AppOpts -> IO ()
 runCommand AppOpts { appCommand = RunServer, serverPort = port } = runServerCommand port

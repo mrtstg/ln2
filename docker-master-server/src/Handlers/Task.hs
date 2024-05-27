@@ -20,6 +20,7 @@ import           Foundation
 import           GHC.Generics
 import           Network.HTTP.Types
 import           Rabbit                       (putQueueTask)
+import           Redis
 import           Utils
 import           Yesod.Core
 import           Yesod.Persist
@@ -61,12 +62,23 @@ taskResultToValue Nothing   = Nothing
 taskResultToValue (Just bs) = decode $ LBS.fromStrict bs
 
 getTaskR :: T.Text -> Handler Value
-getTaskR taskUuid = do
-  taskObj' <- runDB $ get $ (TaskKey . T.unpack) taskUuid
-  case taskObj' of
-    Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
-    (Just (Task { .. })) -> do
-      sendStatusJSON status200 $ object [ "result" .= taskResultToValue taskResult, "status" .= taskState ]
+getTaskR taskUuid = let
+  wrapper :: T.Text -> Handler (Maybe Value)
+  wrapper tId = do
+    r <- runDB $ (get . TaskKey . T.unpack) tId
+    case r of
+      Nothing -> return Nothing
+      (Just (Task { .. })) -> do
+        return $ Just (object [ "result" .= taskResultToValue taskResult, "status" .= taskState])
+  in do
+  taskExists <- runDB $ exists [ TaskId ==. TaskKey (T.unpack taskUuid) ]
+  if not taskExists then sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ] else do
+    App { redisPool = redisPool } <- getYesod
+    cacheRes <- getOrCacheJsonValue redisPool (Just defaultShortCacheTime) ("task-" <> T.unpack taskUuid) (wrapper taskUuid)
+    case cacheRes of
+      (Left _) -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
+      (Right obj) -> do
+        sendStatusJSON status200 obj
 
 deleteTaskR :: T.Text -> Handler Value
 deleteTaskR taskUuid = do

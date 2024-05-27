@@ -43,6 +43,7 @@ dependencies:
 - vector == 0.13.1.0
 - wai-cors == 0.2.7
 - warp == 3.3.25
+- hedis == 0.15.2
 
 ghc-options:
 - -Wall

@@ -5,15 +5,27 @@ module Utils
   , findYMLByName'
   , createYMLPath
   , constructPostgreStringFromEnv
+  , createRedisConnectionFromEnv
   , validateStandCheck
 ) where
 import           Data.Models.Stand
 import           Data.Models.StandCheck
 import qualified Data.Text              as T
+import           Database.Redis
 import           System.Directory
 import           System.Environment     (lookupEnv)
 import           System.FilePath        (addExtension, combine, dropExtension,
                                          takeExtension, takeFileName)
+
+createRedisConnectionFromEnv :: IO (Maybe Connection)
+createRedisConnectionFromEnv = do
+  redisHost'' <- lookupEnv "REDIS_HOST"
+  redisPort'' <- lookupEnv "REDIS_PORT"
+  case (redisHost'', redisPort'') of
+    (Just redisHost', Just redisPort') -> do
+      connection <- connect $ defaultConnectInfo { connectHost = redisHost', connectPort = (PortNumber . read) redisPort' }
+      return $ Just connection
+    _anyOther -> return Nothing
 
 standContainerExists :: StandData -> String -> Either String ()
 standContainerExists (StandData { getStandContainers = containers }) containerName =

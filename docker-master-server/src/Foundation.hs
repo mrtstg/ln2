@@ -24,6 +24,7 @@ import           Data.Pool                   (Pool)
 import           Data.Text
 import           Data.Time.Clock
 import           Database.Persist.Postgresql
+import           Database.Redis              as Redis
 import qualified Network.AMQP                as R
 import           Yesod.Core
 import           Yesod.Persist
@@ -31,6 +32,7 @@ import           Yesod.Persist
 data App = App
   { standsFolder     :: !FilePath
   , rabbitConnection :: !R.Connection
+  , redisPool        :: !Redis.Connection
   , postgresqlPool   :: !(Pool SqlBackend)
   }
 
