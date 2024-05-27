@@ -12,4 +12,4 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 WORKDIR /usr/src/app
 COPY --from=builder /root/.local/bin/docker-master-server-exe /usr/src/app/master-server
-CMD /usr/src/app/master-server run -p 8000
+CMD /usr/src/app/master-server create-db && /usr/src/app/master-server run -p 8000

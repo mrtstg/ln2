@@ -12,4 +12,4 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 WORKDIR /usr/src/app
 COPY --from=builder /root/.local/bin/auth-service-exe /usr/src/app/haskell-binary
-CMD /usr/src/app/haskell-binary run -p 8000
+CMD /usr/src/app/haskell-binary create-db && /usr/src/app/haskell-binary run -p 8000
