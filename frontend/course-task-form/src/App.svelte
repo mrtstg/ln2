@@ -7,7 +7,8 @@
   import WarningMessage from "../../components/WarningMessage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
   import CheckMessageForm from "../../components/CheckMessage.svelte"
-  
+  import SolveCard from "../../components/SolveCard.svelte"
+
   // client
   const url = API_URL;
   const api = new ApiClient(url)
@@ -134,15 +135,7 @@
         <div class="columns is-multiline">
           {#each tasks as task}
             <div class="column is-6">
-              <div class="card" on:click={() => selectTask(task)}>
-                <header class="card-header">
-                  {#if task.correct}
-                    <p class="card-header-title has-text-success"> Решение { task.id } </p>
-                  {:else}
-                    <p class="card-header-title"> Решение { task.id } </p>
-                  {/if}
-                </header>
-              </div>
+              <SolveCard apiUrl={url} solveData={task} selectCallback={async (t) => selectTask(t)}/>
             </div>
           {/each}
         </div>
