@@ -1,7 +1,6 @@
-FROM haskell:9.4.7-buster AS builder
+FROM ln2-haskell AS builder
 WORKDIR /usr/src/app
 COPY docker-master-server.cabal package.yaml stack.yaml stack.yaml.lock ./
-RUN stack setup --install-ghc
 RUN stack install --only-dependencies
 COPY . .
 RUN stack install
