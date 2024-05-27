@@ -11,3 +11,6 @@ create-db: ../.env
 create-roles: ../.env
 	cp ../.env .
 	stack run -- create-roles
+
+build-image: deployment/Dockerfile
+	docker build -t ln2-auth -f deployment/Dockerfile .

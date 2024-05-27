@@ -7,3 +7,6 @@ run: ../.env
 create-db: ../.env
 	cp ../.env .
 	stack run -- create-db
+
+build-image: deployment/Dockerfile
+	docker build -t ln2-main-site -f deployment/Dockerfile .
