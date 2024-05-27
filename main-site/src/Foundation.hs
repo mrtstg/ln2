@@ -99,6 +99,7 @@ mkYesodData
 |]
 
 instance Yesod App where
+  approot = ApprootRelative
   makeSessionBackend _ = return Nothing
   errorHandler NotFound = fmap toTypedContent $ defaultLayout $ do
     setTitle "Страница не найдена!"
