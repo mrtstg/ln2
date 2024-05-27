@@ -22,6 +22,12 @@ procfile: Procfile
 build-lib-image: deployment/Dockerfile
 	docker build -t ln2-haskell -f deployment/Dockerfile .
 
+deploy-prod: $(COMPOSE_FILE)
+	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile prod up -d
+
+destroy-prod: $(COMPOSE_FILE)
+	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile prod down
+
 deploy-dev: $(COMPOSE_FILE)
 	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile dev up -d
 
