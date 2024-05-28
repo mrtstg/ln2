@@ -1,3 +1,4 @@
+IMAGES_LIST = ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api
 COMPOSE_BIN=docker compose
 ENV_FILE=.env
 BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(ENV_FILE) --project-name ln2
@@ -9,6 +10,14 @@ build-frontend: ./static/js ./static/css
 	make -C frontend/course-create-form build
 	make -C frontend/course-task-edit-form build
 	make -C frontend/course-members-form build
+
+save-images: ./images
+	@for n in $(IMAGES_LIST); do \
+		docker save $$n -o ./images/$$n.tar; \
+	done
+
+./images:
+	mkdir ./images -p
 
 ./static/js:
 	mkdir ./static/js -p

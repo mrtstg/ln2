@@ -9,4 +9,5 @@ pids
 pgadmin
 frontend
 logs
+images
 docker-secondary-agent
