@@ -51,6 +51,7 @@ library
       Data.Models.Table
       Data.Models.User
       Data.Models.UserAuthRequest
+      Data.Models.UserPatch
       Data.Models.UserQuery
       Foundation
       Handlers.AssignMember
@@ -65,6 +66,7 @@ library
       Handlers.Logout
       Handlers.QueryCourse
       Handlers.TaskSolves
+      Handlers.UserApi
       Handlers.Utils
       Rabbit
       Utils

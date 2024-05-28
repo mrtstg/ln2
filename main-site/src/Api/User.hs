@@ -5,6 +5,8 @@ module Api.User
   , UserGetResult(..)
   , queryUsers
   , queryUsers'
+  , patchUser
+  , patchUser'
   ) where
 
 import           Control.Exception
@@ -12,14 +14,21 @@ import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.ByteString            (ByteString)
 import           Data.ByteString.Lazy       (fromStrict)
+import           Data.Models.Endpoints
 import           Data.Models.User
+import           Data.Models.UserPatch
 import           Data.Models.UserQuery
 import           Data.Text                  (Text)
 import           Network.HTTP.Simple
 import           System.Environment
 import           Yesod.Core                 (liftIO)
 
-data UserGetResult a = UserGetResult !a | NoAuthURL | InternalError | NotFound
+newtype Error = Error String
+
+instance FromJSON Error where
+  parseJSON = withObject "Error" $ \v -> Api.User.Error <$> v .: "error"
+
+data UserGetResult a = UserGetResult !a | NoAuthURL | InternalError | NotFound | UserGetError String
 
 handler' :: HttpException -> IO (Either HttpException (UserGetResult a))
 handler' _ = return $ Right InternalError
@@ -33,7 +42,7 @@ getUserById' uId = do
 
 queryUsers' :: Text -> IncludeGroup -> ExcludeGroup -> Int -> IO (Maybe UserQuery)
 queryUsers' query includeGroup excludeGroup page = do
-  r <- runExceptT (queryUsers query includeGroup excludeGroup page)
+  r <- runExceptT (queryUsers query includeGroup excludeGroup page) `catch` handler'
   case r of
     (Left _)  -> error "Unreachable pattern!"
     (Right v) -> case v of
@@ -42,6 +51,29 @@ queryUsers' query includeGroup excludeGroup page = do
 
 type IncludeGroup = Maybe Text
 type ExcludeGroup = Maybe Text
+
+patchUser' :: EndpointsConfiguration -> Int -> UserPatch -> IO (UserGetResult ())
+patchUser' e uid patchData = do
+  r <- runExceptT (patchUser e uid patchData) `catch` handler'
+  case r of
+    ~(Right v) -> return v
+
+patchUser :: EndpointsConfiguration -> Int -> UserPatch -> ExceptT HttpException IO (UserGetResult ())
+patchUser (EndpointsConfiguration { getAuthServiceUrl = apiUrl }) uId patchData = do
+  let reqString = "PATCH " <> apiUrl <> "/user/id/" <> show uId
+  request <- liftIO $ parseRequest reqString :: (ExceptT HttpException IO Request)
+  let requestData = setRequestBodyJSON patchData request
+  response <- httpBS requestData
+  let requestBody = getResponseBody response
+  case getResponseStatusCode response of
+    204 -> return $ UserGetResult ()
+    400 -> do
+      let parseRes = (eitherDecode . fromStrict) requestBody
+      case parseRes of
+        (Left _)                     -> return InternalError
+        (Right (Api.User.Error msg)) -> return $ UserGetError msg
+    404 -> return NotFound
+    _unexceptedCode -> return InternalError
 
 queryUsers :: Text -> IncludeGroup -> ExcludeGroup -> Int -> ExceptT HttpException IO (UserGetResult UserQuery)
 queryUsers query includeGroup excludeGroup page = let
