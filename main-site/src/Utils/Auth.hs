@@ -22,7 +22,7 @@ adminRoleGranted :: [RoleDetails] -> Bool
 adminRoleGranted = any (\(RoleDetails name _) -> name == "admins")
 
 isUserAnyCourseAdmin :: [RoleDetails] -> Bool
-isUserAnyCourseAdmin = any (\(RoleDetails name _) -> take 7 (unpack name) == "admins-")
+isUserAnyCourseAdmin roles = any (\(RoleDetails name _) -> take 7 (unpack name) == "admins-") roles || adminRoleGranted roles
 
 isUserCourseManager :: [RoleDetails] -> Bool
 isUserCourseManager roles = any (\(RoleDetails name _) -> name == "course-creator") roles || adminRoleGranted roles
