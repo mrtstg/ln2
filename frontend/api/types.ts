@@ -94,6 +94,12 @@ export type TaskCreateResponse = {
   uuid: string
 }
 
+export type UserPatch = {
+  name?: string | null,
+  password?: string | null,
+  login?: string | null
+}
+
 export type CourseTaskPatch = {
   name?: string,
   content?: string,
