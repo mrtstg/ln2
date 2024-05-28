@@ -160,3 +160,9 @@ services:
       - prod-rabbitmq
     volumes:
       - /run/docker.sock:/run/docker.sock
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.050'
+        limits:
+          cpus: '0.500'
