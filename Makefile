@@ -16,6 +16,11 @@ save-images: ./images
 		docker save $$n -o ./images/$$n.tar; \
 	done
 
+restore-images: ./images
+	@for n in $(IMAGES_LIST); do \
+		docker load -i ./images/$$n.tar; \
+	done
+
 ./images:
 	mkdir ./images -p
 
