@@ -37,7 +37,7 @@ patchUserIdDetailR uId' = do
           ~(Just login) -> do
             when (T.null login) $ sendStatusJSON status400 $ object ["error" .= String "Login is empty"]
             when (T.length login > 30) $ sendStatusJSON status400 $ object ["error" .= String "Login is too long"]
-            loginTaken <- runDB $ exists [ UserLogin ==. login ]
+            loginTaken <- runDB $ exists [ UserLogin ==. login, UserId !=. uId' ]
             when loginTaken $ sendStatusJSON status400 $ object ["error" .= String "Login is taken"]
       when (isJust getUserPatchName) $ do
         case getUserPatchName of
