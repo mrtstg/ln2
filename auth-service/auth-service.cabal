@@ -31,6 +31,7 @@ library
       Data.Models.Role
       Data.Models.User
       Data.Models.UserAuthRequest
+      Data.Models.UserPatch
       Data.Models.UserSearch
       Foundation
       Handlers.Auth

@@ -56,7 +56,7 @@ mkYesodData
   [parseRoutes|
 /user UserRouteR POST
 /user/#Text UserNameDetailR GET DELETE
-/user/id/#UserId UserIdDetailR GET DELETE
+/user/id/#UserId UserIdDetailR GET DELETE PATCH
 /role RoleR POST
 /role/#Text RoleNameDetailR GET DELETE
 /assign/#Text/#Text AssignRoleR GET POST

@@ -5,12 +5,16 @@ module Handlers.UserDetail
   , deleteUserNameDetailR
   , getUserIdDetailR
   , deleteUserIdDetailR
+  , patchUserIdDetailR
   ) where
 
+import           Control.Monad               (when)
 import           Crud
 import           Data.Aeson
-import           Data.Models.User            (userDetailsFromModel)
+import           Data.Maybe                  (isJust)
+import           Data.Models.UserPatch
 import           Data.Text                   (Text, pack, unpack)
+import qualified Data.Text                   as T
 import           Database.Persist.Postgresql
 import           Foundation
 import           Network.HTTP.Types
@@ -20,6 +24,36 @@ import           Yesod.Persist
 
 notFoundErr :: Value
 notFoundErr = object [ "error" .= String "Not found!" ]
+
+patchUserIdDetailR :: UserId -> Handler Value
+patchUserIdDetailR uId' = do
+  userData' <- runDB $ get uId'
+  case userData' of
+    Nothing -> sendStatusJSON status404 notFoundErr
+    (Just (User { .. })) -> do
+      r@(UserPatch { .. }) <- requireCheckJsonBody
+      when (isJust getUserPatchLogin) $ do
+        case getUserPatchLogin of
+          ~(Just login) -> do
+            when (T.null login) $ sendStatusJSON status400 $ object ["error" .= String "Login is empty"]
+            when (T.length login > 30) $ sendStatusJSON status400 $ object ["error" .= String "Login is too long"]
+            loginTaken <- runDB $ exists [ UserLogin ==. login ]
+            when loginTaken $ sendStatusJSON status400 $ object ["error" .= String "Login is taken"]
+      when (isJust getUserPatchName) $ do
+        case getUserPatchName of
+          ~(Just username) -> do
+            when (T.null username) $ sendStatusJSON status400 $ object ["error" .= String "User name is empty"]
+            when (T.length username > 50) $ sendStatusJSON status400 $ object ["error" .= String "User name is too long"]
+      when (isJust getUserPatchPassword) $ do
+        case getUserPatchPassword of
+          ~(Just pass) -> do
+            when (T.null pass) $ sendStatusJSON status400 $ object ["error" .= String "Password is empty"]
+            when (T.length pass > 30) $ sendStatusJSON status400 $ object ["error" .= String "Password is too long"]
+      let query = userPatchToQuery r
+      App { .. } <- getYesod
+      liftIO $ deleteAuthToken redisPool userLogin
+      runDB $ updateWhere [UserId ==. uId'] query
+      sendResponseStatus status204 ()
 
 getUserIdDetailR :: UserId -> Handler Value
 getUserIdDetailR uId' = let
