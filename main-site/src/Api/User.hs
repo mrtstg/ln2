@@ -9,6 +9,8 @@ module Api.User
   , patchUser'
   , createUser
   , createUser'
+  , deleteUser
+  , deleteUser'
   ) where
 
 import           Control.Exception
@@ -65,6 +67,23 @@ createUser' e createData = do
   r <- runExceptT (createUser e createData) `catch` handler'
   case r of
     ~(Right v) -> return v
+
+deleteUser' :: EndpointsConfiguration -> Int -> IO (UserGetResult ())
+deleteUser' e uid = do
+  r <- runExceptT (deleteUser e uid) `catch` handler'
+  case r of
+    ~(Right v) -> return v
+
+deleteUser :: EndpointsConfiguration -> Int -> ExceptT HttpException IO (UserGetResult ())
+deleteUser (EndpointsConfiguration { getAuthServiceUrl = apiUrl }) uId = do
+  let reqString = "DELETE " <> apiUrl <> "/user/id/" <> show uId
+  request <- liftIO $ parseRequest reqString
+  response <- httpBS request
+  let requestBody = getResponseBody response
+  case getResponseStatusCode response of
+    404             -> return NotFound
+    204             -> return $ UserGetResult ()
+    _unexceptedCode -> return InternalError
 
 createUser :: EndpointsConfiguration -> UserCreate -> ExceptT HttpException IO (UserGetResult ())
 createUser (EndpointsConfiguration { getAuthServiceUrl = apiUrl }) createData = do
