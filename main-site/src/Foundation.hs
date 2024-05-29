@@ -93,6 +93,7 @@ mkYesodData
 /api/user/#Int UserApiWrapperR DELETE PATCH
 /api/courses ApiCoursesR GET POST
 /api/assign/#CourseId/#Text AssignMemberR GET
+/api/assign/role/teacher/#Text AssignTeacherR GET
 /api/query/course/#Text QueryCourseR GET
 /api/courses/#CourseId ApiCourseIdR GET PATCH DELETE
 /api/course/#CourseId/task ApiCourseTaskR POST GET

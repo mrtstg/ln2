@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Handlers.AssignMember (getAssignMemberR) where
+module Handlers.AssignMember
+  ( getAssignMemberR
+  , getAssignTeacherR
+  ) where
 
 import           Api.Role
 import           Data.Aeson
@@ -12,6 +15,16 @@ import           Network.HTTP.Types
 import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
+
+getAssignTeacherR :: Text -> Handler Value
+getAssignTeacherR userLogin = do
+  (UserDetails { .. }) <- requireAuth
+  let isAdmin = adminRoleGranted getUserRoles
+  if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You have no access!" ] else do
+    assignRes' <- liftIO $ assignRole' (unpack userLogin) "course-creator"
+    case assignRes' of
+      (RoleResult assignRes) -> sendStatusJSON status200 $ object [ "assigned" .= assignRes ]
+      _anyFailure -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
 
 getAssignMemberR :: CourseId -> Text -> Handler Value
 getAssignMemberR cId@(CourseKey courseUUID) userLogin = do
