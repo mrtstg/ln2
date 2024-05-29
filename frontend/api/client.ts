@@ -253,6 +253,15 @@ export class ApiClient {
     throw "Unreachable!"
   }
 
+  async assignTeacher(userLogin: string): Promise<Boolean | null> {
+    try {
+      const { data } = await this.client.get("/api/assign/role/teacher/" + userLogin)
+      return data.assigned
+    } catch (error) {
+      return null
+    }
+  }
+
   async assignCourseMember(courseId: string, userLogin: string): Promise<Boolean | null> {
     try {
       const { data } = await this.client.get("/api/assign/" + courseId + "/" + userLogin)
