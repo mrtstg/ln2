@@ -11,7 +11,8 @@ import type {
   TaskCreateResponse,
   CourseTaskPatch,
   UserQuery,
-  UserPatch
+  UserPatch,
+  UserCreate
 } from "./types";
 
 export class ApiClient {
@@ -61,6 +62,42 @@ export class ApiClient {
       }
     }
     throw "Unreachable!"
+  }
+
+  async createUser(payload: UserCreate): Promise<string> {
+    try {
+      const _ = await this.client.post("/api/user", payload)
+      return 'ok'
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status == 400) {
+          if (error.response.data.error != undefined) {
+            switch(error.response.data.error) {
+              case 'Login is empty':
+                return 'Логин не может быть пустым!'
+              case 'Login is too long':
+                return 'Логин не может быть длиннее 30 символов!'
+              case 'Login is taken':
+                return 'Логин уже занят'
+              case 'User name is empty':
+                return 'Имя пользователя не может быть пустым'
+              case 'User name is too long':
+                return 'Имя пользователя не может быть длиннее 50 символов'
+              case 'Password is empty':
+                return 'Пароль не может быть пустым'
+              case 'Password is too long':
+                return 'Пароль не может быть длиннее 30 символов'
+              default:
+                return 'Неизвестная ошибка'
+            }
+          }
+        }
+        if (error.response.status == 403) {
+          return 'Нет доступа'
+        }
+      }
+      return 'Неизвестная ошибка'
+    }
   }
 
   async createCourse(payload: CourseCreate): Promise<CommonCourseDetails | string> {
