@@ -21,7 +21,7 @@ getQueryCourseR courseId = do
     getAdmins <- getBoolParameter "getAdmins"
     pageNumber <- getPageNumber
     let queryValue = fromMaybe "" queryValue'
-    let courseMemberGroup = (Just . pack . (if getAdmins then generateCourseAdminsGroup else generateCourseMembersGroup) . unpack) courseId
+    let courseMemberGroup = if (courseId == "all") then Nothing else (Just . pack . (if getAdmins then generateCourseAdminsGroup else generateCourseMembersGroup) . unpack) courseId
     let res'' = if getMembers then queryUsers' queryValue courseMemberGroup Nothing else queryUsers' queryValue Nothing courseMemberGroup
     res' <- liftIO (res'' pageNumber)
     case res' of
