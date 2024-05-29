@@ -171,10 +171,11 @@ $doctype 5
                 <div .navbar-link>
                   #{ getUserDetailsName }
                 <div .navbar-dropdown>
-                  <a .navbar-item href="/profile">
-                    Профиль
-                  <a .navbar-item href="/logout">
+                  <a .navbar-item href=@{LogoutR}>
                     Выйти
+                  $if adminRoleGranted getUserRoles
+                    <a .navbar-item href=@{ImportUserR}>
+                      Импорт пользователей
     ^{pageBody pc}
   <script src="/static/js/navbar.js">
 |]
