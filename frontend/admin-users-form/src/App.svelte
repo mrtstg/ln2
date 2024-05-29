@@ -21,6 +21,8 @@
   $: userPass = ''
   let errorMessage: string
   $: errorMessage = ''
+  let isTeacher: boolean
+  $: isTeacher = false
 
   const unselectUser = () => {
     selectedUser = null
@@ -31,6 +33,7 @@
     userLogin = ''
     userName = ''
     userPass = ''
+    isTeacher = false
   }
 
   const updateUser = () => {
@@ -43,6 +46,22 @@
 
   const deleteUser = () => {
     updateUserCallback = deleteUserWrapper()
+  }
+
+  const promoteUser = () => {
+    updateUserCallback = promoteUserWrapper()
+  }
+
+  const promoteUserWrapper = async (): Promise<string> => {
+    const res = await api.assignTeacher(selectedUser!.login)
+    if (res != null) {
+      isTeacher = !isTeacher
+      updateUserCallback = null
+      return 'ok'
+    } else {
+      errorMessage = 'Не удалось выдать роль пользователю.'
+    }
+    return 'Не удалось выдать роль пользователю.'
   }
 
   const createUserWrapper = async (): Promise<string> => {
@@ -86,6 +105,7 @@
   const selectUser = async (user: UserDetails) => {
     userName = user.name
     userLogin = user.login
+    isTeacher = user.roles.filter(el => el.name == "course-creator").length > 0
     selectedUser = user
   }
 
@@ -128,6 +148,13 @@
         {#if updateUserCallback == null}
           <button class="button is-success is-fullwidth p-3" on:click={updateUser}> Обновить данные </button>
           <button class="button is-danger is-fullwidth mt-3 p-3" on:click={deleteUser}> Удалить пользователя </button>
+          <button class="button is-warning is-fullwidth mt-3 p-3" on:click={promoteUser}>
+            {#if isTeacher}
+              Забрать право создания курсов
+            {:else}
+              Выдать право создания курсов
+            {/if}
+          </button>
         {:else}
           {#await updateUserCallback}
             <SuccessMessage title="Обновляем данные..." description="" additionalStyle="is-fullwidth"/>
@@ -137,6 +164,13 @@
             {:else}
               <button class="button is-success is-fullwidth p-3" on:click={updateUser}> Обновить данные </button>
               <button class="button is-danger is-fullwidth mt-3 p-3" on:click={deleteUser}> Удалить пользователя </button>
+              <button class="button is-warning is-fullwidth mt-3 p-3" on:click={promoteUser}>
+                {#if isTeacher}
+                  Забрать право создания курсов
+                {:else}
+                  Выдать право создания курсов
+                {/if}
+              </button>
             {/if}
           {:catch}
             <DangerMessage title="Ошибка!" description="Что-то пошло не так." additionalStyle="is-fullwidth"/>
