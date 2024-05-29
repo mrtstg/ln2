@@ -10,6 +10,7 @@
 
   let usersUpdate: () => void
   let selectedUser: UserDetails | null = null
+  let creatingUser: boolean = false
 
   let userLogin: string
   $: userLogin = ''
@@ -23,11 +24,34 @@
   const unselectUser = () => {
     selectedUser = null
     updateUserCallback = null
+    createUserCallback = null
+    creatingUser = false
     errorMessage = ''
+    userLogin = ''
+    userName = ''
+    userPass = ''
   }
 
   const updateUser = () => {
     updateUserCallback = updateUserWrapper()
+  }
+
+  const createUser = () => {
+    createUserCallback = createUserWrapper()
+  }
+
+  const createUserWrapper = async (): Promise<string> => {
+    const res = await api.createUser({
+      name: userName,
+      login: userLogin,
+      password: userPass
+    })
+    if (res == 'ok') {
+      unselectUser()
+    } else {
+      errorMessage = res
+    }
+    return res
   }
 
   const updateUserWrapper = async (): Promise<string> => {
@@ -50,47 +74,94 @@
     selectedUser = user
   }
 
-  let updateUserCallback: Promise<String> | null = null
+  let updateUserCallback: Promise<string> | null = null
+  let createUserCallback: Promise<string> | null = null
 </script>
 
-{#if selectedUser == null}
-  <UserQueryForm actionCallback={selectUser} bind:queryWrapper={usersUpdate} apiUrl={url} courseId='all' getMembers={false} getAdmins={false} actionText="Редактировать"/>
+<div class="pb-3">
+{#if !creatingUser}
+  <div class="button is-success is-fullwidth" on:click={() => creatingUser = true}> Создать пользователя </div>
+{:else}
+  <div class="button is-success is-fullwidth" on:click={() => creatingUser = false}> Вернуться назад </div>
+{/if}
+</div>
+
+{#if !creatingUser}
+  {#if selectedUser == null}
+    <UserQueryForm actionCallback={selectUser} bind:queryWrapper={usersUpdate} apiUrl={url} courseId='all' getMembers={false} getAdmins={false} actionText="Редактировать"/>
+  {:else}
+    <div class="box">
+      <a class="button mb-5" href="#" on:click={unselectUser}> Назад </a>
+      <form>
+        <label class="label">
+          Логин пользователя
+          <input class="input" type="text" bind:value={userLogin} maxlength="30">
+          <p class="help"> Уникальный для всего сайта </p>
+        </label>
+        <label class="label">
+          Имя пользователя
+          <input class="input" type="text" bind:value={userName} maxlength="50">      
+        </label>
+        <label class="label">
+          Пароль пользователя
+          <input class="input" type="password" bind:value={userPass} maxlength="30">
+          <p class="help"> Возможен только сброс пароля. Оставьте пустым, если не хотите менять</p>
+        </label>
+        {#if errorMessage.length > 0}
+          <DangerMessage title="Ошибка!" description={errorMessage} additionalStyle="is-fullwidth"/>
+        {/if}
+        {#if updateUserCallback == null}
+          <button class="button is-success is-fullwidth p-3" on:click={updateUser}> Обновить данные </button>
+        {:else}
+          {#await updateUserCallback}
+            <SuccessMessage title="Обновляем данные..." description="" additionalStyle="is-fullwidth"/>
+          {:then res}
+            {#if res == 'ok'}
+              <SuccessMessage title="Данные обновлены!" description="" additionalStyle="is-fullwidth"/>
+            {:else}
+              <button class="button is-success is-fullwidth p-3" on:click={updateUser}> Обновить данные </button>
+            {/if}
+          {:catch}
+            <DangerMessage title="Ошибка!" description="Что-то пошло не так." additionalStyle="is-fullwidth"/>
+          {/await}
+        {/if}
+      </form>
+    </div>
+  {/if}
 {:else}
   <div class="box">
-    <a class="button mb-5" href="#" on:click={unselectUser}> Назад </a>
     <form>
-      <label class="label">
-        Логин пользователя
-        <input class="input" type="text" bind:value={userLogin} maxlength="30">
-        <p class="help"> Уникальный для всего сайта </p>
-      </label>
-      <label class="label">
-        Имя пользователя
-        <input class="input" type="text" bind:value={userName} maxlength="50">      
-      </label>
-      <label class="label">
-        Пароль пользователя
-        <input class="input" type="password" bind:value={userPass} maxlength="30">
-        <p class="help"> Возможен только сброс пароля. Оставьте пустым, если не хотите менять</p>
-      </label>
-      {#if errorMessage.length > 0}
-        <DangerMessage title="Ошибка!" description={errorMessage} additionalStyle="is-fullwidth"/>
-      {/if}
-      {#if updateUserCallback == null}
-        <button class="button is-success is-fullwidth p-3" on:click={updateUser}> Обновить данные </button>
-      {:else}
-        {#await updateUserCallback}
-          <SuccessMessage title="Обновляем данные..." description="" additionalStyle="is-fullwidth"/>
-        {:then res}
-          {#if res == 'ok'}
-            <SuccessMessage title="Данные обновлены!" description="" additionalStyle="is-fullwidth"/>
-          {:else}
-            <button class="button is-success is-fullwidth p-3" on:click={updateUser}> Обновить данные </button>
-          {/if}
-        {:catch}
-          <DangerMessage title="Ошибка!" description="Что-то пошло не так." additionalStyle="is-fullwidth"/>
-        {/await}
-      {/if}
-    </form>
+        <label class="label">
+          Логин пользователя
+          <input class="input" type="text" bind:value={userLogin} maxlength="30">
+          <p class="help"> Уникальный для всего сайта </p>
+        </label>
+        <label class="label">
+          Имя пользователя
+          <input class="input" type="text" bind:value={userName} maxlength="50">      
+        </label>
+        <label class="label">
+          Пароль пользователя
+          <input class="input" type="password" bind:value={userPass} maxlength="30">
+        </label>
+        {#if errorMessage.length > 0}
+          <DangerMessage title="Ошибка!" description={errorMessage} additionalStyle="is-fullwidth"/>
+        {/if}
+        {#if createUserCallback == null}
+          <button class="button is-success is-fullwidth p-3" on:click={createUser}> Создать пользователя </button>
+        {:else}
+          {#await createUserCallback}
+            <SuccessMessage title="Создаем пользователя..." description="" additionalStyle="is-fullwidth"/>
+          {:then res}
+            {#if res == 'ok'}
+              <SuccessMessage title="Данные обновлены!" description="" additionalStyle="is-fullwidth"/>
+            {:else}
+              <button class="button is-success is-fullwidth p-3" on:click={createUser}> Создать пользователя </button>
+            {/if}
+          {:catch}
+            <DangerMessage title="Ошибка!" description="Что-то пошло не так." additionalStyle="is-fullwidth"/>
+          {/await}
+        {/if}
+      </form>
   </div>
 {/if}
