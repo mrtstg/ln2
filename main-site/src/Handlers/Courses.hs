@@ -46,6 +46,9 @@ courseList (courses, cAmount) isAdmin pageN coursePageR coursesR = do
               <a href=@{CourseMembersR cId} .card-footer-item> Участники
               <a href=@{CourseSolvesR cId} .card-footer-item> Решения
               <a href=@{AdminCourseR cId} .card-footer-item> Редактировать
+          $else
+            <footer .card-footer>
+              <a href=@{coursePageR cId} .card-footer-item> Перейти
   <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
     <a href=@{coursesR}?page=#{pageN - 1}>
       <button .button.is-primary.mx-3 :pageN == 1:disabled> Назад
