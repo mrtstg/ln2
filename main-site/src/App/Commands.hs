@@ -23,6 +23,7 @@ import           Handlers.Courses
 import           Handlers.CourseSolves
 import           Handlers.CourseTask
 import           Handlers.CourseTaskEdit
+import           Handlers.ImportUser
 import           Handlers.Index
 import           Handlers.Login
 import           Handlers.Logout
