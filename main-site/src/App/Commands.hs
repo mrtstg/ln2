@@ -29,6 +29,7 @@ import           Handlers.Logout
 import           Handlers.QueryCourse
 import           Handlers.TaskSolves
 import           Handlers.UserApi
+import           Handlers.Users
 import           Network.AMQP                (openConnection')
 import           Network.Socket              (PortNumber)
 import           Network.Wai.Handler.Warp

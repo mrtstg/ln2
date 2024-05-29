@@ -88,6 +88,7 @@ mkYesodData
 /solves/solve/#CourseSolvesId UserSolveR GET
 /task/#CourseTaskId CourseTaskR GET
 /task/#CourseId/#CourseTaskId/edit CourseTaskEditR GET
+/users/admin EditUsersR GET
 /api/user/#Int UserApiWrapperR PATCH
 /api/courses ApiCoursesR GET POST
 /api/assign/#CourseId/#Text AssignMemberR GET
@@ -157,6 +158,9 @@ $doctype 5
               <a href=@{LoginR} class="button">
                 Войти
             $of Just (UserDetails { .. })
+              $if adminRoleGranted getUserRoles
+                <a href=@{EditUsersR} .navbar-item>
+                  Пользователи
               $if isUserCourseManager getUserRoles
                 <a href=@{AdminCoursesR} .navbar-item>
                   Управление курсами

@@ -67,6 +67,7 @@ library
       Handlers.QueryCourse
       Handlers.TaskSolves
       Handlers.UserApi
+      Handlers.Users
       Handlers.Utils
       Rabbit
       Utils
