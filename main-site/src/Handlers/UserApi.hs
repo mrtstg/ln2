@@ -3,6 +3,7 @@
 module Handlers.UserApi
   ( patchUserApiWrapperR
   , postUserApiCreateR
+  , deleteUserApiWrapperR
   ) where
 
 import           Api.User
@@ -25,6 +26,18 @@ postUserApiCreateR = do
     resp <- liftIO $ createUser' endpoints createData
     case resp of
       (UserGetError err) -> sendStatusJSON status400 $ object ["error" .= err]
+      (UserGetResult ()) -> sendStatusJSON status204 ()
+      _otherError -> sendStatusJSON status500 $ object ["error" .= String "Internal error"]
+
+deleteUserApiWrapperR :: Int -> Handler Value
+deleteUserApiWrapperR uId = do
+  (UserDetails { .. }) <- requireApiAuth
+  let isAdmin = adminRoleGranted getUserRoles
+  if not isAdmin then sendStatusJSON status403 $ object ["error" .= String "Forbidden"] else do
+    App { endpointsConfiguration = endpoints } <- getYesod
+    resp <- liftIO $ deleteUser' endpoints uId
+    case resp of
+      Api.User.NotFound -> sendStatusJSON status404 $ object ["error" .= String "Not found"]
       (UserGetResult ()) -> sendStatusJSON status204 ()
       _otherError -> sendStatusJSON status500 $ object ["error" .= String "Internal error"]
 
