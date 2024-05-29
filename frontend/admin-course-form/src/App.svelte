@@ -150,7 +150,7 @@
       taskOrder = 0
       stages = []
       if (exit) {
-        window.location.replace("/tasks/" + courseID + "/admin")
+        window.location.replace("/course/" + courseID)
         return
       } else {
         modalMessage = 'Задача создана!'
@@ -186,7 +186,7 @@
 <div class="container p-5">
   {#if coursePromise != null}
     <section class="hero is-info p-3 my-3">
-      <h1 class="title"> Редактирование курса </h1>
+      <h1 class="is-size-3 has-text-weight-bold">Редактирование курса</h1>
     </section>
     {#await coursePromise}
       <SuccessMessage title="Ожидайте..." description="Загружаем данные"/>
@@ -205,7 +205,7 @@
         </div>
       </div>
       <button class="is-success is-fullwidth button mb-3" on:click={courseUpdateButton}> Обновить курс </button>
-      <button class="is-danger is-fullwidth button" on:click={courseDeleteButton}> Удалить курс </button>
+      <button class="is-danger is-fullwidth button mb-3" on:click={courseDeleteButton}> Удалить курс </button>
     {:catch error}
       {#if typeof error === 'string'}
         <DangerMessage title="Ошибка!" description={courseErrorsToString(error)}/>
@@ -215,8 +215,9 @@
     {/await}
   {/if}
 
-  <section class="hero is-info p-3 my-3">
-    <h1 class="title"> Создание задания </h1>
+  <section class="hero is-info p-3 is-flex is-flex-direction-row is-fullwidth is-flex-wrap-wrap is-justify-content-space-between is-align-content-cente">
+    <h1 class="is-size-3 has-text-weight-bold"> Создание задания </h1>
+    <a target="_blank" href="/course/{courseID}" class="button"> Открыть курс </a>
   </section>
   <div class="field">
     <label class="label"> Заголовок задания </label>
