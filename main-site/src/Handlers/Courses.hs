@@ -29,7 +29,7 @@ courseList :: ([(Entity Course, Maybe UserDetails)], Int) -> Bool -> Int -> (Cou
 courseList (courses, cAmount) isAdmin pageN coursePageR coursesR = do
   [whamlet|
   <div .columns.is-multiline>
-    $forall ((Entity cId (Course cName _ _ _)), d) <- courses
+    $forall ((Entity cId (Course cName cDesc _ _)), d) <- courses
       <div .column.is-full>
         <div .card>
           <a href=@{coursePageR cId}>
@@ -40,6 +40,7 @@ courseList (courses, cAmount) isAdmin pageN coursePageR coursesR = do
               $case d
                 $of Just (UserDetails { getUserDetailsName = authorName })
                   <p> Автор: #{ authorName }
+              <p> #{cDesc}
           $if isAdmin
             <footer .card-footer>
               <a href=@{CourseMembersR cId} .card-footer-item> Участники
