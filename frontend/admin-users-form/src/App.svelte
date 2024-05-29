@@ -4,6 +4,7 @@
   import UserQueryForm from "../../components/UserQueryForm.svelte"
   import DangerMessage from "../../components/DangerMessage.svelte";
   import SuccessMessage from "../../components/SuccessMessage.svelte";
+  import { deleteUserErrorToString  } from "../../api/utils"
 
   let url = API_URL
   const api = new ApiClient(url)
@@ -40,6 +41,10 @@
     createUserCallback = createUserWrapper()
   }
 
+  const deleteUser = () => {
+    updateUserCallback = deleteUserWrapper()
+  }
+
   const createUserWrapper = async (): Promise<string> => {
     const res = await api.createUser({
       name: userName,
@@ -50,6 +55,16 @@
       unselectUser()
     } else {
       errorMessage = res
+    }
+    return res
+  }
+
+  const deleteUserWrapper = async (): Promise<string> => {
+    const res = await api.deleteUser(selectedUser!.id)
+    if (res == 'ok') {
+      unselectUser()
+    } else {
+      errorMessage = deleteUserErrorToString(res)
     }
     return res
   }
@@ -88,7 +103,7 @@
 
 {#if !creatingUser}
   {#if selectedUser == null}
-    <UserQueryForm actionCallback={selectUser} bind:queryWrapper={usersUpdate} apiUrl={url} courseId='all' getMembers={false} getAdmins={false} actionText="Редактировать"/>
+    <UserQueryForm actionCallback={selectUser} apiUrl={url} courseId='all' getMembers={false} getAdmins={false} actionText="Редактировать"/>
   {:else}
     <div class="box">
       <a class="button mb-5" href="#" on:click={unselectUser}> Назад </a>
@@ -112,6 +127,7 @@
         {/if}
         {#if updateUserCallback == null}
           <button class="button is-success is-fullwidth p-3" on:click={updateUser}> Обновить данные </button>
+          <button class="button is-danger is-fullwidth mt-3 p-3" on:click={deleteUser}> Удалить пользователя </button>
         {:else}
           {#await updateUserCallback}
             <SuccessMessage title="Обновляем данные..." description="" additionalStyle="is-fullwidth"/>
@@ -120,6 +136,7 @@
               <SuccessMessage title="Данные обновлены!" description="" additionalStyle="is-fullwidth"/>
             {:else}
               <button class="button is-success is-fullwidth p-3" on:click={updateUser}> Обновить данные </button>
+              <button class="button is-danger is-fullwidth mt-3 p-3" on:click={deleteUser}> Удалить пользователя </button>
             {/if}
           {:catch}
             <DangerMessage title="Ошибка!" description="Что-то пошло не так." additionalStyle="is-fullwidth"/>
