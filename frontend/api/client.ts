@@ -117,6 +117,23 @@ export class ApiClient {
     }
   }
 
+  async deleteUser(userId: number): Promise<string> {
+    try {
+      const _ = await this.client.delete("/api/user/" + userId)
+      return 'ok'
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status == 404) {
+          return "Not found"
+        }
+        if (error.response.status == 403) {
+          return "Forbidden"
+        }
+      }
+      return "Unknown"
+    }
+  }
+
   async deleteCourse(courseId: string): Promise<string> {
     try {
       const res = await this.client.delete("/api/courses/" + courseId)

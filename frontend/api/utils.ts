@@ -35,6 +35,17 @@ export const courseTaskErrorToString = (error: string): string => {
   }
 }
 
+export const deleteUserErrorToString = (error: string): string => {
+  switch (error) {
+    case 'Forbidden':
+      return 'У вас нет доступа!'
+    case 'Not found':
+      return 'Пользователь не найден!'
+    default:
+      return 'Неизвестная ошибка!'
+  }
+}
+
 export const deleteCourseErrorToString = (error: string): string => {
   switch (error) {
     case 'Forbidden':
