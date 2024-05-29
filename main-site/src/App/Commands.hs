@@ -95,7 +95,7 @@ runServerCommand port = do
               waiApp <- toWaiApp app
               run port $ defaultMiddlewaresNoLogging $ cors (const $ Just $ simpleCorsResourcePolicy
                 { corsOrigins = if devMode then Just (corsOrigins, True) else Nothing
-                , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH"]
+                , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH", "DELETE"]
                 , corsRequestHeaders = simpleHeaders
                 }) waiApp
 
