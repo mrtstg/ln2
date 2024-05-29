@@ -7,6 +7,8 @@ module Api.User
   , queryUsers'
   , patchUser
   , patchUser'
+  , createUser
+  , createUser'
   ) where
 
 import           Control.Exception
@@ -57,6 +59,28 @@ patchUser' e uid patchData = do
   r <- runExceptT (patchUser e uid patchData) `catch` handler'
   case r of
     ~(Right v) -> return v
+
+createUser' :: EndpointsConfiguration -> UserCreate -> IO (UserGetResult ())
+createUser' e createData = do
+  r <- runExceptT (createUser e createData) `catch` handler'
+  case r of
+    ~(Right v) -> return v
+
+createUser :: EndpointsConfiguration -> UserCreate -> ExceptT HttpException IO (UserGetResult ())
+createUser (EndpointsConfiguration { getAuthServiceUrl = apiUrl }) createData = do
+  let reqString = "POST " <> apiUrl <> "/user"
+  request <- liftIO $ parseRequest reqString
+  let requestData = setRequestBodyJSON createData request
+  response <- httpBS requestData
+  let requestBody = getResponseBody response
+  case getResponseStatusCode response of
+    200 -> return $ UserGetResult ()
+    400 -> do
+      let parseRes = (eitherDecode . fromStrict) requestBody
+      case parseRes of
+        (Left _)                     -> return InternalError
+        (Right (Api.User.Error msg)) -> return $ UserGetError msg
+    _unexceptedCode -> return InternalError
 
 patchUser :: EndpointsConfiguration -> Int -> UserPatch -> ExceptT HttpException IO (UserGetResult ())
 patchUser (EndpointsConfiguration { getAuthServiceUrl = apiUrl }) uId patchData = do
