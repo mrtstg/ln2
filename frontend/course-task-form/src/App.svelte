@@ -85,6 +85,31 @@
   let sendPromise: Promise<TaskCreateResponse | null> | null = null
 </script>
 
+{#if taskID != null}
+  {#if answerError.length > 0}
+    <DangerMessage title="Ошибка!" description={answerError} additionalStyle="is-fullwidth"/>
+  {/if}
+  <div class="field required">
+    <label class="label"> Решение </label>
+    <CodeMirror styles={{
+      "&": {
+        "font-size": "1rem"
+      }
+    }} bind:value={answer}/>
+  </div>
+  {#if sendPromise == null}
+    <button class="button is-fullwidth is-success" on:click={async () => { sendSolution() }}> Отправить решение </button>
+  {:else}
+    {#await sendPromise}
+      <button class="button is-fullwidth is-success" disabled> Отправляем решение... </button>
+    {:then}
+      <button class="button is-fullwidth is-success" on:click={async () => { sendSolution() }}> Отправить решение </button>
+    {:catch}
+      <DangerMessage title="Неизвестная ошибка!" description="Попробуйте обновить страницу."/>
+    {/await}
+  {/if}
+{/if}
+
 {#if taskSolvesPromise != null}
   {#await taskSolvesPromise}
     <SuccessMessage title="Ожидайте" description="Загружаем данные..." additionalStyle="is-fullwidth"/>
@@ -162,29 +187,4 @@
   {:catch e}
     <DangerMessage title="Ошибка!" description="Не удалось загрузить решения." additionalStyle="is-fullwidth"/>
   {/await}
-{/if}
-
-{#if taskID != null}
-  {#if answerError.length > 0}
-    <DangerMessage title="Ошибка!" description={answerError} additionalStyle="is-fullwidth"/>
-  {/if}
-  <div class="field required">
-    <label class="label"> Решение </label>
-    <CodeMirror styles={{
-      "&": {
-        "font-size": "1rem"
-      }
-    }} bind:value={answer}/>
-  </div>
-  {#if sendPromise == null}
-    <button class="button is-fullwidth is-success" on:click={async () => { sendSolution() }}> Отправить решение </button>
-  {:else}
-    {#await sendPromise}
-      <button class="button is-fullwidth is-success" disabled> Отправляем решение... </button>
-    {:then}
-      <button class="button is-fullwidth is-success" on:click={async () => { sendSolution() }}> Отправить решение </button>
-    {:catch}
-      <DangerMessage title="Неизвестная ошибка!" description="Попробуйте обновить страницу."/>
-    {/await}
-  {/if}
 {/if}
