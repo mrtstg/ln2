@@ -102,6 +102,7 @@
     taskTitle = res.name
     taskContent = res.content
     taskOrder = res.order
+    stages = []
     if (res.standIdentifier != undefined && res.standActions != undefined) {
       res.standActions.forEach(el => {
         let res = stageDataToCheckStage(el)
