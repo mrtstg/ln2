@@ -13,6 +13,14 @@ build-frontend: ./static/js ./static/css
 	make -C frontend/course-task-edit-form build
 	make -C frontend/course-members-form build
 
+build-images:
+	make -C auth-service build-image
+	make -C db-gen-api build-image
+	make -C docker-master-server build-image
+	make -C docker-secondary-agent build-image
+	make -C main-site build-image
+	make -C md-render-api build-image
+
 save-images: ./images
 	@for n in $(IMAGES_LIST); do \
 		docker save $$n -o ./images/$$n.tar; \
