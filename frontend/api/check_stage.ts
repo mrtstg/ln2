@@ -83,7 +83,7 @@ export const defaultCheckStageData = (stType: StageType): object => {
     case StageType.DeclareVariable:
       return {action: "declare", variableName: "", variableValue: ""}
     case StageType.CompareResults:
-      return {action: "compareVars", first: "", second: "", score: 0}
+      return {action: "compareVars", first: "", second: "", score: 0, failureMessage: ""}
     case StageType.PSQLAnswerQuery:
       return {action: "psql_answer_query_macro", container: "", recordInto: ""}
     case StageType.PSQLQuery:

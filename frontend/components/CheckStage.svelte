@@ -126,6 +126,12 @@
         <input class="input" type="number" placeholder="Количество баллов" bind:value={data.data.score} on:change={async () => await updateCallback(data)}>
       </div>
     </div>
+    <div class="field">
+      <label class="label"> Текст сообщения при несоответствии данных (<i> опционально</i>) </label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Сообщение" bind:value={data.data.failureMessage} on:change={async () => await updateCallback(data)}> 
+      </div>
+    </div>
   {:else if selectedType == StageType.PSQLQuery}
     <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.container = v; await updateCallback(data) }}/>
     <div class="field">
