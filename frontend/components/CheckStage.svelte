@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CodeMirror from "svelte-codemirror-editor"
   import type { CheckStage, StageData } from "../api/check_stage"
   import { StageType } from "../api/check_stage"
   import { stageTypeList, defaultCheckStageData, checkStageName } from "../api/check_stage"
@@ -52,7 +53,11 @@
     <div class="field">
       <label class="label"> Содержимое файла </label>
       <div class="control">
-        <textarea class="textarea" bind:value={data.data.fileContent} on:change={async () => await updateCallback(data) }></textarea>
+        <CodeMirror styles={{
+          "&": {
+          "font-size": "1rem"
+          }
+        }} bind:value={data.data.fileContent} on:change={async () => await updateCallback(data) }/>
       </div>
     </div>
   {:else if selectedType == StageType.ExecuteCommand }
@@ -95,7 +100,11 @@
     <div class="field">
       <label class="label"> Значение </label>
       <div class="control">
-        <textarea class="textarea" bind:value={data.data.variableValue} on:change={async () => await updateCallback(data) }></textarea>
+        <CodeMirror styles={{
+          "&": {
+          "font-size": "1rem"
+          }
+        }} bind:value={data.data.variableValue} on:change={async () => await updateCallback(data) }/>
       </div>
     </div>
   {:else if selectedType == StageType.CompareResults}
@@ -122,7 +131,11 @@
     <div class="field">
       <label class="label"> SQL-запрос </label>
       <div class="control">
-        <textarea class="textarea" bind:value={data.data.query} on:change={async () => await updateCallback(data) }></textarea>
+        <CodeMirror styles={{
+          "&": {
+          "font-size": "1rem"
+          }
+        }} bind:value={data.data.query} on:change={async () => await updateCallback(data) }/>
       </div>
       </div>
     <div class="field">
@@ -144,7 +157,11 @@
     <div class="field">
       <label class="label"> SQL-запрос </label>
       <div class="control">
-        <textarea class="textarea" bind:value={data.data.query} on:change={async () => await updateCallback(data) }></textarea>
+        <CodeMirror styles={{
+          "&": {
+          "font-size": "1rem"
+          }
+        }} bind:value={data.data.query} on:change={async () => await updateCallback(data) }/>
       </div>
       <p class="help"> Запрос должен выполнять поиск определенных данных в единичном количестве. Запрос будет автоматически подставлен. Не ставьте точку с запятой в конце. </p>
     </div>
