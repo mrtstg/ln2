@@ -13,21 +13,8 @@ use std::sync::Arc;
 use structs::app_env::*;
 use tokio::sync::Mutex;
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    dotenv().ok();
+async fn tokio_main() -> Result<()> {
     let app_env = get_app_environment();
-
-    env_logger::Builder::from_env(Env::default().default_filter_or(if app_env.agent_debug {
-        "debug"
-    } else {
-        "info"
-    }))
-    .target(Target::Stdout)
-    .init();
-    if app_env.agent_debug {
-        warn!("!!! AGENT DEBUG ENABLED !!!");
-    }
 
     info!("Opening RabbitMQ connection!");
     let rabbit_conn = Connection::connect(
@@ -113,4 +100,27 @@ async fn main() -> Result<()> {
         });
     }
     Ok(())
+}
+
+fn main() {
+    dotenv().ok();
+    let app_env = get_app_environment();
+    if app_env.agent_debug {
+        warn!("!!! AGENT DEBUG ENABLED !!!");
+    }
+
+    env_logger::Builder::from_env(Env::default().default_filter_or(if app_env.agent_debug {
+        "debug"
+    } else {
+        "info"
+    }))
+    .target(Target::Stdout)
+    .init();
+
+    let _ = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .worker_threads(app_env.threads_amount)
+        .build()
+        .unwrap()
+        .block_on(async { tokio_main().await });
 }
