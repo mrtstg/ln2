@@ -2,25 +2,19 @@ mod consumer;
 mod deploy;
 mod structs;
 
-use amqprs::{
-    channel::{
-        BasicConsumeArguments, BasicPublishArguments, ExchangeType, QueueBindArguments,
-        QueueDeclareArguments,
-    },
-    connection::{Connection, OpenConnectionArguments},
-};
 use consumer::RabbitConsumer;
 use docker_api::docker::Docker;
 use dotenv::dotenv;
 use env_logger::{self, Env, Target};
+use futures_util::StreamExt;
+use lapin::{options::*, types::FieldTable, Connection, ConnectionProperties, Result};
 use log::{debug, info, warn};
-use signal_hook::consts::SIGTERM;
-use signal_hook::iterator::Signals;
-use std::io::Read;
+use std::sync::Arc;
 use structs::app_env::*;
+use tokio::sync::Mutex;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     dotenv().ok();
     let app_env = get_app_environment();
 
@@ -36,17 +30,18 @@ async fn main() {
     }
 
     info!("Opening RabbitMQ connection!");
-    let rabbit_conn = Connection::open(&OpenConnectionArguments::new(
-        app_env.rabbit_host.as_str(),
-        app_env.rabbit_port,
-        app_env.rabbit_user.as_str(),
-        app_env.rabbit_pass.as_str(),
-    ))
-    .await
-    .unwrap();
+    let rabbit_conn = Connection::connect(
+        format!(
+            "amqp://{}:{}@{}:{}",
+            app_env.rabbit_user, app_env.rabbit_pass, app_env.rabbit_host, app_env.rabbit_port
+        )
+        .as_str(),
+        ConnectionProperties::default(),
+    )
+    .await?;
 
     info!("Creating clients!");
-    let rabbit_chan = rabbit_conn.open_channel(None).await.unwrap();
+    let rabbit_chan = rabbit_conn.create_channel().await?;
     let docker_client = Docker::new(app_env.clone().docker_url).unwrap();
     match docker_client.ping().await {
         Ok(docker_info) => debug!("{:?}", docker_info),
@@ -54,59 +49,68 @@ async fn main() {
     }
 
     info!("Declaring requestsQueue!");
-    let (queue_name, _, _) = rabbit_chan
-        .queue_declare(QueueDeclareArguments::durable_client_named("requestsQueue"))
-        .await
-        .unwrap()
-        .unwrap();
+    let mut queue_options = QueueDeclareOptions::default();
+    queue_options.durable = true;
+    let _ = rabbit_chan
+        .queue_declare(
+            "requestsQueue",
+            queue_options.clone(),
+            FieldTable::default(),
+        )
+        .await?;
 
     info!("Declaring resultsQueue!");
-    let (response_queue_name, _, _) = rabbit_chan
-        .queue_declare(QueueDeclareArguments::durable_client_named("resultsQueue"))
-        .await
-        .unwrap()
-        .unwrap();
+    let _ = rabbit_chan
+        .queue_declare("resultsQueue", queue_options.clone(), FieldTable::default())
+        .await?;
 
-    rabbit_chan
+    let _ = rabbit_chan
         .exchange_declare(
-            amqprs::channel::ExchangeDeclareArguments::of_type(
-                "resultsExchange",
-                ExchangeType::Direct,
-            )
-            .durable(true)
-            .finish(),
+            "resultsExchange",
+            lapin::ExchangeKind::Direct,
+            ExchangeDeclareOptions::default(),
+            FieldTable::default(),
         )
-        .await
-        .unwrap();
+        .await;
 
-    rabbit_chan
-        .queue_bind(QueueBindArguments::new(
-            response_queue_name.as_str(),
+    let _ = rabbit_chan
+        .queue_bind(
+            "resultsQueue",
             "resultsExchange",
             "",
-        ))
-        .await
-        .unwrap();
-
-    info!("Starting consumer!");
-    let args = BasicConsumeArguments::new(queue_name.as_str(), "");
-    rabbit_chan
-        .basic_consume(
-            RabbitConsumer::new(
-                app_env.clone(),
-                BasicPublishArguments::new("resultsExchange", ""),
-                docker_client,
-            ),
-            args,
+            QueueBindOptions::default(),
+            FieldTable::default(),
         )
-        .await
-        .unwrap();
+        .await;
 
-    loop {}
-    let mut buf = String::new();
-    std::io::stdin().read_line(&mut buf).unwrap();
+    info!("Starting consumer pool!");
+    let mut consumer = rabbit_chan
+        .basic_consume(
+            "requestsQueue",
+            "",
+            BasicConsumeOptions::default(),
+            FieldTable::default(),
+        )
+        .await?;
 
-    rabbit_chan.close().await.unwrap();
-    rabbit_conn.close().await.unwrap();
-    return ();
+    let conn_arc = Arc::new(Mutex::new(rabbit_conn));
+    let env_arc = Arc::new(Mutex::new(app_env));
+    let docker_arc = Arc::new(Mutex::new(docker_client));
+    while let Some(delivery) = consumer.next().await {
+        let conn_binding = Arc::clone(&conn_arc);
+        let env_binding = Arc::clone(&env_arc);
+        let docker_binding = Arc::clone(&docker_arc);
+        tokio::spawn(async move {
+            let delivery = delivery.unwrap();
+
+            let consumer = RabbitConsumer::new(
+                env_binding.lock().await.clone(),
+                docker_binding.lock().await.clone(),
+            );
+
+            let conn = conn_binding.lock().await;
+            let _ = consumer.consume(delivery, &*conn).await;
+        });
+    }
+    Ok(())
 }
