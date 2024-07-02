@@ -8,6 +8,7 @@ pub struct AppEnvironment {
     pub rabbit_port: u16,
     pub agent_debug: bool,
     pub docker_url: String,
+    pub threads_amount: usize,
 }
 
 pub fn get_app_environment() -> AppEnvironment {
@@ -24,6 +25,10 @@ pub fn get_app_environment() -> AppEnvironment {
         Err(_) => false,
     };
     let docker_url = env::var("DOCKER_SOCKET_URL").expect("Failed to get docker socket URL!");
+    let threads_amount = env::var("AGENT_THREADS")
+        .unwrap_or(String::from("4"))
+        .parse::<usize>()
+        .expect("Failed to parse threads amount!");
     AppEnvironment {
         rabbit_user,
         rabbit_pass,
@@ -31,5 +36,6 @@ pub fn get_app_environment() -> AppEnvironment {
         rabbit_port,
         agent_debug,
         docker_url,
+        threads_amount,
     }
 }
