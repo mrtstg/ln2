@@ -1,3 +1,4 @@
+HS_SERVICES=auth-service db-gen-api docker-master-server docker-secondary-agent main-site md-render-api
 IMAGES_LIST = ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api
 COMPOSE_BIN=docker compose
 ENV_FILE=.env
@@ -12,6 +13,11 @@ build-frontend: ./static/js ./static/css
 	make -C frontend/course-create-form build
 	make -C frontend/course-task-edit-form build
 	make -C frontend/course-members-form build
+
+build-bin:
+	@for n in $(HS_SERVICES); do \
+		(cd $$n && stack build); \
+	done
 
 build-images:
 	make -C auth-service build-image
