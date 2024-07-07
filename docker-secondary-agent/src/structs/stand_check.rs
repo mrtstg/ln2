@@ -7,27 +7,33 @@ pub enum StandCheckStage {
     CopyFile(CopyFileStage),
     #[serde(rename = "command")]
     ExecuteCommand(ExecuteCommandStage),
+    #[serde(rename = "points")]
+    AddPoints(AddPointsStage),
     #[serde(rename = "compareVars")]
-    CompareResults(CompareResultsStage),
+    CompareVariables(CompareVariablesStage),
+    #[serde(rename = "compareStatusCode")]
+    CompareLatestStatusCode(CompareLatestStatusCodeStage),
     #[serde(rename = "declare")]
     DeclareVariable(DeclareVariableStage),
+    #[serde(rename = "stopCheck")]
+    StopCheck,
+    #[serde(rename = "displayMessage")]
+    DisplayMessage(DisplayMessageStage),
+    #[serde(rename = "displayVariable")]
+    DisplayVariable(DisplayVariableStage),
 }
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct CopyFileStage {
-    pub container: String,
-    #[serde(rename = "fileContent")]
-    pub file_content: String,
-    #[serde(rename = "filePath")]
-    pub file_path: String,
+    pub target: String,
+    pub content: String,
+    pub path: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ExecuteCommandStage {
-    pub container: String,
+    pub target: String,
     pub command: String,
-    #[serde(rename = "recordStdout")]
-    pub record_stdout: bool,
     #[serde(rename = "formatOutput")]
     pub format_output: bool,
     #[serde(rename = "recordInto")]
@@ -37,12 +43,28 @@ pub struct ExecuteCommandStage {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct CompareResultsStage {
+pub struct AddPointsStage {
+    pub amount: u32,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct CompareVariablesStage {
     pub first: String,
     pub second: String,
-    pub score: u32,
-    #[serde(rename = "failureMessage")]
-    pub on_failure_message: String,
+    #[serde(rename = "positiveActions")]
+    pub positive_actions: Vec<StandCheckStage>,
+    #[serde(rename = "negativeActions")]
+    pub negative_actions: Vec<StandCheckStage>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct CompareLatestStatusCodeStage {
+    #[serde(rename = "awaitedStatus")]
+    pub awaited_status: usize,
+    #[serde(rename = "positiveActions")]
+    pub positive_actions: Vec<StandCheckStage>,
+    #[serde(rename = "negativeActions")]
+    pub negative_actions: Vec<StandCheckStage>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -51,4 +73,16 @@ pub struct DeclareVariableStage {
     pub variable_name: String,
     #[serde(rename = "variableValue")]
     pub variable_value: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct DisplayMessageStage {
+    pub message: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct DisplayVariableStage {
+    #[serde(rename = "variableName")]
+    pub variable_name: String,
+    pub message: String,
 }
