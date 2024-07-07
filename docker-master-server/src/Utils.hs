@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Utils
   ( listYMLFiles
   , findYMLByName
@@ -29,9 +30,7 @@ createRedisConnectionFromEnv = do
 
 standContainerExists :: StandData -> String -> Either String ()
 standContainerExists (StandData { getStandContainers = containers }) containerName =
-  case containerName `elem` map getContainerName containers of
-    True  -> return ()
-    False -> Left $ containerName ++ " not found in stand!"
+  if containerName `elem` map getContainerName containers then return () else Left $ containerName ++ " not found in stand!"
 
 stackVariableDeclared :: T.Text -> [T.Text] -> Either String ()
 stackVariableDeclared v vs = if v `elem` vs then Right () else Left $ "Variable " <> T.unpack v <> " is not declared!"
@@ -48,25 +47,41 @@ validateStandCheck :: StandData -> [StandCheckStage] -> Either String ()
 validateStandCheck d = helper [] where
   helper :: [T.Text] -> [StandCheckStage] -> Either String ()
   helper _ []                                        = Right ()
-  helper stack ((CopyFile containerName _ filePath):ls)  = do
-    () <- standContainerExists d containerName
-    () <- standFilePathValid filePath
+  helper stack ((CopyFile { .. }):ls)  = do
+    () <- standContainerExists d getStageTarget
+    () <- standFilePathValid getStageFilePath
     helper stack ls
-  helper stack ((ExecuteCommand containerName cmd _ _ rValue _):ls) = do
-    () <- standContainerExists d containerName
-    () <- standCommandValid cmd
-    case rValue of
+  helper stack ((ExecuteCommand { .. }):ls) = do
+    () <- standContainerExists d getStageTarget
+    () <- standCommandValid getStageCommand
+    case getStageRecordVariable of
       Nothing  -> helper stack ls
       (Just v) -> helper (v:stack) ls
-  -- TODO: score upper bound
   -- TODO: forbid variable overflow
-  helper stack ((CompareResults fst' snd' score _):ls) = do
-    () <- stackVariableDeclared fst' stack
-    () <- stackVariableDeclared snd' stack
-    () <- if score > 0 then Right () else Left "Score can't be negative or zero!"
+  helper stack ((CompareVariables { .. }):ls) = do
+    () <- stackVariableDeclared getStageFirstV stack
+    () <- stackVariableDeclared getStageSecondV stack
+    () <- validateStandCheck d getStagePositiveActions
+    () <- validateStandCheck d getStageNegativeActions
     helper stack ls
   -- TODO: empty var check
   helper stack ((DeclareVariable varName _):ls) = helper (varName:stack) ls
+  helper stack ((AddPoints { .. }):ls) = do
+    () <- if getStagePointsAmount > 0 then Right () else Left "Points cant be negative!"
+    helper stack ls
+  helper stack ((CompareLatestStatusCode { .. }):ls) = do
+    () <- validateStandCheck d getStagePositiveActions
+    () <- validateStandCheck d getStageNegativeActions
+    helper stack ls
+  helper stack (StopCheck:ls) = helper stack ls
+  helper stack ((DisplayMessage { .. }):ls) = do
+    () <- if T.null getStandMessage then Left "Empty message for display!" else Right ()
+    helper stack ls
+  helper stack ((DisplayVariable { ..}):ls) = do
+    () <- if T.null getStandMessage then Left "Empty message for display!" else Right ()
+    () <- stackVariableDeclared getStandVariableName stack
+    helper stack ls
+
 
 constructPostgreStringFromEnv :: IO (Maybe String)
 constructPostgreStringFromEnv = do
