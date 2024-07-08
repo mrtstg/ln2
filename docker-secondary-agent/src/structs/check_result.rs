@@ -6,8 +6,8 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize)]
 pub struct StandCheckResult {
     pub score: u32,
-    #[serde(rename = "maxScore")]
-    pub max_score: u32,
+    #[serde(rename = "scoreGate")]
+    pub score_gate: u32,
     pub values: HashMap<String, Value>,
     pub messages: Vec<CheckMessage>,
 }
@@ -16,7 +16,7 @@ impl Default for StandCheckResult {
     fn default() -> Self {
         StandCheckResult {
             score: 0,
-            max_score: 0,
+            score_gate: 0,
             values: HashMap::new(),
             messages: Vec::new(),
         }
