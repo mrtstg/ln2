@@ -78,6 +78,7 @@ pub struct DeclareVariableStage {
 #[derive(Deserialize, Debug, Clone)]
 pub struct DisplayMessageStage {
     pub message: String,
+    pub title: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -85,4 +86,5 @@ pub struct DisplayVariableStage {
     #[serde(rename = "variableName")]
     pub variable_name: String,
     pub message: String,
+    pub title: String,
 }
