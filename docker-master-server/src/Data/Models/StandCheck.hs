@@ -40,11 +40,13 @@ data StandCheckStage = CopyFile
   , getStandVariableValue :: !Value
   }
   | DisplayMessage
-  { getStandMessage :: !T.Text
+  { getStandMessage      :: !T.Text
+  , getStandMessageTitle :: !T.Text
   }
   | DisplayVariable
   { getStandVariableName :: !T.Text
   , getStandMessage      :: !T.Text
+  , getStandMessageTitle :: !T.Text
   }
   | StopCheck {}
   deriving (Show, Eq)
@@ -92,11 +94,13 @@ instance ToJSON StandCheckStage where
   toJSON (DisplayMessage { .. }) = object
     [ "action" .= String "displayMessage"
     , "message" .= getStandMessage
+    , "title" .= getStandMessageTitle
     ]
   toJSON (DisplayVariable { .. }) = object
     [ "action" .= String "displayVariable"
     , "variableName" .= getStandVariableName
     , "message" .= getStandMessage
+    , "title" .= getStandMessageTitle
     ]
 
 instance FromJSON StandCheckStage where
@@ -129,7 +133,9 @@ instance FromJSON StandCheckStage where
     (Just (String "stopCheck")) -> pure StopCheck
     (Just (String "displayMessage")) -> DisplayMessage
       <$> v .: "message"
+      <*> v .: "title"
     (Just (String "displayVariable")) -> DisplayVariable
       <$> v .: "variableName"
       <*> v .: "message"
+      <*> v .: "title"
     _anyOther -> fail "Wrong action type, excepted string!"
