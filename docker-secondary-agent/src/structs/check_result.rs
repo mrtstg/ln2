@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct StandCheckResult {
+    pub accepted: bool,
     pub score: u32,
     #[serde(rename = "scoreGate")]
     pub score_gate: u32,
@@ -15,6 +16,7 @@ pub struct StandCheckResult {
 impl Default for StandCheckResult {
     fn default() -> Self {
         StandCheckResult {
+            accepted: false,
             score: 0,
             score_gate: 0,
             values: HashMap::new(),
