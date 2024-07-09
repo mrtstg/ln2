@@ -69,17 +69,21 @@ validateStandCheck d = helper [] where
   helper stack ((AddPoints { .. }):ls) = do
     () <- if getStagePointsAmount > 0 then Right () else Left "Points cant be negative!"
     helper stack ls
+  helper stack ((SetPointsGate { .. }):ls) = do
+    () <- if getStageNeededPoints > -1 then Right () else Left "Needed points cant be negative!"
+    helper stack ls
   helper stack ((CompareLatestStatusCode { .. }):ls) = do
     () <- validateStandCheck d getStagePositiveActions
     () <- validateStandCheck d getStageNegativeActions
     helper stack ls
   helper stack (StopCheck:ls) = helper stack ls
+  helper stack (AcceptCheck:ls) = helper stack ls
   helper stack ((DisplayMessage { .. }):ls) = do
-    () <- if T.null getStandMessage then Left "Empty message for display!" else Right ()
+    () <- if T.null getStageMessage then Left "Empty message for display!" else Right ()
     helper stack ls
   helper stack ((DisplayVariable { ..}):ls) = do
-    () <- if T.null getStandMessage then Left "Empty message for display!" else Right ()
-    () <- stackVariableDeclared getStandVariableName stack
+    () <- if T.null getStageMessage then Left "Empty message for display!" else Right ()
+    () <- stackVariableDeclared getStageVariableName stack
     helper stack ls
 
 
