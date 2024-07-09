@@ -1,6 +1,6 @@
 use serde::*;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum CheckBlockType {
     #[serde(rename = "code")]
     Code,
@@ -8,7 +8,7 @@ pub enum CheckBlockType {
     Message,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CheckMessageBlock {
     #[serde(rename = "type")]
     pub block_type: CheckBlockType,
@@ -31,7 +31,7 @@ impl CheckMessageBlock {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CheckMessage {
     pub title: String,
     pub blocks: Vec<CheckMessageBlock>,
