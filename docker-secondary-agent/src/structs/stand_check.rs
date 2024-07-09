@@ -21,6 +21,15 @@ pub enum StandCheckStage {
     DisplayMessage(DisplayMessageStage),
     #[serde(rename = "displayVariable")]
     DisplayVariable(DisplayVariableStage),
+    #[serde(rename = "acceptCheck")]
+    AcceptCheck,
+    #[serde(rename = "setPointsGate")]
+    SetPointsGate(SetPointsGateStage),
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct SetPointsGateStage {
+    pub amount: u32,
 }
 
 #[derive(Deserialize, Debug, Clone)]

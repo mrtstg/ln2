@@ -36,19 +36,23 @@ data StandCheckStage = CopyFile
   , getStageNegativeActions :: ![StandCheckStage]
   }
   | DeclareVariable
-  { getStandVariableName  :: !T.Text
-  , getStandVariableValue :: !Value
+  { getStageVariableName  :: !T.Text
+  , getStageVariableValue :: !Value
   }
   | DisplayMessage
-  { getStandMessage      :: !T.Text
-  , getStandMessageTitle :: !T.Text
+  { getStageMessage      :: !T.Text
+  , getStageMessageTitle :: !T.Text
   }
   | DisplayVariable
-  { getStandVariableName :: !T.Text
-  , getStandMessage      :: !T.Text
-  , getStandMessageTitle :: !T.Text
+  { getStageVariableName :: !T.Text
+  , getStageMessage      :: !T.Text
+  , getStageMessageTitle :: !T.Text
   }
   | StopCheck {}
+  | AcceptCheck {}
+  | SetPointsGate
+  { getStageNeededPoints :: !Int
+  }
   deriving (Show, Eq)
 
 instance ToJSON StandCheckStage where
@@ -85,22 +89,29 @@ instance ToJSON StandCheckStage where
     ]
   toJSON (DeclareVariable { .. }) = object
     [ "action" .= String "declare"
-    , "variableName" .= getStandVariableName
-    , "variableValue" .= getStandVariableValue
+    , "variableName" .= getStageVariableName
+    , "variableValue" .= getStageVariableValue
     ]
   toJSON StopCheck = object
     [ "action" .= String "stopCheck"
     ]
+  toJSON AcceptCheck = object
+    [ "action" .= String "acceptCheck"
+    ]
   toJSON (DisplayMessage { .. }) = object
     [ "action" .= String "displayMessage"
-    , "message" .= getStandMessage
-    , "title" .= getStandMessageTitle
+    , "message" .= getStageMessage
+    , "title" .= getStageMessageTitle
     ]
   toJSON (DisplayVariable { .. }) = object
     [ "action" .= String "displayVariable"
-    , "variableName" .= getStandVariableName
-    , "message" .= getStandMessage
-    , "title" .= getStandMessageTitle
+    , "variableName" .= getStageVariableName
+    , "message" .= getStageMessage
+    , "title" .= getStageMessageTitle
+    ]
+  toJSON (SetPointsGate { .. }) = object
+    [ "action" .= String "setPointsGate"
+    , "amount" .= getStageNeededPoints
     ]
 
 instance FromJSON StandCheckStage where
@@ -131,6 +142,7 @@ instance FromJSON StandCheckStage where
       <$> v .: "variableName"
       <*> v .: "variableValue"
     (Just (String "stopCheck")) -> pure StopCheck
+    (Just (String "acceptCheck")) -> pure AcceptCheck
     (Just (String "displayMessage")) -> DisplayMessage
       <$> v .: "message"
       <*> v .: "title"
@@ -138,4 +150,6 @@ instance FromJSON StandCheckStage where
       <$> v .: "variableName"
       <*> v .: "message"
       <*> v .: "title"
+    (Just (String "setPointsGate")) -> SetPointsGate
+      <$> v .: "amount"
     _anyOther -> fail "Wrong action type, excepted string!"
