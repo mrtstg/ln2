@@ -60,7 +60,7 @@ pub struct CompareVariablesStage {
 #[derive(Deserialize, Debug, Clone)]
 pub struct CompareLatestStatusCodeStage {
     #[serde(rename = "awaitedStatus")]
-    pub awaited_status: usize,
+    pub awaited_status: isize,
     #[serde(rename = "positiveActions")]
     pub positive_actions: Vec<StandCheckStage>,
     #[serde(rename = "negativeActions")]

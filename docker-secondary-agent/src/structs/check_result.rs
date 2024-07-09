@@ -3,7 +3,7 @@ use serde::*;
 use serde_json::Value;
 use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct StandCheckResult {
     pub score: u32,
     #[serde(rename = "scoreGate")]
