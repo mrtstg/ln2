@@ -3,6 +3,7 @@ use crate::structs::check_result::StandCheckResult;
 use crate::structs::stand_check::StandCheckStage;
 use crate::structs::stand_data::StandContainerData;
 use crate::structs::stand_data::StandData;
+use async_recursion::async_recursion;
 use containers_api::conn::tty::TtyChunk;
 use docker_api::api::container::*;
 use docker_api::api::network::*;
@@ -80,7 +81,7 @@ pub async fn execute_docker_command(
                 let stderr_str = String::from_utf8(stderr).unwrap_or(String::new());
                 let exec_details = exec_instance.inspect().await;
                 let exit_code = match exec_details {
-                    Err(e) => None,
+                    Err(_) => None,
                     Ok(details) => details.exit_code,
                 };
                 return Ok((stdout_str, stderr_str, exit_code));
@@ -89,33 +90,38 @@ pub async fn execute_docker_command(
     }
 }
 
+#[async_recursion]
 pub async fn execute_stand_check(
     docker: Docker,
     containers_map: &HashMap<String, Container>,
     actions: Vec<StandCheckStage>,
-) -> (HashMap<String, String>, StandCheckResult) {
-    let mut variable_stack: HashMap<String, String> = HashMap::new();
-    let mut check_res = StandCheckResult::default();
+    variable_stack_base: HashMap<String, String>,
+    check_res_base: StandCheckResult,
+    status_stack_base: Vec<isize>,
+) -> Result<StandCheckResult, String> {
+    let mut variable_stack = variable_stack_base.clone();
+    let mut check_res = check_res_base.clone();
+    let mut status_stack = status_stack_base.clone();
     for action in actions {
         match action {
             StandCheckStage::CopyFile(payload) => {
-                if let Some(container) = containers_map.get(payload.container.as_str()) {
-                    debug!("Copying into {}", payload.clone().file_path);
-                    debug!("{}", payload.clone().file_content);
+                if let Some(container) = containers_map.get(payload.target.as_str()) {
+                    debug!("Copying into {}", payload.clone().path);
+                    debug!("{}", payload.clone().content);
                     match container
-                        .copy_file_into(payload.clone().file_path, payload.file_content.as_bytes())
+                        .copy_file_into(payload.clone().path, payload.content.as_bytes())
                         .await
                     {
                         Ok(_) => {}
                         Err(e) => error!(
                             "Failed to create {} on {}: {:?}",
-                            payload.file_path, payload.container, e
+                            payload.path, payload.target, e
                         ),
                     }
                 }
             }
             StandCheckStage::ExecuteCommand(payload) => {
-                if let Some(container) = containers_map.get(payload.container.as_str()) {
+                if let Some(container) = containers_map.get(payload.target.as_str()) {
                     match execute_docker_command(
                         &docker.clone(),
                         container,
@@ -140,40 +146,48 @@ pub async fn execute_stand_check(
                                 } else {
                                     stdout.clone()
                                 };
-                                info!(
-                                    "Exit code of command {} is {:?}",
-                                    payload.command, exit_code
-                                );
-                                debug!("--- COMMAND {} ---", payload.command);
-                                debug!("Stdout: {}", stdout);
-                                debug!("Stderr: {}", stderr);
-                                debug!("Exit code: {:?}", exit_code);
                                 variable_stack.insert(record_key.clone(), record_out.clone());
-                                if payload.record_stdout {
-                                    check_res
-                                        .values
-                                        .insert(record_key, serde_json::Value::String(record_out));
-                                }
                             }
+                            info!(
+                                "Exit code of command {} is {:?}",
+                                payload.command, exit_code
+                            );
+                            debug!("--- COMMAND {} ---", payload.command);
+                            debug!("Stdout: {}", stdout);
+                            debug!("Stderr: {}", stderr);
+                            debug!("Exit code: {:?}", exit_code);
+                            status_stack.push(exit_code.unwrap_or(0));
                         }
                         Err(e) => error!(
                             "Failed to execute command {} on {}: {:?}",
-                            payload.command, payload.container, e
+                            payload.command, payload.target, e
                         ),
                     };
                 }
             }
-            StandCheckStage::CompareResults(payload) => {
-                check_res.max_score += payload.score;
+            StandCheckStage::CompareVariables(payload) => {
                 if let Some(first_v) = variable_stack.get(payload.first.as_str()) {
                     if let Some(second_v) = variable_stack.get(payload.second.as_str()) {
                         if first_v == second_v {
-                            check_res.score += payload.score;
-                        } else if !payload.on_failure_message.is_empty() {
-                            let mut msg = CheckMessage::new("Ошибка!".to_string());
-                            msg.blocks
-                                .push(CheckMessageBlock::new_message(payload.on_failure_message));
-                            check_res.messages.push(msg);
+                            return execute_stand_check(
+                                docker,
+                                containers_map,
+                                payload.positive_actions,
+                                variable_stack,
+                                check_res,
+                                status_stack,
+                            )
+                            .await;
+                        } else {
+                            return execute_stand_check(
+                                docker,
+                                containers_map,
+                                payload.negative_actions,
+                                variable_stack,
+                                check_res,
+                                status_stack,
+                            )
+                            .await;
                         }
                     }
                 }
@@ -181,9 +195,57 @@ pub async fn execute_stand_check(
             StandCheckStage::DeclareVariable(payload) => {
                 variable_stack.insert(payload.variable_name, payload.variable_value);
             }
+            StandCheckStage::StopCheck => {
+                return Err("cancelled".to_string());
+            }
+            StandCheckStage::AddPoints(payload) => {
+                check_res.score += payload.amount;
+            }
+            StandCheckStage::CompareLatestStatusCode(payload) => {
+                let latest_code = status_stack.last().unwrap_or(&0);
+                if *latest_code == payload.awaited_status {
+                    return execute_stand_check(
+                        docker,
+                        containers_map,
+                        payload.positive_actions,
+                        variable_stack,
+                        check_res,
+                        status_stack,
+                    )
+                    .await;
+                } else {
+                    return execute_stand_check(
+                        docker,
+                        containers_map,
+                        payload.negative_actions,
+                        variable_stack,
+                        check_res,
+                        status_stack,
+                    )
+                    .await;
+                }
+            }
+            StandCheckStage::DisplayMessage(payload) => {
+                let mut msg = CheckMessage::new(payload.title);
+                msg.blocks
+                    .push(CheckMessageBlock::new_message(payload.message));
+                check_res.messages.push(msg);
+            }
+            StandCheckStage::DisplayVariable(payload) => {
+                if let Some(value) = variable_stack.get(payload.variable_name.as_str()) {
+                    let mut msg = CheckMessage::new(payload.title);
+                    if !payload.message.is_empty() {
+                        msg.blocks
+                            .push(CheckMessageBlock::new_message(payload.message));
+                    }
+                    msg.blocks
+                        .push(CheckMessageBlock::new_code(value.to_string()));
+                    check_res.messages.push(msg);
+                }
+            }
         }
     }
-    return (variable_stack, check_res);
+    return Ok(check_res);
 }
 
 fn format_command_out(out: String) -> String {
