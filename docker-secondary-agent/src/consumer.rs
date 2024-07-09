@@ -113,19 +113,34 @@ impl RabbitConsumer {
                                         self.docker_client.clone(),
                                         &containers,
                                         check_actions,
+                                        std::collections::HashMap::new(),
+                                        StandCheckResult::default(),
+                                        Vec::from([0]),
                                     ),
                                 )
                                 .await
                                 {
-                                    Ok((_, res)) => {
-                                        let _ = update_task_status(
-                                            conn,
-                                            queue_task.uuid.clone(),
-                                            "finished".to_string(),
-                                            Some(res),
-                                        )
-                                        .await;
-                                    }
+                                    Ok(res) => match res {
+                                        Ok(result) => {
+                                            let _ = update_task_status(
+                                                conn,
+                                                queue_task.uuid.clone(),
+                                                "finished".to_string(),
+                                                Some(result),
+                                            )
+                                            .await;
+                                        }
+                                        Err(e) => {
+                                            error!("Stand check cancelled: {}", e);
+                                            let _ = update_task_status(
+                                                conn,
+                                                queue_task.uuid.clone(),
+                                                "cancelled".to_string(),
+                                                None,
+                                            )
+                                            .await;
+                                        }
+                                    },
                                     Err(_) => {
                                         error!("Timeout error as task {}", queue_task.uuid.clone());
                                         let _ = update_task_status(
