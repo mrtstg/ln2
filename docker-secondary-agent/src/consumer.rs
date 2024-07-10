@@ -1,13 +1,13 @@
 use crate::deploy::docker::*;
-use crate::structs::app_env::{self, AppEnvironment};
-use crate::structs::check_result::StandCheckResult;
+use crate::structs::app_env::AppEnvironment;
+use crate::structs::check_result::{StandCheckEnum, StandCheckResult};
 use crate::structs::queue_response::QueueTaskResponse;
 use crate::structs::queue_task::QueueTask;
 use async_std::future::timeout;
 use docker_api::docker::Docker;
 use lapin::message::Delivery;
 use lapin::options::{BasicAckOptions, BasicPublishOptions};
-use lapin::{BasicProperties, Channel, Connection};
+use lapin::{BasicProperties, Connection};
 use log::*;
 use serde_json::from_str;
 use std::time::Duration;
@@ -121,7 +121,7 @@ impl RabbitConsumer {
                                 .await
                                 {
                                     Ok(res) => match res {
-                                        Ok(result) => {
+                                        StandCheckEnum::Ok(result) => {
                                             let _ = update_task_status(
                                                 conn,
                                                 queue_task.uuid.clone(),
@@ -130,13 +130,21 @@ impl RabbitConsumer {
                                             )
                                             .await;
                                         }
-                                        Err(e) => {
-                                            error!("Stand check cancelled: {}", e);
+                                        StandCheckEnum::Cancelled => {
                                             let _ = update_task_status(
                                                 conn,
                                                 queue_task.uuid.clone(),
                                                 "cancelled".to_string(),
                                                 None,
+                                            )
+                                            .await;
+                                        }
+                                        StandCheckEnum::Accepted(result) => {
+                                            let _ = update_task_status(
+                                                conn,
+                                                queue_task.uuid.clone(),
+                                                "accepted".to_string(),
+                                                Some(result),
                                             )
                                             .await;
                                         }
