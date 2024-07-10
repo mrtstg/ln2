@@ -96,11 +96,9 @@ pub async fn execute_stand_check(
     docker: Docker,
     containers_map: &HashMap<String, Container>,
     actions: Vec<StandCheckStage>,
-    variable_stack_base: HashMap<String, String>,
     check_res_base: StandCheckResult,
     status_stack_base: Vec<isize>,
 ) -> StandCheckEnum {
-    let mut variable_stack = variable_stack_base.clone();
     let mut check_res = check_res_base.clone();
     let mut status_stack = status_stack_base.clone();
     for action in actions {
@@ -147,7 +145,9 @@ pub async fn execute_stand_check(
                                 } else {
                                     stdout.clone()
                                 };
-                                variable_stack.insert(record_key.clone(), record_out.clone());
+                                check_res
+                                    .values
+                                    .insert(record_key.clone(), record_out.clone());
                             }
                             info!(
                                 "Exit code of command {} is {:?}",
@@ -167,14 +167,13 @@ pub async fn execute_stand_check(
                 }
             }
             StandCheckStage::CompareVariables(payload) => {
-                if let Some(first_v) = variable_stack.get(payload.first.as_str()) {
-                    if let Some(second_v) = variable_stack.get(payload.second.as_str()) {
+                if let Some(first_v) = check_res.values.get(payload.first.as_str()) {
+                    if let Some(second_v) = check_res.values.get(payload.second.as_str()) {
                         if first_v == second_v {
                             return execute_stand_check(
                                 docker,
                                 containers_map,
                                 payload.positive_actions,
-                                variable_stack,
                                 check_res,
                                 status_stack,
                             )
@@ -184,7 +183,6 @@ pub async fn execute_stand_check(
                                 docker,
                                 containers_map,
                                 payload.negative_actions,
-                                variable_stack,
                                 check_res,
                                 status_stack,
                             )
@@ -194,9 +192,13 @@ pub async fn execute_stand_check(
                 }
             }
             StandCheckStage::DeclareVariable(payload) => {
-                variable_stack.insert(payload.variable_name, payload.variable_value);
+                check_res
+                    .values
+                    .insert(payload.variable_name, payload.variable_value);
             }
             StandCheckStage::StopCheck => {
+                // avoiding accidential check accept
+                check_res.accepted = false;
                 return StandCheckEnum::Cancelled;
             }
             StandCheckStage::AddPoints(payload) => {
@@ -209,7 +211,6 @@ pub async fn execute_stand_check(
                         docker,
                         containers_map,
                         payload.positive_actions,
-                        variable_stack,
                         check_res,
                         status_stack,
                     )
@@ -219,7 +220,6 @@ pub async fn execute_stand_check(
                         docker,
                         containers_map,
                         payload.negative_actions,
-                        variable_stack,
                         check_res,
                         status_stack,
                     )
@@ -233,7 +233,7 @@ pub async fn execute_stand_check(
                 check_res.messages.push(msg);
             }
             StandCheckStage::DisplayVariable(payload) => {
-                if let Some(value) = variable_stack.get(payload.variable_name.as_str()) {
+                if let Some(value) = check_res.values.get(payload.variable_name.as_str()) {
                     let mut msg = CheckMessage::new(payload.title);
                     if !payload.message.is_empty() {
                         msg.blocks
@@ -248,10 +248,13 @@ pub async fn execute_stand_check(
                 check_res.score_gate = payload.amount;
             }
             StandCheckStage::AcceptCheck => {
+                // avoiding accidential check accept
+                check_res.accepted = true;
                 return StandCheckEnum::Accepted(check_res);
             }
         }
     }
+    check_res.accepted = check_res.score >= check_res.score_gate;
     return StandCheckEnum::Ok(check_res);
 }
 
