@@ -73,10 +73,9 @@ rabbitResultConsumer App { .. } (msg, env) = do
                   putStrLn "Course task not found!"
                   ackEnv env
                 (Just (Entity taskId (CourseTask { .. }))) -> do
-                  let resultCorrect = getCheckScore == getMaxCheckScore
                   flip runSqlPool postgresqlPool $ do
-                    update solveId [ CourseSolvesCorrect =. resultCorrect ]
-                    when resultCorrect $ do
+                    update solveId [ CourseSolvesCorrect =. getCheckAccepted ]
+                    when getCheckAccepted $ do
                       taskAccepted <- exists
                         [ CourseSolveAcceptionTaskId ==. taskId
                         , CourseSolveAcceptionUserId ==. courseSolvesUserId]
