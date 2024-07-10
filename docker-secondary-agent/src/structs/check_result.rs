@@ -1,6 +1,5 @@
 use crate::structs::check_message::CheckMessage;
 use serde::*;
-use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -16,7 +15,7 @@ pub struct StandCheckResult {
     pub score: u32,
     #[serde(rename = "scoreGate")]
     pub score_gate: u32,
-    pub values: HashMap<String, Value>,
+    pub values: HashMap<String, String>,
     pub messages: Vec<CheckMessage>,
 }
 
