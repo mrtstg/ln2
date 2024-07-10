@@ -113,7 +113,6 @@ impl RabbitConsumer {
                                         self.docker_client.clone(),
                                         &containers,
                                         check_actions,
-                                        std::collections::HashMap::new(),
                                         StandCheckResult::default(),
                                         Vec::from([0]),
                                     ),
