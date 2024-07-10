@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Data.Models.StandCheckResult (StandCheckResult(..), defaultCheckResult) where
 
 import           Data.Aeson
@@ -7,25 +8,28 @@ import           Data.Models.CheckMessage (CheckMessage)
 
 data StandCheckResult = StandCheckResult
   { getCheckScore     :: !Int
-  , getMaxCheckScore  :: !Int
-  , getRecordedValues :: !(K.KeyMap Value)
-  , getUserMessages   :: ![CheckMessage]
+  , getCheckScoreGate :: !Int
+  , getCheckAccepted  :: !Bool
+  , getCheckValues    :: !(K.KeyMap String)
+  , getCheckMessages  :: ![CheckMessage]
   } deriving Show
 
 instance ToJSON StandCheckResult where
-  toJSON (StandCheckResult score maxScore vals messages) = object
-    [ "score" .= score
-    , "maxScore" .= maxScore
-    , "values" .= vals
-    , "messages" .= messages
+  toJSON (StandCheckResult {..}) = object
+    [ "score" .= getCheckScore
+    , "scoreGate" .= getCheckScoreGate
+    , "accepted" .= getCheckAccepted
+    , "values" .= getCheckValues
+    , "messages" .= getCheckMessages
     ]
 
 instance FromJSON StandCheckResult where
   parseJSON = withObject "StandCheckResult" $ \v -> StandCheckResult
     <$> v .: "score"
-    <*> v .: "maxScore"
+    <*> v .: "scoreGate"
+    <*> v .: "accepted"
     <*> v .: "values"
     <*> v .: "messages"
 
 defaultCheckResult :: StandCheckResult
-defaultCheckResult = StandCheckResult 0 0 K.empty []
+defaultCheckResult = StandCheckResult 0 0 False K.empty []

@@ -165,7 +165,7 @@ getUserTaskSolvesR ctId uId = do
                   <td> -
                 $of (Just (StandCheckResult { .. }))
                   <td><a href=@{UserSolveR (CourseSolvesKey csId)}> #{csId}
-                  <td> #{getCheckScore} / #{getMaxCheckScore}
+                  <td> #{getCheckScore} / #{getCheckScoreGate}
               <td> #{ taskStatusToText getWrapperStatus }
           $if courseSolvesCorrect
             <td .has-text-success> Да
@@ -220,8 +220,8 @@ getUserSolveR csId@(CourseSolvesKey csId') = do
       <p> Статус проверки: #{ taskStatusToText getWrapperStatus }
       $case getWrapperResult
         $of (Just (StandCheckResult { .. }))
-          <p> Баллов: #{getCheckScore} / #{getMaxCheckScore}
-          $forall message <- getUserMessages
+          <p> Баллов: #{getCheckScore} / #{getCheckScoreGate}
+          $forall message <- getCheckMessages
             ^{generateCheckMessage message}
     $of anyError
       <article .message.is-warning>
