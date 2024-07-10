@@ -3,6 +3,13 @@ use serde::*;
 use serde_json::Value;
 use std::collections::HashMap;
 
+#[derive(Deserialize, Serialize, Clone)]
+pub enum StandCheckEnum {
+    Ok(StandCheckResult),
+    Cancelled,
+    Accepted(StandCheckResult),
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct StandCheckResult {
     pub accepted: bool,

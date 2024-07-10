@@ -1,4 +1,5 @@
 use crate::structs::check_message::*;
+use crate::structs::check_result::StandCheckEnum;
 use crate::structs::check_result::StandCheckResult;
 use crate::structs::stand_check::StandCheckStage;
 use crate::structs::stand_data::StandContainerData;
@@ -98,7 +99,7 @@ pub async fn execute_stand_check(
     variable_stack_base: HashMap<String, String>,
     check_res_base: StandCheckResult,
     status_stack_base: Vec<isize>,
-) -> Result<StandCheckResult, String> {
+) -> StandCheckEnum {
     let mut variable_stack = variable_stack_base.clone();
     let mut check_res = check_res_base.clone();
     let mut status_stack = status_stack_base.clone();
@@ -196,7 +197,7 @@ pub async fn execute_stand_check(
                 variable_stack.insert(payload.variable_name, payload.variable_value);
             }
             StandCheckStage::StopCheck => {
-                return Err("cancelled".to_string());
+                return StandCheckEnum::Cancelled;
             }
             StandCheckStage::AddPoints(payload) => {
                 check_res.score += payload.amount;
@@ -243,9 +244,15 @@ pub async fn execute_stand_check(
                     check_res.messages.push(msg);
                 }
             }
+            StandCheckStage::SetPointsGate(payload) => {
+                check_res.score_gate = payload.amount;
+            }
+            StandCheckStage::AcceptCheck => {
+                return StandCheckEnum::Accepted(check_res);
+            }
         }
     }
-    return Ok(check_res);
+    return StandCheckEnum::Ok(check_res);
 }
 
 fn format_command_out(out: String) -> String {
