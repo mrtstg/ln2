@@ -169,24 +169,24 @@ pub async fn execute_stand_check(
             StandCheckStage::CompareVariables(payload) => {
                 if let Some(first_v) = check_res.values.get(payload.first.as_str()) {
                     if let Some(second_v) = check_res.values.get(payload.second.as_str()) {
-                        if first_v == second_v {
-                            return execute_stand_check(
-                                docker,
-                                containers_map,
-                                payload.positive_actions,
-                                check_res,
-                                status_stack,
-                            )
-                            .await;
+                        let actions = if first_v == second_v {
+                            payload.positive_actions
                         } else {
-                            return execute_stand_check(
-                                docker,
-                                containers_map,
-                                payload.negative_actions,
-                                check_res,
-                                status_stack,
-                            )
-                            .await;
+                            payload.negative_actions
+                        };
+                        let res = execute_stand_check(
+                            docker.clone(),
+                            containers_map,
+                            actions,
+                            check_res.clone(),
+                            status_stack.clone(),
+                        )
+                        .await;
+                        match res {
+                            StandCheckEnum::Accepted(_) | StandCheckEnum::Cancelled => return res,
+                            StandCheckEnum::Ok(result) => {
+                                check_res = result;
+                            }
                         }
                     }
                 }
@@ -206,24 +206,24 @@ pub async fn execute_stand_check(
             }
             StandCheckStage::CompareLatestStatusCode(payload) => {
                 let latest_code = status_stack.last().unwrap_or(&0);
-                if *latest_code == payload.awaited_status {
-                    return execute_stand_check(
-                        docker,
-                        containers_map,
-                        payload.positive_actions,
-                        check_res,
-                        status_stack,
-                    )
-                    .await;
+                let actions = if *latest_code == payload.awaited_status {
+                    payload.positive_actions
                 } else {
-                    return execute_stand_check(
-                        docker,
-                        containers_map,
-                        payload.negative_actions,
-                        check_res,
-                        status_stack,
-                    )
-                    .await;
+                    payload.negative_actions
+                };
+                let res = execute_stand_check(
+                    docker.clone(),
+                    containers_map,
+                    actions,
+                    check_res.clone(),
+                    status_stack.clone(),
+                )
+                .await;
+                match res {
+                    StandCheckEnum::Accepted(_) | StandCheckEnum::Cancelled => return res,
+                    StandCheckEnum::Ok(result) => {
+                        check_res = result;
+                    }
                 }
             }
             StandCheckStage::DisplayMessage(payload) => {
