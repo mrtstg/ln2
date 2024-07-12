@@ -38,6 +38,7 @@ import           Network.Wai.Middleware.Cors
 import           Rabbit
 import           System.Environment          (lookupEnv)
 import           System.Exit
+import           System.Random
 import           Utils
 import           Yesod.Core
 
@@ -89,7 +90,8 @@ runServerCommand port = do
                 ((T.pack . getRConUser) rabbitCreds)
                 ((T.pack . getRConPass) rabbitCreds)
               postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-              let app = App postgresPool rabbitConn endpoints
+              rnd <- newStdGen
+              let app = App postgresPool rabbitConn endpoints rnd
               _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
               devMode <- isDevEnabled
               let corsOrigins = ["http://localhost:5173", "http://localhost"]

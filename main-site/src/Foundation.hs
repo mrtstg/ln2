@@ -29,6 +29,7 @@ import           Data.Text
 import           Data.Time.Clock
 import           Database.Persist.Postgresql
 import qualified Network.AMQP                as R
+import           System.Random               (StdGen)
 import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Form
@@ -38,6 +39,7 @@ data App = App
   { postgresqlPool         :: !(Pool SqlBackend)
   , rabbitConnection       :: !R.Connection
   , endpointsConfiguration :: !EndpointsConfiguration
+  , randomGenerator        :: !StdGen
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|

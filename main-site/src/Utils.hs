@@ -21,8 +21,8 @@ taskStatusToText "cancelled"  = "Проверка прервана"
 taskStatusToText "timeout"    = "Тайм-аут проверки"
 taskStatusToText _            = "Неизвестный статус"
 
-unsafeRandomString :: Int -> String
-unsafeRandomString n = take n $ randomRs ('a', 'z') $ unsafePerformIO newStdGen
+unsafeRandomString :: StdGen -> Int -> String
+unsafeRandomString rnd n = take n $ randomRs ('a', 'z') rnd
 
 constructPostgreStringFromEnv :: IO (Maybe String)
 constructPostgreStringFromEnv = do
