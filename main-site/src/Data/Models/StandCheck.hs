@@ -1,6 +1,7 @@
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Data.Models.StandCheck (StandCheckStage(..), convertStandCheckList) where
+{-# LANGUAGE RecordWildCards   #-}
+
+module Data.Models.StandCheck (StandCheckStage (..), convertStandCheckList) where
 
 import           Api.DBApi
 import           Data.Aeson
@@ -9,257 +10,402 @@ import           Data.Either
 import           Data.Models.Database
 import           Data.Models.Endpoints (EndpointsConfiguration)
 import qualified Data.Text             as T
+import           System.Random         (StdGen)
 import           Utils                 (unsafeRandomString)
 
-type ContainerName = String
+type StageTarget = String
 
-data StandCheckStage = CopyFile
-  { getStageContainer   :: !ContainerName
+data StandCheckStage
+  = CopyFile
+  { getStageTarget      :: !StageTarget
   , getStageFileContent :: !T.Text
   , getStageFilePath    :: !FilePath
   }
   | ExecuteCommand
-  { getStageContainer       :: !ContainerName
-  , getStageCommand         :: !T.Text
-  , getStandRecordStdout    :: !Bool
-  , getStandFormattedOutput :: !Bool
-  , getStandRecordVariable  :: !(Maybe T.Text)
-  , getErrorReported        :: !Bool
+  { getStageTarget         :: !StageTarget
+  , getStageCommand        :: !T.Text
+  , getStageFormatOutput   :: !Bool
+  , getStageRecordVariable :: !(Maybe T.Text)
+  , getStageReportError    :: !Bool
   }
-  | CopyAnswer
-  { getStageContainer :: !ContainerName
-  , getStageFilePath  :: !FilePath
+  | AddPoints
+  { getStagePointsAmount :: !Int
   }
-  | CompareResults
-  { getFirstCompareV         :: !T.Text
-  , getSecondCompareV        :: !T.Text
-  , getCompareScore          :: !Int
-  , getCompareFailureMessage :: !T.Text
+  | CompareVariables
+  { getStageFirstV          :: !T.Text
+  , getStageSecondV         :: !T.Text
+  , getStagePositiveActions :: ![StandCheckStage]
+  , getStageNegativeActions :: ![StandCheckStage]
+  }
+  | CompareLatestStatusCode
+  { getAwaitedStatus        :: !Int
+  , getStagePositiveActions :: ![StandCheckStage]
+  , getStageNegativeActions :: ![StandCheckStage]
   }
   | DeclareVariable
-  { getStandDeclaringVariable :: !T.Text
-  , getStandDeclaredValue     :: !Value
+  { getStageVariableName  :: !T.Text
+  , getStageVariableValue :: !T.Text
+  }
+  | DisplayMessage
+  { getStageMessage      :: !T.Text
+  , getStageMessageTitle :: !T.Text
+  }
+  | DisplayVariable
+  { getStageVariableName :: !T.Text
+  , getStageMessage      :: !T.Text
+  , getStageMessageTitle :: !T.Text
+  }
+  | StopCheck {}
+  | AcceptCheck {}
+  | SetPointsGate
+  { getStageNeededPoints :: !Int
   }
   | PSQLExists
-  { getStageContainer :: !ContainerName
-  , getCheckQuery     :: !T.Text
-  , getCheckScore     :: !Int
+  { getStageTarget          :: !StageTarget
+  , getStageQuery           :: !T.Text
+  , getStagePositiveActions :: ![StandCheckStage]
+  , getStageNegativeActions :: ![StandCheckStage]
   }
   | PSQLQuery
-  { getStageContainer      :: !ContainerName
-  , getCheckQuery          :: !T.Text
-  , getStandRecordVariable :: !(Maybe T.Text)
+  { getStageTarget         :: !StageTarget
+  , getStageQuery          :: !T.Text
+  , getStageRecordVariable :: !(Maybe T.Text)
   }
   | PSQLAnswerQuery
-  { getStageContainer      :: !ContainerName
-  , getStandRecordVariable :: !(Maybe T.Text)
+  { getStageTarget         :: !StageTarget
+  , getStageRecordVariable :: !(Maybe T.Text)
   }
   | PSQLGenerateDatabase
-  { getStageContainer :: !ContainerName
-  , getDatabaseInfo   :: !DatabaseData
+  { getStageTarget       :: !StageTarget
+  , getStageDatabaseInfo :: !DatabaseData
   }
   | PSQLTableExists
-  { getStageContainer :: !ContainerName
-  , getDatabaseSchema :: !T.Text
-  , getTableName      :: !T.Text
-  , getCheckScore     :: !Int
-  , getErrorReported  :: !Bool
+  { getStageTarget          :: !StageTarget
+  , getStageDatabaseSchema  :: !T.Text
+  , getStageTableName       :: !T.Text
+  , getStagePositiveActions :: ![StandCheckStage]
+  , getStageNegativeActions :: ![StandCheckStage]
   }
   | PSQLColumnTypeCheck
-  { getStageContainer    :: !ContainerName
-  , getDatabaseSchema    :: !T.Text
-  , getTableName         :: !T.Text
-  , getColumnName        :: !T.Text
-  , getColumnAwaitedType :: !T.Text
-  , getCheckScore        :: !Int
-  , getErrorReported     :: !Bool
-  } deriving Show
+  { getStageTarget          :: !StageTarget
+  , getStageDatabaseSchema  :: !T.Text
+  , getStageTableName       :: !T.Text
+  , getStageColumnName      :: !T.Text
+  , getStageAwaitedType     :: !T.Text
+  , getStagePositiveActions :: ![StandCheckStage]
+  , getStageNegativeActions :: ![StandCheckStage]
+  }
+  | CopyAnswer
+  { getStageTarget   :: !StageTarget
+  , getStageFilePath :: !FilePath
+  }
+  deriving (Show)
 
 instance ToJSON StandCheckStage where
-  toJSON (CopyFile container file path) = object ["action" .= String "copy", "container" .= container, "fileContent" .= file, "filePath" .= path]
-  toJSON (ExecuteCommand container command recordStdout formatOut recordVar reportError) = object
+  toJSON (CopyFile { .. }) = object
+    [ "action" .= String "copy"
+    , "target" .= getStageTarget
+    , "content" .= getStageFileContent
+    , "path" .= getStageFilePath
+    ]
+  toJSON (ExecuteCommand { .. }) = object
     [ "action" .= String "command"
-    , "container" .= container
-    , "command" .= command
-    , "recordStdout" .= recordStdout
-    , "formatOutput" .= formatOut
-    , "recordInto" .= recordVar
-    , "reportError" .= reportError
+    , "target" .= getStageTarget
+    , "command" .= getStageCommand
+    , "formatOutput" .= getStageFormatOutput
+    , "recordInto" .= getStageRecordVariable
+    , "reportError" .= getStageReportError
     ]
-  toJSON (CopyAnswer container path) = object
-    [ "action" .= String "copyAnswer"
-    , "container" .= container
-    , "filePath" .= path
+  toJSON (AddPoints { .. }) = object
+    [ "action" .= String "points"
+    , "amount" .= getStagePointsAmount
     ]
-  toJSON (CompareResults fvar svar score failureMessage) = object
+  toJSON (CompareVariables { .. }) = object
     [ "action" .= String "compareVars"
-    , "first" .= String fvar
-    , "second" .= String svar
-    , "score" .= score
-    , "failureMessage" .= failureMessage
+    , "first" .= getStageFirstV
+    , "second" .= getStageSecondV
+    , "positiveActions" .= getStagePositiveActions
+    , "negativeActions" .= getStageNegativeActions
     ]
-  toJSON (DeclareVariable varname varvalue) = object
+  toJSON (CompareLatestStatusCode { .. }) = object
+    [ "action" .= String "compareStatusCode"
+    , "awaitedStatus" .= getAwaitedStatus
+    , "positiveActions" .= getStagePositiveActions
+    , "negativeActions" .= getStageNegativeActions
+    ]
+  toJSON (DeclareVariable { .. }) = object
     [ "action" .= String "declare"
-    , "variableName" .= String varname
-    , "variableValue" .= varvalue
+    , "variableName" .= getStageVariableName
+    , "variableValue" .= getStageVariableValue
     ]
-  toJSON (PSQLExists container query score) = object
+  toJSON StopCheck = object
+    [ "action" .= String "stopCheck"
+    ]
+  toJSON AcceptCheck = object
+    [ "action" .= String "acceptCheck"
+    ]
+  toJSON (DisplayMessage { .. }) = object
+    [ "action" .= String "displayMessage"
+    , "message" .= getStageMessage
+    , "title" .= getStageMessageTitle
+    ]
+  toJSON (DisplayVariable { .. }) = object
+    [ "action" .= String "displayVariable"
+    , "variableName" .= getStageVariableName
+    , "message" .= getStageMessage
+    , "title" .= getStageMessageTitle
+    ]
+  toJSON (SetPointsGate { .. }) = object
+    [ "action" .= String "setPointsGate"
+    , "amount" .= getStageNeededPoints
+    ]
+  toJSON (PSQLExists { .. }) = object
     [ "action" .= String "psql_exists_macro"
-    , "container" .= container
-    , "query" .= String query
-    , "score" .= score
+    , "target" .= getStageTarget
+    , "query" .= getStageQuery
+    , "positiveActions" .= getStagePositiveActions
+    , "negativeActions" .= getStageNegativeActions
     ]
-  toJSON (PSQLQuery container query recordInto) = object
+  toJSON (PSQLQuery { .. }) = object
     [ "action" .= String "psql_query_macro"
-    , "container" .= container
-    , "query" .= query
-    , "recordInto" .= recordInto
+    , "target" .= getStageTarget
+    , "query" .= getStageQuery
+    , "recordInto" .= getStageRecordVariable
     ]
-  toJSON (PSQLAnswerQuery container recordInto) = object
+  toJSON (PSQLAnswerQuery { .. }) = object
     [ "action" .= String "psql_answer_query_macro"
-    , "container" .= container
-    , "recordInto" .= recordInto]
-  toJSON (PSQLGenerateDatabase container db) = object
+    , "target" .= getStageTarget
+    , "recordInto" .= getStageRecordVariable
+    ]
+  toJSON (PSQLGenerateDatabase { .. }) = object
     [ "action" .= String "psql_generate_database"
-    , "container" .= container
-    , "database" .= db
+    , "target" .= getStageTarget
+    , "database" .= getStageDatabaseInfo
     ]
-  toJSON (PSQLTableExists container schema name score reportError) = object
-    [ "action" .= String "psql_table_exists"
-    , "container" .= container
-    , "schema" .= schema
-    , "tableName" .= name
-    , "score" .= score
-    , "reportError" .= reportError
+  toJSON (CopyAnswer { .. }) = object
+    [ "action" .= String "copyAnswer"
+    , "target" .= getStageTarget
+    , "filePath" .= getStageFilePath
     ]
-  toJSON (PSQLColumnTypeCheck container schema tableName colName awaitedType score reportError) = object
+  toJSON (PSQLColumnTypeCheck { .. }) = object
     [ "action" .= String "psql_column_type_check"
-    , "container" .= container
-    , "schema" .= schema
-    , "tableName" .= tableName
-    , "columnName" .= colName
-    , "score" .= score
-    , "reportError" .= reportError
-    , "awaitedType" .= awaitedType
+    , "target" .= getStageTarget
+    , "schema" .= getStageDatabaseSchema
+    , "tableName" .= getStageTableName
+    , "columnName" .= getStageColumnName
+    , "awaitedType" .= getStageAwaitedType
+    , "positiveActions" .= getStagePositiveActions
+    , "negativeActions" .= getStageNegativeActions
+    ]
+  toJSON (PSQLTableExists { .. }) = object
+    [ "action" .= String "psql_table_exists"
+    , "target" .= getStageTarget
+    , "schema" .= getStageDatabaseSchema
+    , "tableName" .= getStageTableName
+    , "positiveActions" .= getStagePositiveActions
+    , "negativeActions" .= getStageNegativeActions
     ]
 
 instance FromJSON StandCheckStage where
   parseJSON = withObject "StandCheckStage" $ \v -> case K.lookup "action" v of
     Nothing -> fail "No action specified"
-    (Just (String "copy")) -> CopyFile <$> v .: "container" <*> v .: "fileContent" <*> v .: "filePath"
+    (Just (String "copy")) -> CopyFile
+      <$> v .: "target"
+      <*> v .: "content"
+      <*> v .: "path"
     (Just (String "command")) -> ExecuteCommand
-      <$> v .: "container"
+      <$> v .: "target"
       <*> v .: "command"
-      <*> v .:? "recordStdout" .!= True
-      <*> v .:? "formatOutput" .!= False
-      <*> v .:? "recordInto"
-      <*> v .:? "reportError" .!= True
-    (Just (String "copyAnswer")) -> CopyAnswer
-      <$> v .: "container"
-      <*> v .: "filePath"
-    (Just (String "compareVars")) -> CompareResults
+      <*> v .: "formatOutput"
+      <*> v .: "recordInto"
+      <*> v .: "reportError"
+    (Just (String "points")) -> AddPoints
+      <$> v .: "amount"
+    (Just (String "compareVars")) -> CompareVariables
       <$> v .: "first"
       <*> v .: "second"
-      <*> v .: "score"
-      <*> v .:? "failureMessage" .!= ""
+      <*> v .: "positiveActions"
+      <*> v .: "negativeActions"
+    (Just (String "compareStatusCode")) -> CompareLatestStatusCode
+      <$> v .: "awaitedStatus"
+      <*> v .: "positiveActions"
+      <*> v .: "negativeActions"
     (Just (String "declare")) -> DeclareVariable
       <$> v .: "variableName"
       <*> v .: "variableValue"
+    (Just (String "stopCheck")) -> pure StopCheck
+    (Just (String "acceptCheck")) -> pure AcceptCheck
+    (Just (String "displayMessage")) -> DisplayMessage
+      <$> v .: "message"
+      <*> v .: "title"
+    (Just (String "displayVariable")) -> DisplayVariable
+      <$> v .: "variableName"
+      <*> v .: "message"
+      <*> v .: "title"
+    (Just (String "setPointsGate")) -> SetPointsGate
+      <$> v .: "amount"
+    (Just (String "copyAnswer")) -> CopyAnswer
+      <$> v .: "target"
+      <*> v .: "filePath"
     (Just (String "psql_exists_macro")) -> PSQLExists
-      <$> v .: "container"
+      <$> v .: "target"
       <*> v .: "query"
-      <*> v .: "score"
+      <*> v .: "positiveActions"
+      <*> v .: "negativeActions"
     (Just (String "psql_query_macro")) -> PSQLQuery
-      <$> v .: "container"
+      <$> v .: "target"
       <*> v .: "query"
       <*> v .:? "recordInto"
     (Just (String "psql_answer_query_macro")) -> PSQLAnswerQuery
-      <$> v .: "container"
+      <$> v .: "target"
       <*> v .:? "recordInto"
     (Just (String "psql_generate_database")) -> PSQLGenerateDatabase
-      <$> v .: "container"
+      <$> v .: "target"
       <*> v .: "database"
     (Just (String "psql_table_exists")) -> PSQLTableExists
-      <$> v .: "container"
+      <$> v .: "target"
       <*> v .: "schema"
       <*> v .: "tableName"
-      <*> v .: "score"
-      <*> v .: "reportError"
+      <*> v .: "positiveActions"
+      <*> v .: "negativeActions"
     (Just (String "psql_column_type_check")) -> PSQLColumnTypeCheck
-      <$> v .: "container"
+      <$> v .: "target"
       <*> v .: "schema"
       <*> v .: "tableName"
       <*> v .: "columnName"
       <*> v .: "awaitedType"
-      <*> v .: "score"
-      <*> v .: "reportError"
+      <*> v .: "positiveActions"
+      <*> v .: "negativeActions"
     _anyOther -> fail "Wrong action type, excepted string!"
 
+
 -- развертка макросов в простые составные блоки
-convertStandCheckList :: EndpointsConfiguration -> T.Text -> [StandCheckStage] -> IO (Either String [StandCheckStage])
-convertStandCheckList endpoints answer stages = do
-  res <- mapM f stages
-  if any isLeft res then return (head $ filter isLeft res) else do
-    (return . Right) $ concatMap (fromRight []) res
-  where
+convertStandCheckList :: StdGen -> EndpointsConfiguration -> T.Text -> [StandCheckStage] -> IO (Either String [StandCheckStage])
+convertStandCheckList rnd endpoints answer stages = let
+  randomFilePath :: Int -> String -> (String, String)
+  randomFilePath ln ext = ("/" <> r <> "." <> ext, r) where
+    r = unsafeRandomString rnd ln
   f :: StandCheckStage -> IO (Either String [StandCheckStage])
-  f (PSQLGenerateDatabase container db) = do
+  f (PSQLGenerateDatabase target db) = do
     resp <- convertCreateDB' endpoints db
+    (path, _) <- return $ randomFilePath 15 "sql"
     case resp of
-      (DBApiResult query) -> return $ return
-        [ CopyFile container query "/db.sql"
-        , ExecuteCommand container "psql -f /db.sql" False True (Just "db-creation") False
-        ]
+      (DBApiResult query) ->
+        return $
+          return
+            [ DeclareVariable "GENERATED_DATABASE" query,
+              CopyFile { getStageTarget = target, getStageFilePath = path, getStageFileContent = query },
+              ExecuteCommand { getStageTarget = target, getStageCommand = "psql -f " <> T.pack path, getStageFormatOutput = True, getStageRecordVariable = Just "GENERATED_DATABASE_RESULT", getStageReportError = False }
+            ]
       (DBApiError err) -> return $ Left ("Ошибка проверки БД: " <> T.unpack err)
       _anyOther -> return $ Left "Неизвестная ошибка со стороны проверки БД"
-  f (CopyAnswer container filePath) = return $ return [CopyFile container answer filePath]
-  f (PSQLTableExists container schema name score reportError) = return $ return
-    [ CopyFile container ("SELECT CASE WHEN EXISTS(SELECT * FROM pg_tables WHERE tablename = '" <> name <> "' AND schemaname = '" <> schema <> "') THEN 1 ELSE 0 END;") scriptName
-    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv -t") False True (Just scriptName') False
-    , DeclareVariable (scriptName' <> "-correct") (String "1")
-    , CompareResults (scriptName' <> "-correct") scriptName' score compareError
-    ] where
-      scriptName = "/" <> unsafeRandomString 16 <> ".sql"
-      scriptName' = T.pack scriptName
-      compareError = if reportError then "Критерий не пройден: таблица " <> name <> " не существует." else ""
-  f (PSQLColumnTypeCheck container schema tableName colName awaitedType score reportError) = return $ return
-    [ CopyFile container (
-      "SELECT CASE WHEN ((SELECT data_type FROM information_schema.columns WHERE table_name = '"
-      <> tableName
-      <> "' AND column_name = '"
-      <> colName
-      <> "' AND table_schema = '"
-      <> schema
-      <> "') = '"
-      <> awaitedType
-      <> "') THEN 1 ELSE 0 END;"
-      ) scriptName
-    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv -t") False True (Just scriptName') False
-    , DeclareVariable (scriptName' <> "-correct") (String "1")
-    , CompareResults (scriptName' <> "-correct") scriptName' score compareError
-    ] where
-      scriptName = "/" <> unsafeRandomString 16 <> ".sql"
-      scriptName' = T.pack scriptName
-      compareError = if reportError then "Критерий не пройден: колонка " <> tableName <> "(" <> colName <> ") не прошла проверку типа" else ""
-  f (PSQLExists container query score) = return $ return
-    [ CopyFile container ("select (CASE WHEN EXISTS(" <> query' <> ") THEN 1 ELSE 0 END);") scriptName
-    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv -t") False True (Just scriptName') False
-    , DeclareVariable (scriptName' <> "-correct") (String "1")
-    , CompareResults (scriptName' <> "-correct") scriptName' score ""
-    ] where
-      query' = if T.last query == ';' then T.init query else query
-      scriptName = "/" <> unsafeRandomString 15 <> ".sql"
-      scriptName' = T.pack scriptName
-  f (PSQLQuery container query recordInto) = return $ return
-    [ CopyFile container query scriptName
-    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv") False True recordInto False
-    ] where
-      scriptName = "/" <> unsafeRandomString 14 <> ".sql"
-      scriptName' = T.pack scriptName
-  f (PSQLAnswerQuery container recordInto) = return $ return
-    [ CopyFile container answer scriptName
-    , ExecuteCommand container ("psql -f " <> scriptName' <> " --csv") False True recordInto True
-    ] where
-      scriptName = "/" <> unsafeRandomString 14 <> ".sql"
-      scriptName' = T.pack scriptName
-  f other                          = return $ return [other]
+  f (CopyAnswer { .. }) = return $
+    return
+      [ CopyFile { getStageTarget = getStageTarget, getStageFilePath = getStageFilePath, getStageFileContent = answer }
+      ]
+  f (PSQLTableExists { .. }) = do
+    (path, name) <- return $ randomFilePath 15 "sql"
+    let query = "SELECT CASE WHEN EXISTS(SELECT * FROM pg_tables WHERE tablename = '" <> getStageTableName <> "' AND schemaname = '" <> getStageDatabaseSchema <> "') THEN 1 ELSE 0 END;"
+    return $
+      return
+        [ CopyFile
+          { getStageTarget = getStageTarget
+          , getStageFilePath = path
+          , getStageFileContent = query
+          }
+        , DeclareVariable (T.pack path) query
+        , ExecuteCommand
+          { getStageTarget = getStageTarget
+          , getStageCommand = T.pack $ "psql -f " <> path <> " --csv -t"
+          , getStageFormatOutput = True
+          , getStageRecordVariable = (Just . T.pack) name
+          , getStageReportError = False
+          }
+        , DeclareVariable (T.pack $ path <> "-correct") "1"
+        , CompareVariables
+          { getStageFirstV = T.pack $ path <> "-correct"
+          , getStageSecondV = T.pack name
+          , getStagePositiveActions = getStagePositiveActions
+          , getStageNegativeActions = getStageNegativeActions
+          }
+        ]
+  f (PSQLColumnTypeCheck { .. }) = do
+    (path, name) <- return $ randomFilePath 15 "sql"
+    let query = "SELECT CASE WHEN ((SELECT data_type FROM information_schema.columns WHERE table_name = '" <> getStageTableName <> "' AND column_name = '" <> getStageColumnName <> "' AND table_schema = '" <> getStageDatabaseSchema <> "') = '" <> getStageAwaitedType <> "') THEN 1 ELSE 0 END;"
+    return $
+      return
+        [ CopyFile { getStageTarget = getStageTarget, getStageFilePath = path, getStageFileContent = query }
+        , DeclareVariable (T.pack path) query
+        , ExecuteCommand
+          { getStageTarget = getStageTarget
+          , getStageCommand = T.pack $ "psql -f " <> path <> " --csv -t"
+          , getStageFormatOutput = True
+          , getStageRecordVariable = (Just . T.pack) name
+          , getStageReportError = False
+          }
+        , DeclareVariable (T.pack $ path <> "-correct") "1"
+        , CompareVariables
+          { getStageFirstV = T.pack $ path <> "-correct"
+          , getStageSecondV = T.pack name
+          , getStagePositiveActions = getStagePositiveActions
+          , getStageNegativeActions = getStageNegativeActions
+          }
+        ]
+  f (PSQLExists { .. }) = do
+    (path, name) <- return $ randomFilePath 15 "sql"
+    let query' = if T.last getStageQuery == ';' then T.init getStageQuery else getStageQuery
+    let query = "select (CASE WHEN EXISTS(" <> query' <> ") THEN 1 ELSE 0 END);"
+    return $
+      return
+        [ CopyFile { getStageTarget = getStageTarget, getStageFilePath = path, getStageFileContent = query }
+        , DeclareVariable (T.pack path) query
+        , ExecuteCommand
+          { getStageTarget = getStageTarget
+          , getStageCommand = T.pack $ "psql -f " <> path <> " --csv -t"
+          , getStageFormatOutput = True
+          , getStageRecordVariable = (Just . T.pack) name
+          , getStageReportError = False
+          }
+        , DeclareVariable (T.pack $ path <> "-correct") "1"
+        , CompareVariables
+          { getStageFirstV = T.pack $ path <> "-correct"
+          , getStageSecondV = T.pack name
+          , getStagePositiveActions = getStagePositiveActions
+          , getStageNegativeActions = getStageNegativeActions
+          }
+        ]
+  f (PSQLQuery { .. }) = do
+    (path, _) <- return $ randomFilePath 15 "sql"
+    return $
+      return
+        [ CopyFile { getStageTarget = getStageTarget, getStageFilePath = path, getStageFileContent = getStageQuery }
+        , DeclareVariable (T.pack path) getStageQuery
+        , ExecuteCommand
+          { getStageTarget = getStageTarget
+          , getStageCommand = T.pack $ "psql -f " <> path <> " --csv"
+          , getStageFormatOutput = True
+          , getStageRecordVariable = getStageRecordVariable
+          , getStageReportError = False
+          }
+        ]
+  f (PSQLAnswerQuery { .. }) = do
+    (path, _) <- return $ randomFilePath 15 "sql"
+    return $
+      return
+        [ CopyFile { getStageTarget = getStageTarget, getStageFilePath = path, getStageFileContent = answer }
+        , DeclareVariable (T.pack path) answer
+        , ExecuteCommand
+          { getStageTarget = getStageTarget
+          , getStageCommand = T.pack $ "psql -f " <> path <> " --csv"
+          , getStageFormatOutput = True
+          , getStageRecordVariable = getStageRecordVariable
+          , getStageReportError = True
+          }
+        ]
+  f other = return $ return [other]
+  in do
+    res <- mapM f stages
+    if any isLeft res
+       then return (head $ filter isLeft res)
+       else do
+        (return . Right) $ concatMap (fromRight []) res
