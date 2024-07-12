@@ -43,8 +43,8 @@ postTaskCreateR = do
         (Left e) -> do
           $logError $ (T.pack . show) e
           sendStatusJSON status500 $ object [ "error" .= String "Internal parse error!" ]
-        (Right standData) -> do
-          let validationResult = validateStandCheck standData standActions
+        (Right standData@(StandData _ defaultActions)) -> do
+          let validationResult = validateStandCheck standData [] (defaultActions ++ standActions)
           case validationResult of
             (Left e) -> sendStatusJSON status400 $ object [ "error" .= (String . T.pack) e ]
             (Right _) -> do
