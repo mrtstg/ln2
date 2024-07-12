@@ -37,7 +37,7 @@ data StandCheckStage = CopyFile
   }
   | DeclareVariable
   { getStageVariableName  :: !T.Text
-  , getStageVariableValue :: !Value
+  , getStageVariableValue :: !T.Text
   }
   | DisplayMessage
   { getStageMessage      :: !T.Text
