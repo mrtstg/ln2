@@ -37,7 +37,7 @@ checkStages = helper where
   helper [] = return ()
   helper ((PSQLGenerateDatabase { .. }):stages) = do
     App { .. } <- getYesod
-    res <- liftIO $ checkCreateDB' endpointsConfiguration getDatabaseInfo
+    res <- liftIO $ checkCreateDB' endpointsConfiguration getStageDatabaseInfo
     case res of
       (DBApiResult ()) -> helper stages
       (DBApiError err) -> sendStatusJSON status400 $ object ["error" .= err]
