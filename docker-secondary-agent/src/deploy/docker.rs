@@ -183,7 +183,7 @@ pub async fn execute_stand_check(
                         )
                         .await;
                         match res {
-                            StandCheckEnum::Accepted(_) | StandCheckEnum::Cancelled => return res,
+                            StandCheckEnum::Accepted(_) | StandCheckEnum::Cancelled(_) => return res,
                             StandCheckEnum::Ok(result) => {
                                 check_res = result;
                             }
@@ -199,7 +199,14 @@ pub async fn execute_stand_check(
             StandCheckStage::StopCheck => {
                 // avoiding accidential check accept
                 check_res.accepted = false;
-                return StandCheckEnum::Cancelled;
+                let mut msg = CheckMessage::new("Проверка прервана!".to_string());
+                msg.blocks.push(
+                    CheckMessageBlock::new_message(
+                        "Схема проверки предварительно завершила выполнение проверки. Задание не зачтено.".to_string()
+                    )
+                );
+                check_res.messages.push(msg);
+                return StandCheckEnum::Cancelled(check_res);
             }
             StandCheckStage::AddPoints(payload) => {
                 check_res.score += payload.amount;
@@ -220,7 +227,7 @@ pub async fn execute_stand_check(
                 )
                 .await;
                 match res {
-                    StandCheckEnum::Accepted(_) | StandCheckEnum::Cancelled => return res,
+                    StandCheckEnum::Accepted(_) | StandCheckEnum::Cancelled(_) => return res,
                     StandCheckEnum::Ok(result) => {
                         check_res = result;
                     }
