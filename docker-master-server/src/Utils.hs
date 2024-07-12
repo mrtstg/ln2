@@ -43,8 +43,8 @@ standCommandValid :: T.Text -> Either String ()
 standCommandValid "" = Left "Command to container must be specified!"
 standCommandValid _  = Right()
 
-validateStandCheck :: StandData -> [StandCheckStage] -> Either String ()
-validateStandCheck d = helper [] where
+validateStandCheck :: StandData -> [T.Text] -> [StandCheckStage] -> Either String ()
+validateStandCheck d = helper where
   helper :: [T.Text] -> [StandCheckStage] -> Either String ()
   helper _ []                                        = Right ()
   helper stack ((CopyFile { .. }):ls)  = do
@@ -61,8 +61,8 @@ validateStandCheck d = helper [] where
   helper stack ((CompareVariables { .. }):ls) = do
     () <- stackVariableDeclared getStageFirstV stack
     () <- stackVariableDeclared getStageSecondV stack
-    () <- validateStandCheck d getStagePositiveActions
-    () <- validateStandCheck d getStageNegativeActions
+    () <- validateStandCheck d stack getStagePositiveActions
+    () <- validateStandCheck d stack getStageNegativeActions
     helper stack ls
   -- TODO: empty var check
   helper stack ((DeclareVariable varName _):ls) = helper (varName:stack) ls
@@ -73,8 +73,8 @@ validateStandCheck d = helper [] where
     () <- if getStageNeededPoints > -1 then Right () else Left "Needed points cant be negative!"
     helper stack ls
   helper stack ((CompareLatestStatusCode { .. }):ls) = do
-    () <- validateStandCheck d getStagePositiveActions
-    () <- validateStandCheck d getStageNegativeActions
+    () <- validateStandCheck d stack getStagePositiveActions
+    () <- validateStandCheck d stack getStageNegativeActions
     helper stack ls
   helper stack (StopCheck:ls) = helper stack ls
   helper stack (AcceptCheck:ls) = helper stack ls
