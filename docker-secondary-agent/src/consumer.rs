@@ -120,6 +120,7 @@ impl RabbitConsumer {
                                 .await
                                 {
                                     Ok(res) => match res {
+                                        // TODO: refactor this shi
                                         StandCheckEnum::Ok(result) => {
                                             let _ = update_task_status(
                                                 conn,
@@ -129,12 +130,12 @@ impl RabbitConsumer {
                                             )
                                             .await;
                                         }
-                                        StandCheckEnum::Cancelled => {
+                                        StandCheckEnum::Cancelled(result) => {
                                             let _ = update_task_status(
                                                 conn,
                                                 queue_task.uuid.clone(),
                                                 "cancelled".to_string(),
-                                                None,
+                                                Some(result),
                                             )
                                             .await;
                                         }

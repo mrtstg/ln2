@@ -5,7 +5,7 @@ use std::collections::HashMap;
 #[derive(Deserialize, Serialize, Clone)]
 pub enum StandCheckEnum {
     Ok(StandCheckResult),
-    Cancelled,
+    Cancelled(StandCheckResult),
     Accepted(StandCheckResult),
 }
 
