@@ -44,7 +44,7 @@ postStandsCreateR :: T.Text -> Handler Value
 postStandsCreateR standName = do
   App { .. } <- getYesod
   standInfo <- requireCheckJsonBody :: Handler StandData
-  case validateStandCheck standInfo (getStandDefaultActions standInfo) of
+  case validateStandCheck standInfo [] (getStandDefaultActions standInfo) of
     (Left e) -> sendStatusJSON badRequest400 $ object ["error" .= (String . T.pack) e]
     (Right ()) -> do
       findRes <- liftIO $ findYMLByName' standsFolder (T.unpack standName)
