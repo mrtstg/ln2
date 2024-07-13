@@ -5,5 +5,8 @@
     "codemirror": "^6.0.1",
     "svelte": "^4.2.17",
     "svelte-codemirror-editor": "^1.4.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.4"
   }
 }
