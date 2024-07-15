@@ -19,7 +19,7 @@
 </script>
 
 <div class="flex flex-row justify-between">
-  <h4 class="subtitle is-4"> 
+  <h4 class="text-2xl"> 
     {#if title.length > 0}
       { title }
     {:else}
