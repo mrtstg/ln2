@@ -14,6 +14,7 @@
   export let deleteCallback: () => void = (() => {})
   export let selectedActionIndex: number = stageTypeList.indexOf(data.type)
 
+  let hidden: boolean = true
   let selectedType: StageType
   $: selectedType = stageTypeList[selectedActionIndex]
   for (let i = 0; i < stageTypeList.length; i++) {
@@ -34,7 +35,7 @@
   }
 </script>
 
-<div class="my-3">
+<div class="">
   <div class="flex flex-row justify-between">
     <div class="field">
       <label class="label"> Тип действия </label>
@@ -48,13 +49,21 @@
         </div>
       </div>
     </div>
-    <button on:click={deleteCallback} class="text-white">
-      <div class="icon medium bg-red-700 font-bold rounded-sm text-xl">
-        -
-      </div>
-    </button>
+    <div class="flex flex-wrap flex-row">
+      <button on:click={deleteCallback} class="text-white">
+        <div class="icon medium bg-red-700 font-bold rounded-sm text-xl">
+          -
+        </div>
+      </button>
+      <button on:click={() => { hidden = !hidden }} class="text-white">
+        <div class="icon medium bg-sky-500 font-bold rounded-sm text-xl">
+          ?
+        </div>
+      </button>
+    </div>
   </div>
-  
+
+{#if !hidden}
   {#if selectedType == StageType.CopyFile }
     <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.target = v; await updateCallbackWrapper() }}/>
     <div class="field">
@@ -249,4 +258,5 @@
   {:else}
     <DangerMessage title="Ошибка!" description="Неизвестный тип"/>
   {/if}
+{/if}
 </div>
