@@ -48,9 +48,6 @@ getAdminCourseR cId = do
   userD <- requireAuth
   _ <- validateCourseId cId userD isUserCourseAdmin AdminCoursesR
   defaultLayout $ do
-    toWidgetHead [hamlet|
-<link rel=stylesheet href=/static/css/courseTaskCreateForm.css>
-|]
     [whamlet|
       <div #app>
       <script src="/static/js/adminCourseForm.js">|]
