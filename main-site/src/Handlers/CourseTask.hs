@@ -120,9 +120,6 @@ getCourseTaskR ctId = do
             parseRes <- liftIO $ convertMarkdown' courseTaskContent
             defaultLayout $ do
               setTitle $ toHtml ("Задача: " <> T.unpack courseTaskName)
-              toWidgetHead [hamlet|
-<link rel=stylesheet href=/static/css/courseTaskForm.css>
-|]
               [whamlet|
 <div .container.pt-2.py-3>
   <nav .breadcrumb>
