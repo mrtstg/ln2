@@ -1,6 +1,7 @@
 <script lang="ts">
   import { type CheckStage, stageTypeList, defaultCheckStageData } from "../api/check_stage"
   import CheckStageWidget from "../components/CheckStage.svelte"
+  export let stageStyle: string = ''
   export let stages: Array<CheckStage> = []
   export let containers: string[]
   export let updateCallback: (data: CheckStage[]) => Promise<void>
@@ -34,7 +35,8 @@
 </div>
 <div class="ml-5 overflow-y-auto">
   {#each stages as stage, stageIndex (stage)}
-    <CheckStageWidget 
+    <CheckStageWidget
+      additionalStyle={stageStyle}
       data={stage} 
       containers={containers}
       updateCallback={async (v) => {stages[stageIndex] = v; await updateCallback(stages);}}
