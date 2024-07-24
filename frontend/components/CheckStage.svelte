@@ -1,5 +1,6 @@
 <script lang="ts">
-  import CodeMirror from "svelte-codemirror-editor"
+  import { ArrowDownOutline, ArrowUpOutline, TrashBinOutline } from 'flowbite-svelte-icons'
+  import CodemirrorField from "./CodemirrorField.svelte"
   import type { CheckStage, StageData } from "../api/check_stage"
   import { StageType } from "../api/check_stage"
   import { stageTypeList, defaultCheckStageData, checkStageName } from "../api/check_stage"
@@ -7,7 +8,8 @@
   import SelectField from "./SelectField.svelte"
   import DBConstructor from "./DBConstructor.svelte"
   import CheckStageContainer from "./CheckStageContainer.svelte"
-
+  
+  export let additionalStyle: string = ''
   export let data: CheckStage
   export let containers: string[]
   export let updateCallback: (data: CheckStage) => Promise<void>
@@ -35,10 +37,10 @@
   }
 </script>
 
-<div class="">
+<div class="check_action_card {additionalStyle}">
   <div class="flex flex-row justify-between">
     <div class="field">
-      <label class="label"> Тип действия </label>
+      <label class="label" on:click={() => { hidden = !hidden }}> Тип действия </label>
       <div class="control">
         <div class="select">
           <select bind:value={selectedActionIndex} on:change={async (event) => { await updateCheckStage() }}>
@@ -50,14 +52,18 @@
       </div>
     </div>
     <div class="flex flex-wrap flex-row">
-      <button on:click={deleteCallback} class="text-white">
+      <button on:click={deleteCallback} class="text-white mr-3">
         <div class="icon medium bg-red-700 font-bold rounded-sm text-xl">
-          -
+          <TrashBinOutline/>
         </div>
       </button>
       <button on:click={() => { hidden = !hidden }} class="text-white">
         <div class="icon medium bg-sky-500 font-bold rounded-sm text-xl">
-          ?
+          {#if hidden }
+            <ArrowDownOutline/>
+          {:else}
+            <ArrowUpOutline/>
+          {/if}
         </div>
       </button>
     </div>
@@ -75,11 +81,7 @@
     <div class="field">
       <label class="label"> Содержимое файла </label>
       <div class="control">
-        <CodeMirror styles={{
-          "&": {
-          "font-size": "1rem"
-          }
-        }} bind:value={data.data.content} on:change={updateCallbackWrapper }/>
+        <CodemirrorField bind:doc={data.data.content} onChange={async (v) => { updateCallbackWrapper()}}/>
       </div>
     </div>
   {:else if selectedType == StageType.ExecuteCommand }
@@ -122,11 +124,7 @@
     <div class="field">
       <label class="label"> Значение </label>
       <div class="control">
-        <CodeMirror styles={{
-          "&": {
-          "font-size": "1rem"
-          }
-        }} bind:value={data.data.variableValue} on:change={updateCallbackWrapper }/>
+        <CodemirrorField bind:doc={data.data.variableValue} onChange={async (v) => await updateCallbackWrapper()}/>
       </div>
     </div>
   {:else if selectedType == StageType.CompareVariables}
@@ -143,12 +141,14 @@
       </div>
     </div>
     <CheckStageContainer
+      stageStyle="positive"
       stages={data.data.positiveActions}
       containers={containers}
       title="Если переменные равны:"
       updateCallback={async (newStages) => {data.data.positiveActions = newStages; await updateCallbackWrapper()}}
     />
     <CheckStageContainer
+      stageStyle="negative"
       stages={data.data.negativeActions}
       containers={containers}
       title="Если переменные не равны:"
@@ -159,11 +159,7 @@
     <div class="field">
       <label class="label"> SQL-запрос </label>
       <div class="control">
-        <CodeMirror styles={{
-          "&": {
-          "font-size": "1rem"
-          }
-        }} bind:value={data.data.query} on:change={updateCallbackWrapper }/>
+      <CodemirrorField bind:doc={data.data.query} onChange={async (v) => await updateCallbackWrapper()}/>
       </div>
       </div>
     <div class="field">
@@ -185,11 +181,7 @@
     <div class="field">
       <label class="label"> SQL-запрос </label>
       <div class="control">
-        <CodeMirror styles={{
-          "&": {
-          "font-size": "1rem"
-          }
-        }} bind:value={data.data.query} on:change={updateCallbackWrapper }/>
+        <CodemirrorField bind:doc={data.data.query} onChange={async (v) => await updateCallbackWrapper()}/>
       </div>
       <p class="help"> Запрос должен выполнять поиск определенных данных в единичном количестве. Запрос будет автоматически подставлен. Не ставьте точку с запятой в конце. </p>
     </div>
