@@ -13,3 +13,15 @@
 .icon.large {
     @apply w-[50px] h-[50px];
 }
+
+.check_action_card {
+    @apply rounded-lg dark:bg-gray-800 bg-slate-100 p-3 mb-3;
+}
+
+.check_action_card.negative {
+    @apply border-l-2 border-l-red-700 rounded-l-none;
+}
+
+.check_action_card.positive {
+    @apply border-l-2 border-l-green-500 rounded-l-none;
+}
