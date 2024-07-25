@@ -194,8 +194,8 @@
         {:else}
           <DangerMessage title="Ошибка!" description={taskPatchErrorToString(res)}/>
         {/if}
-      {:catch}
-        <DangerMessage title="Ошибка!" description="Не удалось обновить задачу!" additionalStyle="is-fullwidth"/>
+      {:catch err}
+        <DangerMessage title="Ошибка!" description="Не удалось обновить задачу! {err}" additionalStyle="is-fullwidth"/>
       {/await}
     {/if}
     <button class="button is-fullwidth is-success my-3" on:click={() => taskUpdatePromise = updateTaskWrapper()}> Обновить задачу </button>
