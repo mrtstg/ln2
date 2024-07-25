@@ -14,9 +14,7 @@
   <div class="message-body">
     {#each messageData.blocks as block}
       {#if block.type == 'code'}
-        <pre>
-          { block.content }
-        </pre>
+        <pre>{block.content}</pre>
       {:else}
           {#each splitText(block.content) as t}
             <p>{ t }</p>
