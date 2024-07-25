@@ -10,12 +10,15 @@ use docker_api::api::container::*;
 use docker_api::api::network::*;
 use docker_api::docker::Docker;
 use docker_api::models::EndpointSettings;
+use docker_api::models::ImageBuildChunk;
 use docker_api::models::NetworkingConfig;
 use docker_api::opts::ContainerCreateOpts;
 use docker_api::opts::ExecCreateOpts;
 use docker_api::opts::ExecStartOpts;
 use docker_api::opts::NetworkCreateOpts;
+use docker_api::opts::PullOpts;
 use docker_api::Exec;
+use docker_api::Images;
 use futures_util::StreamExt;
 use log::*;
 use std::collections::HashMap;
@@ -183,7 +186,9 @@ pub async fn execute_stand_check(
                         )
                         .await;
                         match res {
-                            StandCheckEnum::Accepted(_) | StandCheckEnum::Cancelled(_) => return res,
+                            StandCheckEnum::Accepted(_) | StandCheckEnum::Cancelled(_) => {
+                                return res
+                            }
                             StandCheckEnum::Ok(result) => {
                                 check_res = result;
                             }
@@ -284,6 +289,11 @@ pub async fn deploy_stand(
     let network = create_network(docker.clone(), network_name).await?;
     let mut containers_map: HashMap<String, Container> = HashMap::new();
     for container_data in stand_data.containers {
+        let images_api = Images::new(docker.clone());
+        let pull_res = pull_container_image(images_api, container_data.clone()).await;
+        if let Err(e) = pull_res {
+            error!("Failed to pull {}: {}", container_data.image, e);
+        }
         let container_api = Containers::new(docker.clone());
         match deploy_container(
             container_api,
@@ -367,4 +377,34 @@ pub async fn deploy_container(
         Ok(container) => Ok(container),
         Err(e) => Err(e.to_string()),
     }
+}
+
+pub async fn pull_container_image(
+    images: Images,
+    container_data: StandContainerData,
+) -> Result<(), String> {
+    let container_parts = container_data.image.split(":").collect::<Vec<&str>>();
+    if container_parts.get(0).unwrap_or(&"").len() == 0 {
+        return Err("No container image name details".to_string());
+    }
+    let tag = if (container_parts.len() > 1) {
+        container_parts[1]
+    } else {
+        "latest"
+    };
+    let image_name = container_parts[0];
+    let mut pull = images.pull(&PullOpts::builder().image(image_name).tag(tag).build());
+    while let Some(data) = pull.next().await {
+        match data {
+            Ok(pull_chunk) => {
+                debug!("{:?}", pull_chunk);
+                if let ImageBuildChunk::Error { error, .. } = pull_chunk {
+                    return Err(error);
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        }
+    }
+
+    Ok(())
 }
