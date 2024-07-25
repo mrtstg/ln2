@@ -129,7 +129,7 @@
                   <h3 class="subtitle is-5"> Результаты проверки </h3>
                   <p> Статус проверки: { taskStatusToString(result.status) } </p>
                   {#if result.result != null}
-                    <p> Набрано баллов: { result.result.score } из { result.result.maxScore } </p>
+                    <p> Набрано баллов: { result.result.score } из { result.result.scoreGate } </p>
                     {#if result.result.messages.length > 0}
                       <h3 class="subtitle is-5 pt-5"> Сообщения </h3>
                       {#each result.result.messages as message}
