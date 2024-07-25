@@ -1,9 +1,11 @@
 <script lang="ts">
   import CodeMirror, { basicSetup } from "codemirror-svelte"
   import { EditorView, ViewPlugin } from "@codemirror/view";
+    import { EditorState } from "@codemirror/state";
 
+  export let readonly: boolean = false;
   export let doc: string;
-  export let onChange: (doc: string) => Promise<void>;
+  export let onChange: (doc: string) => Promise<void> = async (arg0) => {};
 
   let extensions = [
     basicSetup,
@@ -23,6 +25,13 @@
       }
     })
   ]
+
+  if (readonly) {
+    extensions = [
+      EditorState.readOnly.of(true),
+      ...extensions
+    ]
+  }
 </script>
 
 <CodeMirror {doc} {extensions}/>
