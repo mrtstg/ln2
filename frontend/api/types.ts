@@ -85,8 +85,9 @@ export type CheckMessage = {
 
 export type TaskResult = {
   score: number,
-  maxScore: number,
+  scoreGate: number,
   values: object,
+  accepted: boolean,
   messages: [CheckMessage]
 }
 
