@@ -71,6 +71,10 @@ export const taskStatusToString = (status: string): string => {
       return 'Проверка завершена'
     case 'timeout':
       return 'Проверка превысила тайм-аут'
+    case 'accepted':
+      return 'Проверка зачтена'
+    case 'cancelled':
+      return 'Проверка прервана в процессе'
     default:
       return 'Неизвестный статус'
   }
