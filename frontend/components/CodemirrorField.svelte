@@ -1,7 +1,8 @@
 <script lang="ts">
   import CodeMirror, { basicSetup } from "codemirror-svelte"
-  import { EditorView, ViewPlugin } from "@codemirror/view";
-    import { EditorState } from "@codemirror/state";
+  import { EditorView, ViewPlugin, keymap } from "@codemirror/view";
+  import { EditorState } from "@codemirror/state";
+  import { indentWithTab } from "@codemirror/commands"
 
   export let readonly: boolean = false;
   export let doc: string;
@@ -9,6 +10,7 @@
 
   let extensions = [
     basicSetup,
+    keymap.of([indentWithTab]),
     EditorView.theme({
       "&": {
         "font-size": "1rem"
