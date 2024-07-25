@@ -6,6 +6,7 @@ BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(ENV_FILE) --project-name ln2
 COMPOSE_FILE=deployment/docker-compose.yml
 
 build-frontend: ./static/js ./static/css
+	make -C frontend build
 	make -C frontend/admin-course-form build
 	make -C frontend/admin-users-form build
 	make -C frontend/course-task-form build
