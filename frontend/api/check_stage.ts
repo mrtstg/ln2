@@ -123,7 +123,14 @@ export const processStageData = (stageData: StageData): StageData => {
 export const stageDataToCheckStage = (data: StageData): CheckStage | null => {
   const t = actionToStageType(data.action);
   if (t != null) {
-    return { type: t, data: data };
+    let ndata = {...data}
+    if (data.positiveActions != undefined) {
+      ndata.positiveActions = ndata.positiveActions.map(el => stageDataToCheckStage(el))
+    }
+    if (data.negativeActions != undefined) {
+      ndata.negativeActions = ndata.negativeActions.map(el => stageDataToCheckStage(el))
+    }
+    return { type: t, data: ndata };
   }
   return null;
 };
