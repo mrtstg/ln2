@@ -93,7 +93,7 @@ export const countStages = (stages: CheckStage[], f: (arg0: CheckStage) => boole
     if (f(stages[i])) {
       filteredStages.push(stages[i])
     }
-    console.log(stages[i].data.positiveActions)
+
     if (stages[i].data.positiveActions != undefined) {
       filteredStages.push.apply(filteredStages, countStages(stages[i].data.positiveActions, f))
     }
