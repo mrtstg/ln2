@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { ArrowDownOutline, ArrowUpOutline, TrashBinOutline } from 'flowbite-svelte-icons'
+  import TrashBinOutline from "./icons/TrashBinOutline.svelte"
+  import EyeOutline from "./icons/EyeOutline.svelte"
+  import EyeSlashOutline from "./icons/EyeSlashOutline.svelte"
   import CodemirrorField from "./CodemirrorField.svelte"
   import type { CheckStage, StageData } from "../api/check_stage"
   import { StageType } from "../api/check_stage"
@@ -60,9 +62,9 @@
       <button on:click={() => { hidden = !hidden }} class="text-white">
         <div class="icon medium bg-sky-500 font-bold rounded-sm text-xl">
           {#if hidden }
-            <ArrowDownOutline/>
+            <EyeOutline/>
           {:else}
-            <ArrowUpOutline/>
+            <EyeSlashOutline/>
           {/if}
         </div>
       </button>
@@ -92,21 +94,32 @@
         <input class="input" type="text" placeholder="Команда, например psql -f /a.sql" bind:value={data.data.command} on:change={updateCallbackWrapper }>
       </div>
     </div>
-    <label class="checkbox">
-      <input type="checkbox" bind:checked={data.data.formatOutput} on:change={updateCallbackWrapper}/>
-      Форматировать вывод
-    </label>
-    <label class="checkbox">
-      <input type="checkbox" bind:checked={data.data.reportError} on:change={updateCallbackWrapper}/>
-      Сообщать пользователю об ошибках в процессе выполнения
-    </label>
+    <div class="field">
+      <label class="checkbox">
+        <input type="checkbox" bind:checked={data.data.formatOutput} on:change={updateCallbackWrapper}/>
+        Форматировать вывод
+      </label>
+    </div>
+    <div class="field">
+      <label class="checkbox">
+        <input type="checkbox" bind:checked={data.data.reportError} on:change={updateCallbackWrapper}/>
+        Сообщать пользователю об ошибках в процессе выполнения
+      </label>
+    </div>
     <div class="field">
       <label class="label"> Записать в переменную (<i>опционально</i>)</label>
       <div class="control">
         <input class="input" type="text" placeholder="Название переменной, например result" maxlength="25" bind:value={data.data.recordInto} on:change={updateCallbackWrapper}>
       </div>
     </div>
-  {:else if selectedType == StageType.CopyAnswer }
+  {:else if selectedType == StageType.AddPoints }
+    <div class="field">
+      <label class="label"> Количество баллов для добавления </label>
+      <div class="control">
+        <input class="input" type="number" min="1" placeholder="Количество баллов, больше 0" max="100" bind:value={data.data.amount} on:change={updateCallbackWrapper}/>
+      </div>
+    </div>
+  {:else if selectedType == StageType.CopyAnswer}
     <SelectField title="Скопировать на" items={containers} selectCallback={async (v) => { data.data.target = v; await updateCallback(data) }}/>
     <div class="field">
       <label class="label"> Путь файла </label>
@@ -125,6 +138,48 @@
       <label class="label"> Значение </label>
       <div class="control">
         <CodemirrorField bind:doc={data.data.variableValue} onChange={async (v) => await updateCallbackWrapper()}/>
+      </div>
+    </div>
+  {:else if selectedType == StageType.StopCheck || selectedType == StageType.AcceptCheck}
+    <!-- TODO: output some message about no details -->
+  {:else if selectedType == StageType.DisplayMessage}
+    <div class="field">
+      <label class="label"> Заголовок сообщения </label>
+      <div class="control">
+        <input class="input" type="text" bind:value={data.data.title} on:change={updateCallbackWrapper}/>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label"> Сообщение </label>
+      <div class="control">
+        <textarea class="textarea" placeholder="Простое сообщение, Markdown не поддерживается" bind:value={data.data.message} on:change={updateCallbackWrapper}></textarea>
+      </div>
+    </div>
+  {:else if selectedType == StageType.DisplayVariable}
+    <div class="field">
+      <label class="label"> Заголовок сообщения </label>
+      <div class="control">
+        <input class="input" type="text" bind:value={data.data.title} on:change={updateCallbackWrapper}/>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label"> Подпись к значению переменной </label>
+      <div class="control">
+        <textarea class="textarea" placeholder="Простое сообщение, Markdown не поддерживается" bind:value={data.data.message} on:change={updateCallbackWrapper}></textarea>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label"> Название переменной </label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Название переменной" maxlength="25" bind:value={data.data.variableName} on:change={updateCallbackWrapper}>
+      </div>
+    </div>
+  {:else if selectedType == StageType.SetPointsGate}
+    <div class="field">
+      <label class="label"> Количество баллов для принятия задания </label>
+      <div class="control">
+        <!-- TODO: decide about points limit -->
+        <input class="input" type="number" min="1" placeholder="Количество баллов, больше 0" max="1000" bind:value={data.data.amount} on:change={updateCallbackWrapper}/>
       </div>
     </div>
   {:else if selectedType == StageType.CompareVariables}
@@ -152,16 +207,37 @@
       stages={data.data.negativeActions}
       containers={containers}
       title="Если переменные не равны:"
-      updateCallback={async (newStages) => {data.data.negativeActions = newStages}}
+      updateCallback={async (newStages) => {data.data.negativeActions = newStages; await updateCallbackWrapper()}}
+    />
+  {:else if selectedType == StageType.CompareLatestStatusCode}
+    <div class="field">
+      <label class="label"> Ожидаемый код завершения последней программы </label>
+      <div class="control">
+        <input class="input" type="number" placeholder="Код выхода" bind:value={data.data.awaitedStatus} on:change={updateCallbackWrapper}/>
+      </div>
+    </div>
+    <CheckStageContainer
+      stageStyle="positive"
+      stages={data.data.positiveActions}
+      containers={containers}
+      title="Если код совпадает:"
+      updateCallback={async (newStages) => {data.data.positiveActions = newStages; await updateCallbackWrapper()}}
+    />
+    <CheckStageContainer
+      stageStyle="negative"
+      stages={data.data.negativeActions}
+      containers={containers}
+      title="Если код не совпадает:"
+      updateCallback={async (newStages) => {data.data.negativeActions = newStages; await updateCallbackWrapper()}}
     />
   {:else if selectedType == StageType.PSQLQuery}
     <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.target = v; await updateCallback(data) }}/>
     <div class="field">
       <label class="label"> SQL-запрос </label>
       <div class="control">
-      <CodemirrorField bind:doc={data.data.query} onChange={async (v) => await updateCallbackWrapper()}/>
+        <CodemirrorField bind:doc={data.data.query} onChange={async (v) => await updateCallbackWrapper()}/>
       </div>
-      </div>
+    </div>
     <div class="field">
       <label class="label"> Записать в переменную (<i>опционально</i>)</label>
       <div class="control">
@@ -185,16 +261,23 @@
       </div>
       <p class="help"> Запрос должен выполнять поиск определенных данных в единичном количестве. Запрос будет автоматически подставлен. Не ставьте точку с запятой в конце. </p>
     </div>
-    <div class="field">
-      <label class="label"> Количество зачтенных баллов, если данные в базе есть </label>
-      <div class="control">
-        <input class="input" type="number" placeholder="Количество баллов" bind:value={data.data.score} on:change={updateCallbackWrapper}>
-      </div>
-    </div>
+    <CheckStageContainer
+      stageStyle="positive"
+      stages={data.data.positiveActions}
+      containers={containers}
+      title="Если данные есть:"
+      updateCallback={async (newStages) => {data.data.positiveActions = newStages; await updateCallbackWrapper()}}
+    />
+    <CheckStageContainer
+      stageStyle="negative"
+      stages={data.data.negativeActions}
+      containers={containers}
+      title="Если данных нет:"
+      updateCallback={async (newStages) => {data.data.negativeActions = newStages; await updateCallbackWrapper()}}
+    />
   {:else if selectedType == StageType.PSQLGenerateDatabase}
     <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.target = v; await updateCallback(data) }}/>
     <DBConstructor dbData={data.data.database} changeCallback={(t) => data.data.database.tables = t}/>
-    <br>
   {:else if selectedType == StageType.PSQLTableExists}
     <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.target = v; await updateCallback(data) }}/>
     <div class="field">
@@ -203,18 +286,20 @@
         <input class="input" type="text" placeholder="Название таблицы, без кавычек" bind:value={data.data.tableName} on:change={updateCallbackWrapper}>
       </div>
     </div>
-    <div class="field">
-      <label class="label"> Количество зачтенных баллов, если таблица есть </label>
-      <div class="control">
-        <input class="input" type="number" placeholder="Количество баллов" bind:value={data.data.score} on:change={updateCallbackWrapper}>
-      </div>
-    </div>
-    <div class="field">
-      <label class="checkbox">
-        <input type="checkbox" bind:checked={data.data.reportError} on:change={updateCallbackWrapper}/>
-        Вывести ошибку пользователю, если таблица не найдена
-      </label>
-    </div>
+    <CheckStageContainer
+      stageStyle="positive"
+      stages={data.data.positiveActions}
+      containers={containers}
+      title="Если таблица существует:"
+      updateCallback={async (newStages) => {data.data.positiveActions = newStages; await updateCallbackWrapper()}}
+    />
+    <CheckStageContainer
+      stageStyle="negative"
+      stages={data.data.negativeActions}
+      containers={containers}
+      title="Если таблица не существует:"
+      updateCallback={async (newStages) => {data.data.negativeActions = newStages; await updateCallbackWrapper()}}
+    />
   {:else if selectedType == StageType.PSQLColumnTypeCheck}
     <SelectField title="Контейнер выполнения" items={containers} selectCallback={async (v) => { data.data.target = v; await updateCallback(data) }}/>
     <div class="field">
@@ -235,18 +320,20 @@
         <input class="input" type="text" placeholder="Тип данных" bind:value={data.data.awaitedType} on:change={updateCallbackWrapper}>
       </div>
     </div>
-    <div class="field">
-      <label class="label"> Количество зачтенных баллов, если тип совпал </label>
-      <div class="control">
-        <input class="input" type="number" placeholder="Количество баллов" bind:value={data.data.score} on:change={updateCallbackWrapper}>
-      </div>
-    </div>
-    <div class="field">
-      <label class="checkbox">
-        <input type="checkbox" bind:checked={data.data.reportError} on:change={updateCallbackWrapper}/>
-        Вывести ошибку пользователю, если тип не совпадает
-      </label>
-    </div>
+    <CheckStageContainer
+      stageStyle="positive"
+      stages={data.data.positiveActions}
+      containers={containers}
+      title="Если тип совпал:"
+      updateCallback={async (newStages) => {data.data.positiveActions = newStages; await updateCallbackWrapper()}}
+    />
+    <CheckStageContainer
+      stageStyle="negative"
+      stages={data.data.negativeActions}
+      containers={containers}
+      title="Если тип не совпал:"
+      updateCallback={async (newStages) => {data.data.negativeActions = newStages; await updateCallbackWrapper()}}
+    />
   {:else}
     <DangerMessage title="Ошибка!" description="Неизвестный тип"/>
   {/if}
