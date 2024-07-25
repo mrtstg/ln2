@@ -87,6 +87,39 @@ export interface StageData {
   [key: string]: any;
 }
 
+export const countStages = (stages: CheckStage[], f: (arg0: CheckStage) => boolean): CheckStage[] => {
+  let filteredStages: CheckStage[] = []
+  for (let i = 0; i < stages.length; i++) {
+    if (f(stages[i])) {
+      filteredStages.push(stages[i])
+    }
+    console.log(stages[i].data.positiveActions)
+    if (stages[i].data.positiveActions != undefined) {
+      filteredStages.push.apply(filteredStages, countStages(stages[i].data.positiveActions, f))
+    }
+    if (stages[i].data.negativeActions != undefined) {
+      filteredStages.push.apply(filteredStages, countStages(stages[i].data.negativeActions, f))
+    }
+  }
+  return filteredStages
+}
+
+// applies stage data to appropriate for backend form
+export const processStageData = (stageData: StageData): StageData => {
+  let ndata = {...stageData}
+  if (["command", "psql_query_macro", "psql_answer_query_macro"].includes(ndata.action) && ndata.recordInto.length == 0) {
+    ndata.recordInto = null
+  }
+  if (ndata.positiveActions != undefined) {
+    ndata.positiveActions = ndata.positiveActions.map(el => processStageData(el.data))
+  }
+  if (ndata.negativeActions != undefined) {
+    ndata.negativeActions = ndata.negativeActions.map(el => processStageData(el.data))
+  }
+
+  return ndata
+}
+
 export const stageDataToCheckStage = (data: StageData): CheckStage | null => {
   const t = actionToStageType(data.action);
   if (t != null) {
