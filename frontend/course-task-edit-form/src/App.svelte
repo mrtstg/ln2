@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ApiClient } from "../../api/client"
-  import { StageType, stageDataToCheckStage, stageTypeList, defaultCheckStageData } from "../../api/check_stage"
+  import { processStageData, countStages, StageType, stageDataToCheckStage, stageTypeList, defaultCheckStageData } from "../../api/check_stage"
   import type { CheckStage, StageData } from "../../api/check_stage";
   import type { CommonCourseDetails, CourseTaskDetails, ContainerSummary } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
@@ -48,19 +48,11 @@
       return "Проверка задачи должна содержать как минимум один этап!"
     }
 
-    if (stages.map(el => el.type).filter(el => el == StageType.PSQLGenerateDatabase).length > 1) {
+    if (countStages(stages, (el => el.type == StageType.PSQLGenerateDatabase)).length > 1) {
       return "В задаче может быть только один этап генерации базы данных!"
     }
 
-    const processStage = (data: StageData): StageData => {
-      let ndata = { ...data }
-      if (ndata.action === 'command' && ndata.recordInto.length == 0) {
-        ndata.recordInto = null
-      }
-      return ndata
-    }
-
-    let stagesToSend = stages.map(v => v.data).map(processStage)
+    let stagesToSend = stages.map(v => v.data).map(processStageData)
     const res = await api.patchTask(taskID!, {
       name: taskTitle,
       content: taskContent,
