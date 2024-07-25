@@ -1,8 +1,5 @@
 <script lang="ts">
-  import CodeMirror, { basicSetup } from "codemirror-svelte"
-  import { EditorView } from "@codemirror/view";
-  import { EditorState } from "@codemirror/state";
-
+  import CodemirrorField from "../../components/CodemirrorField.svelte"
   import { taskStatusToString, taskCreateErrorToString } from "../../api/utils"
   import { ApiClient } from "../../api/client"
   import type { CourseTaskSolve, CourseSolvesResponse, TaskResult, TaskResultWrapper, TaskCreateResponse } from "../../api/types"
@@ -12,18 +9,6 @@
   import CheckMessageForm from "../../components/CheckMessage.svelte"
   import SolveCard from "../../components/SolveCard.svelte"
 
-  let extensions = [
-    basicSetup,
-    EditorView.theme({
-      "&": {
-        "font-size": "1rem"
-      }
-    })
-  ]
-  let answer_extensions = [
-    EditorState.readOnly.of(true),
-    ...extensions
-  ]
   // client
   const url = API_URL;
   const api = new ApiClient(url)
@@ -106,7 +91,7 @@
   {/if}
   <div class="field required">
     <label class="label"> Решение </label>
-    <CodeMirror bind:doc={answer} {extensions}/>
+    <CodemirrorField bind:doc={answer}/>
   </div>
   {#if sendPromise == null}
     <button class="button is-fullwidth is-success" on:click={async () => { sendSolution() }}> Отправить решение </button>
@@ -130,7 +115,7 @@
         <h2 class="subtitle is-4"> Решение { selectedTask.id } </h2>
         <div class="field">
           <label class="label"> Ответ пользователя </label>
-          <CodeMirror bind:doc={selectedTask.input} bind:extensions={answer_extensions}/>
+          <CodemirrorField bind:doc={selectedTask.input} readonly={true}/>
         </div>
         <button class="button is-danger is-fullwidth" on:click={unselectTask}> Назад </button>
         {#if taskResultPromise != null}
