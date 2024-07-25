@@ -107,7 +107,10 @@ export const countStages = (stages: CheckStage[], f: (arg0: CheckStage) => boole
 // applies stage data to appropriate for backend form
 export const processStageData = (stageData: StageData): StageData => {
   let ndata = {...stageData}
-  if (["command", "psql_query_macro", "psql_answer_query_macro"].includes(ndata.action) && ndata.recordInto.length == 0) {
+  if ((
+    ["command", "psql_query_macro", "psql_answer_query_macro"].includes(ndata.action) && 
+    ndata.recordInto != undefined && ndata.recordInto != null
+  ) && ndata.recordInto.length == 0) {
     ndata.recordInto = null
   }
   if (ndata.positiveActions != undefined) {
