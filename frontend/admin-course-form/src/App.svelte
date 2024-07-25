@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { PlusOutline } from 'flowbite-svelte-icons'
+  import PlusOutline from "../../components/icons/PlusOutline.svelte"
   import { ApiClient } from "../../api/client"
   import type { ContainerSummary, CommonCourseDetails } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
   import CheckStageWidget from "../../components/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
-  import { type StageData, stageTypeList, StageType, type CheckStage, defaultCheckStageData } from "../../api/check_stage" 
+  import { processStageData, countStages, type StageData, stageTypeList, StageType, type CheckStage, defaultCheckStageData } from "../../api/check_stage" 
   import { courseErrorsToString, courseTaskErrorToString, deleteCourseErrorToString } from "../../api/utils"
 
   // client declaration
@@ -119,20 +119,12 @@
       return
     }
 
-    if (stages.map(el => el.type).filter(el => el == StageType.PSQLGenerateDatabase).length > 1) {
+    if (countStages(stages, (el => el.type == StageType.PSQLGenerateDatabase)).length > 1) {
       modalMessage = "В задаче может быть только один этап генерации базы данных!"
       return
     }
 
-    const processStage = (data: StageData): StageData => {
-      let ndata = { ...data }
-      if (ndata.action === 'command' && ndata.recordInto.length == 0) {
-        ndata.recordInto = null
-      }
-      return ndata
-    }
-
-    let stagesToSend = stages.map(v => v.data).map(processStage)
+    let stagesToSend = stages.map(v => v.data).map(processStageData)
     const payload = {
       name: taskTitle,
       content: taskDesc,
