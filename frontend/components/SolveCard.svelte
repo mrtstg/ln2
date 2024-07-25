@@ -25,7 +25,10 @@
       {#if res != null}
         <p> Статус: { taskStatusToString(res.status) } </p>
         {#if res.result != null}
-          { res.result.score } / { res.result.maxScore } баллов
+          <p>{ res.result.score } / { res.result.scoreGate } баллов</p>
+          {#if res.result.accepted }
+            <p class="text-green-500"> Решение зачтено </p>
+          {/if}
         {:else}
           Итогов проверки нет
         {/if}
