@@ -98,7 +98,6 @@
     if (res.standIdentifier != undefined && res.standActions != undefined) {
       res.standActions.forEach(el => {
         let res = stageDataToCheckStage(el)
-        console.log(res)
         if (res != null) {
           stages = [...stages, res]
         }
