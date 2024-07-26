@@ -147,7 +147,7 @@ services:
     depends_on:
       - prod-rabbitmq
     volumes:
-      - /run/docker.sock:/run/docker.sock
+      - ${DOCKER_SOCKET}:/run/docker.sock
     deploy:
       resources:
         reservations:

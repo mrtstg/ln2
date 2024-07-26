@@ -2,7 +2,8 @@ HS_SERVICES=auth-service db-gen-api docker-master-server main-site md-render-api
 IMAGES_LIST = ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api
 COMPOSE_BIN=docker compose
 ENV_FILE=.env
-BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(ENV_FILE) --project-name ln2
+DOCKER_ENV_FILE=docker.env
+BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(DOCKER_ENV_FILE) --project-name ln2
 COMPOSE_FILE=deployment/docker-compose.yml
 
 build-frontend: ./static/js ./static/css
