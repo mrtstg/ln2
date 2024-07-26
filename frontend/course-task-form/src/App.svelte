@@ -10,8 +10,12 @@
   import SolveCard from "../../components/SolveCard.svelte"
 
   // client
+  // @ts-ignore: replaced by vite
   const url = API_URL;
   const api = new ApiClient(url)
+
+  // bind to codemirror
+  let cleanSolution: () => {};
 
   let pageNum: number = 1
   let answer: string = '';
@@ -40,6 +44,7 @@
     }
 
     answer = ''
+    cleanSolution()
     await refreshTasks()
     return res
   }
@@ -91,7 +96,7 @@
   {/if}
   <div class="field required">
     <label class="label"> Решение </label>
-    <CodemirrorField bind:doc={answer}/>
+    <CodemirrorField bind:cleanField={cleanSolution} bind:doc={answer}/>
   </div>
   {#if sendPromise == null}
     <button class="button is-fullwidth is-success" on:click={async () => { sendSolution() }}> Отправить решение </button>
