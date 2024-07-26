@@ -383,17 +383,17 @@ pub async fn pull_container_image(
     images: Images,
     container_data: StandContainerData,
 ) -> Result<(), String> {
-    let container_parts = container_data.image.split(":").collect::<Vec<&str>>();
-    if container_parts.get(0).unwrap_or(&"").len() == 0 {
-        return Err("No container image name details".to_string());
+    let image: &str;
+    let tag: &str;
+    let tag_parts = container_data.image.split(":").collect::<Vec<&str>>();
+    if tag_parts.len() != 2 {
+        return Err("No image tag provided".to_string());
     }
-    let tag = if (container_parts.len() > 1) {
-        container_parts[1]
-    } else {
-        "latest"
-    };
-    let image_name = container_parts[0];
-    let mut pull = images.pull(&PullOpts::builder().image(image_name).tag(tag).build());
+    tag = tag_parts.last().unwrap();
+    image = tag_parts.first().unwrap(); // strange, cus image name should not contain :
+
+    debug!("Pulling image {}:{}", image, tag);
+    let mut pull = images.pull(&PullOpts::builder().image(image).tag(tag).build());
     while let Some(data) = pull.next().await {
         match data {
             Ok(pull_chunk) => {
