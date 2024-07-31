@@ -55,6 +55,18 @@ services:
     restart: unless-stopped
     env_file:
       - ../.env
+  dev-websocket:
+    image: ln2-websockify
+    container_name: ln2-dev-websockify
+    hostname: websockify
+    ports:
+      - 6080:6080
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+    volumes:
+      - ./websockify/entrypoint.sh:/entrypoint.sh:ro
+      - ./websockify/tokens.cfg:/tokens.cfg.template:ro
   dev-nginx:
     profiles: ['dev']
     image: nginx:stable-alpine
@@ -66,6 +78,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/dev.conf:/etc/nginx/conf.d/site.conf:ro
       - ../static/:/static:ro
+    depends_on:
+      - dev-websocket
   dev-pgadmin:
     profiles: ['dev']
     image: dpage/pgadmin4:8.6
