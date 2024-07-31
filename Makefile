@@ -6,6 +6,9 @@ DOCKER_ENV_FILE=docker.env
 BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(DOCKER_ENV_FILE) --project-name ln2
 COMPOSE_FILE=deployment/docker-compose.yml
 
+build-websockify: ./deployment/websockify/Dockerfile
+	docker build -t ln2-websockify -f ./deployment/websockify/Dockerfile .
+
 build-frontend: ./static/js ./static/css
 	make -C frontend build
 	make -C frontend/admin-course-form build
