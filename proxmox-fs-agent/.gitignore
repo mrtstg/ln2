@@ -1,3 +1,6 @@
 .stack-work/
 *~
 deployment/proxmox-fs-agent
+
+# test dir for qemu configs
+configs
