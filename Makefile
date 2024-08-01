@@ -1,4 +1,4 @@
-HS_SERVICES=auth-service db-gen-api docker-master-server main-site md-render-api
+HS_SERVICES=auth-service db-gen-api docker-master-server main-site md-render-api proxmox-fs-agent
 IMAGES_LIST = ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api
 COMPOSE_BIN=docker compose
 ENV_FILE=.env
@@ -21,7 +21,7 @@ build-frontend: ./static/js ./static/css
 
 build-bin:
 	@for n in $(HS_SERVICES); do \
-		(cd $$n && stack build); \
+		(cd $$n && echo "Building $$n" && stack build); \
 	done
 
 build-images:
