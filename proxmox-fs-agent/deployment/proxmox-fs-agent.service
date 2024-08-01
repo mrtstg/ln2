@@ -1,0 +1,14 @@
+[Unit]
+Description=Proxmox FS agent
+After=pve-guests.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+OOMScoreAdjust=-500
+ExecStart=/usr/local/bin/proxmox-fs-agent -p 8000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
