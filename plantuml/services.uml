@@ -1,0 +1,75 @@
+@startuml
+skinparam artifact<<Layout>> {
+  borderColor Transparent
+  backgroundColor Transparent
+  fontColor Transparent
+  stereotypeFontColor Transparent
+}
+
+agent NGINX as nginx
+
+artifact p1 <<Layout>> {
+agent "Websockify server" as websockify
+component "Proxmox deploy API" as proxmox_deploy_api
+component "Proxmox deploy agent" as proxmox_deploy_agent
+database "PostgreSQL" as psql2
+queue RabbitMQ as rmq2
+
+artifact Proxmox {
+file "Proxmox FS" as proxmoxfs
+agent "Proxmox API" as proxmox
+component "Proxmox FS agent" as proxmoxagent
+}
+
+}
+
+artifact p2 <<Layout>> {
+component "MD render API" as mdapi
+component "DB generation API" as dbapi
+component "Main site" as mainsite
+database "PostgreSQL" as psql3
+queue RabbitMQ as rmq3
+}
+
+artifact p3 <<Layout>> {
+file "Stands FS" as standsfs
+agent "Docker socket" as docker
+component "Docker master server" as dockermaster
+component "Docker agent server" as dockeragent
+}
+
+artifact p4 <<Layout>> {
+component "Auth service" as auth
+database PostgreSQL as psql1
+database Redis as redis
+}
+
+nginx ..> proxmox_deploy_api : Sending access\ncheck request
+mainsite --> proxmox_deploy_api : Sending deploy request (GRPC)\nChecking deploy status
+proxmox_deploy_api --> rmq2 : Provisioning ports,\nspecifying task
+rmq2 --> proxmox_deploy_agent : Receiving task
+proxmox_deploy_agent --> proxmox : Deploying VMs
+proxmox_deploy_agent --> proxmoxagent : Setting ports
+proxmox_deploy_api --> auth : Validating session
+proxmox_deploy_api --> psql2 : Storing data
+
+nginx --> mainsite : HTTP
+nginx --> dockermaster : HTTP\n(Stands API and task results)
+dockermaster <-up- standsfs : Reads data\nfrom YML files
+
+nginx -down-> websockify : Forwards WS connections\nto VMs
+websockify --> proxmox : Connects to static\nVNC ports
+
+proxmoxagent -- proxmoxfs : Modifies VM\nQEMU configs
+mainsite --> mdapi : Render task text (HTTP)
+mainsite --> dbapi : Generates create SQL queries\nand validates data
+mainsite --> auth : Validate sessions,\nmanages users and roles
+mainsite --> dockermaster : Creates tasks
+dockermaster --> rmq3 : Puts tasks\nresults in query\n(and forwards results\nto main site)
+rmq3 <-- mainsite : Receives tasks results
+dockeragent <--> rmq3 : Receives task data\nand put results
+dockeragent -up-> docker : Launches tasks
+mainsite --> psql3 : Stores data
+auth --> redis : Caches user data
+auth --> psql1 : Stores data
+@enduml
