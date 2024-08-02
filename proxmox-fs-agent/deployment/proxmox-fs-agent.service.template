@@ -8,6 +8,7 @@ User=root
 Group=root
 OOMScoreAdjust=-500
 ExecStart=/usr/local/bin/proxmox-fs-agent -p 8000
+Environment="PROXMOX_AGENT_ACCESS_TOKEN=${PROXMOX_AGENT_ACCESS_TOKEN}"
 Restart=always
 
 [Install]
