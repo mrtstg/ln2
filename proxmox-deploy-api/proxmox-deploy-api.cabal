@@ -1,0 +1,136 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.36.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           proxmox-deploy-api
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/proxmox-deploy-api#readme>
+homepage:       https://github.com/githubuser/proxmox-deploy-api#readme
+bug-reports:    https://github.com/githubuser/proxmox-deploy-api/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2024 Author name here
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/proxmox-deploy-api
+
+library
+  exposed-modules:
+      Api.Proxmox
+      Api.Proxmox.VM
+      App.Commands
+      App.Parser
+      App.Types
+      Crud.VMIds
+      Data.Models.ProxmoxConfiguration
+      Data.Models.ProxmoxVM
+      Foundation
+      Handlers.MachineID
+      Handlers.ReserveIDs
+      Handlers.Utils
+      Rabbit
+      Utils
+  other-modules:
+      Paths_proxmox_deploy_api
+  autogen-modules:
+      Paths_proxmox_deploy_api
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      aeson ==2.1.2.1
+    , amqp ==0.22.1
+    , base >=4.7 && <5
+    , bytestring ==0.11.5.2
+    , connection ==0.3.1
+    , directory ==1.3.7.1
+    , http-conduit ==2.3.8.1
+    , http-types ==0.12.3
+    , load-env ==0.2.1.0
+    , monad-logger ==0.3.40
+    , network ==3.1.4.0
+    , optparse-applicative ==0.17.1.0
+    , persistent ==2.14.*
+    , persistent-postgresql ==2.13.6.1
+    , resource-pool ==0.4.0.0
+    , text >=2 && <2.1
+    , transformers ==0.5.6.2
+    , uuid ==1.3.15
+    , yesod-core ==1.6.24.5
+    , yesod-persistent ==1.6.0.8
+  default-language: Haskell2010
+
+executable proxmox-deploy-api-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_proxmox_deploy_api
+  autogen-modules:
+      Paths_proxmox_deploy_api
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson ==2.1.2.1
+    , amqp ==0.22.1
+    , base >=4.7 && <5
+    , bytestring ==0.11.5.2
+    , connection ==0.3.1
+    , directory ==1.3.7.1
+    , http-conduit ==2.3.8.1
+    , http-types ==0.12.3
+    , load-env ==0.2.1.0
+    , monad-logger ==0.3.40
+    , network ==3.1.4.0
+    , optparse-applicative ==0.17.1.0
+    , persistent ==2.14.*
+    , persistent-postgresql ==2.13.6.1
+    , proxmox-deploy-api
+    , resource-pool ==0.4.0.0
+    , text >=2 && <2.1
+    , transformers ==0.5.6.2
+    , uuid ==1.3.15
+    , yesod-core ==1.6.24.5
+    , yesod-persistent ==1.6.0.8
+  default-language: Haskell2010
+
+test-suite proxmox-deploy-api-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_proxmox_deploy_api
+  autogen-modules:
+      Paths_proxmox_deploy_api
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson ==2.1.2.1
+    , amqp ==0.22.1
+    , base >=4.7 && <5
+    , bytestring ==0.11.5.2
+    , connection ==0.3.1
+    , directory ==1.3.7.1
+    , http-conduit ==2.3.8.1
+    , http-types ==0.12.3
+    , load-env ==0.2.1.0
+    , monad-logger ==0.3.40
+    , network ==3.1.4.0
+    , optparse-applicative ==0.17.1.0
+    , persistent ==2.14.*
+    , persistent-postgresql ==2.13.6.1
+    , proxmox-deploy-api
+    , resource-pool ==0.4.0.0
+    , text >=2 && <2.1
+    , transformers ==0.5.6.2
+    , uuid ==1.3.15
+    , yesod-core ==1.6.24.5
+    , yesod-persistent ==1.6.0.8
+  default-language: Haskell2010
