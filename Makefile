@@ -1,5 +1,5 @@
-HS_SERVICES=auth-service db-gen-api docker-master-server main-site md-render-api proxmox-fs-agent
-IMAGES_LIST = ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api
+HS_SERVICES=auth-service db-gen-api docker-master-server main-site md-render-api proxmox-fs-agent proxmox-deploy-api
+IMAGES_LIST=ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api ln2-proxmox-deploy-api
 COMPOSE_BIN=docker compose
 ENV_FILE=.env
 DOCKER_ENV_FILE=docker.env
@@ -31,6 +31,7 @@ build-images:
 	make -C docker-secondary-agent build-image
 	make -C main-site build-image
 	make -C md-render-api build-image
+	make -C proxmox-deploy-api build-image
 
 save-images: ./images
 	@for n in $(IMAGES_LIST); do \
