@@ -63,7 +63,7 @@ services:
       - 6080:6080
     restart: unless-stopped
     env_file:
-      - ../docker.env
+      - ../.env
     volumes:
       - ./websockify/entrypoint.sh:/entrypoint.sh:ro
       - ./websockify/tokens.cfg:/tokens.cfg.template:ro
