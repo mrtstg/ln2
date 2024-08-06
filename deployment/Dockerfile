@@ -14,3 +14,6 @@ RUN stack install --only-dependencies
 WORKDIR /proj5
 COPY db-gen-api/*.cabal db-gen-api/*.yaml db-gen-api/stack.yaml.lock ./
 RUN stack install --only-dependencies
+WORKDIR /proj6
+COPY proxmox-deploy-api/*.cabal proxmox-deploy-api/*.yaml proxmox-deploy-api/stack.yaml.lock ./
+RUN stack install --only-dependencies
