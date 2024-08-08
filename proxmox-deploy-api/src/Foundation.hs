@@ -43,8 +43,8 @@ ReservedMachine
 TakenDisplay
   number Int
   comment Text default=''
-  vmid ReservedMachineId nullable
-  TakenDisplayUnique number
+  vmid Int default=0
+  Primary number
   deriving Show
 MachineTemplate
   proxmoxId Int
@@ -66,7 +66,6 @@ mkYesodData
   "App"
   [parseRoutes|
 /vm/ids MachineIDs GET
-/vm/ids/reserve ReservePortsR GET
 |]
 
 instance Yesod App where
