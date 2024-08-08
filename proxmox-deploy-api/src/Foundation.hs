@@ -43,6 +43,7 @@ ReservedMachine
 TakenDisplay
   number Int
   comment Text default=''
+  vmid ReservedMachineId nullable
   TakenDisplayUnique number
   deriving Show
 MachineTemplate
