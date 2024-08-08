@@ -6,12 +6,11 @@ module Crud.VMIds
   ) where
 
 import           Api.Proxmox.VM
-import           Control.Monad.Trans.Reader       (ReaderT (ReaderT))
 import           Data.Models.ProxmoxConfiguration
 import           Data.Models.ProxmoxVM            (ProxmoxVM (getProxmoxVMId))
 import           Data.Text                        (Text)
 import           Database.Persist
-import           Database.Persist.SqlBackend
+import           Database.Persist.Postgresql      (toSqlKey)
 import           Foundation
 import           Yesod.Core
 import           Yesod.Persist
@@ -30,7 +29,9 @@ suggestVMIds conf = do
       (return . Right) $ filter (`notElem` vmIds) vmIDsRange
 
 freeVMIds :: [Int] -> Handler ()
-freeVMIds vmIds = runDB $ deleteWhere [ReservedMachineNumber <-. vmIds]
+freeVMIds vmIds = runDB $ do
+  deleteWhere [TakenDisplayVmid <-. map (toSqlKey . fromIntegral) vmIds]
+  deleteWhere [ReservedMachineNumber <-. vmIds]
 
 reserveVMIds :: Text -> [Int] -> Int -> Handler (Either String [Int])
 reserveVMIds idComment ids amount = let
