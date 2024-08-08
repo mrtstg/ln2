@@ -17,7 +17,7 @@ import           Yesod.Core
 import           Yesod.Persist
 
 vmIDsRange :: [Int]
-vmIDsRange = [100..999]
+vmIDsRange = [100..999999999]
 
 -- returns VERY big list
 suggestVMIds :: ProxmoxConfiguration -> Handler (Either String [Int])
