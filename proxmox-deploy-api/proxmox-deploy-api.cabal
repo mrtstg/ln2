@@ -29,12 +29,12 @@ library
       App.Commands
       App.Parser
       App.Types
+      Crud.DisplayNumbers
       Crud.VMIds
       Data.Models.ProxmoxConfiguration
       Data.Models.ProxmoxVM
       Foundation
       Handlers.MachineID
-      Handlers.ReserveIDs
       Handlers.Utils
       Rabbit
       Utils
