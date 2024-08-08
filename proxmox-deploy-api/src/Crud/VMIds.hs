@@ -32,7 +32,7 @@ suggestVMIds conf = do
 
 freeVMIds :: [Int] -> Handler ()
 freeVMIds vmIds = runDB $ do
-  deleteWhere [TakenDisplayVmid <-. map (toSqlKey . fromIntegral) vmIds]
+  deleteWhere [TakenDisplayVmid <-. vmIds]
   deleteWhere [ReservedMachineNumber <-. vmIds]
 
 reserveVMIds :: Text -> [Int] -> Int -> Handler (Either String [Int])
