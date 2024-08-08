@@ -26,7 +26,9 @@ suggestVMIds conf = do
     (Left e) -> return $ Left e
     (Right vms) -> do
       let vmIds = map getProxmoxVMId vms
-      (return . Right) $ filter (`notElem` vmIds) vmIDsRange
+      dbMachines <- runDB $ selectList [] []
+      let dbMachinesId = map (\(Entity _ e) -> reservedMachineNumber e) dbMachines
+      (return . Right) $ filter (\el -> el `notElem` vmIds && el `notElem` dbMachinesId) vmIDsRange
 
 freeVMIds :: [Int] -> Handler ()
 freeVMIds vmIds = runDB $ do
