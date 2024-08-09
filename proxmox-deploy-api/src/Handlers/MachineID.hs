@@ -1,16 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Handlers.MachineID (getMachineIDs) where
+module Handlers.MachineID (getMachineIDsR) where
 
 import           Api.Proxmox.VM
 import           Data.Aeson
-import           Data.Models.ProxmoxVM
+import           Data.Models.ProxmoxAPI.VM
 import           Foundation
 import           Network.HTTP.Types
 import           Yesod.Core
 
-getMachineIDs :: Handler Value
-getMachineIDs = do
+getMachineIDsR :: Handler Value
+getMachineIDsR = do
   App { .. } <- getYesod
   response <- liftIO $ getNodeVMs' proxmoxConfiguration
   case response of
