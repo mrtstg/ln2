@@ -65,7 +65,8 @@ MachineDeployment
 mkYesodData
   "App"
   [parseRoutes|
-/vm/ids MachineIDs GET
+/vm/ids MachineIDsR GET
+/sdn SDNR GET
 |]
 
 instance Yesod App where

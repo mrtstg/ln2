@@ -25,6 +25,7 @@ source-repository head
 library
   exposed-modules:
       Api.Proxmox
+      Api.Proxmox.SDN
       Api.Proxmox.VM
       App.Commands
       App.Parser
@@ -39,6 +40,7 @@ library
       Data.Models.ProxmoxConfiguration
       Foundation
       Handlers.MachineID
+      Handlers.SDN
       Handlers.Utils
       Rabbit
       Utils
