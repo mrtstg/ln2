@@ -8,8 +8,8 @@ module Api.Proxmox.VM
 import           Api.Proxmox
 import           Control.Monad.Trans.Except
 import qualified Data.ByteString.Char8            as BS
+import           Data.Models.ProxmoxAPI.VM
 import           Data.Models.ProxmoxConfiguration
-import           Data.Models.ProxmoxVM
 import qualified Data.Text                        as T
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
