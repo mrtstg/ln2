@@ -34,6 +34,7 @@ library
       Data.Models.Proxmox.DeployNetwork
       Data.Models.Proxmox.DeployNetworkInterface
       Data.Models.Proxmox.DeployVM
+      Data.Models.ProxmoxAPI.SDNZone
       Data.Models.ProxmoxAPI.VM
       Data.Models.ProxmoxConfiguration
       Foundation

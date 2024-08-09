@@ -22,7 +22,7 @@ data ProxmoxVM = ProxmoxVM
   , getProxmoxVMCpus    :: !(Maybe Int)
   , getProxmoxVMMaxdisk :: !(Maybe Int)
   , getProxmoxVMMaxmem  :: !(Maybe Int)
-  , getProxmoxVMName    :: !(Maybe Text)
+  , getProxmoxVMName    :: !(Maybe String)
   , getProxmoxVMPid     :: !(Maybe Int)
   , getProxmoxVMUptime  :: !(Maybe Int)
   } deriving Show
