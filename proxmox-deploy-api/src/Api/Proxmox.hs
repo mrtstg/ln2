@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
 module Api.Proxmox
   ( CommonApiResult(..)
   , NodeName
@@ -8,6 +9,8 @@ module Api.Proxmox
   , commonHttpErrorHandler
   , errorTextFromStatus
   , DeclareResult(..)
+  , logDeclareResult
+  , logDeclareResultIO
   ) where
 
 import           Control.Exception                (catch)
@@ -17,10 +20,12 @@ import           Data.ByteString.Char8            (pack)
 import qualified Data.ByteString.Char8            as BS
 import           Data.Models.ProxmoxConfiguration (ProxmoxConfiguration (..))
 import           Data.Text                        (Text, unpack)
+import qualified Data.Text                        as T
 import           Network.Connection
 import           Network.HTTP.Conduit
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status        (Status (..))
+import           Yesod.Core
 
 type NodeName = Text
 
@@ -30,6 +35,16 @@ instance (FromJSON a) => FromJSON (ProxmoxResponseWrapper a) where
   parseJSON = withObject "ProxmoxResponseWrapper" $ \v -> ProxmoxResponseWrapper <$> v .: "data"
 
 data DeclareResult a = Existed | Created | DeclareError a deriving Show
+
+logDeclareResult :: (Show a) => Text -> DeclareResult a -> HandlerFor site ()
+logDeclareResult commentary Existed = $logInfo (commentary <> " existed!")
+logDeclareResult commentary Created = $logInfo (commentary <> " created!")
+logDeclareResult commentary (DeclareError e) = $logInfo (commentary <> " declare error: " <> T.pack (show e) <> "!")
+
+logDeclareResultIO :: (Show a) => String -> DeclareResult a -> IO ()
+logDeclareResultIO commentary Existed = putStrLn (commentary <> " existed!")
+logDeclareResultIO commentary Created = putStrLn (commentary <> " created!")
+logDeclareResultIO commentary (DeclareError e) = putStrLn (commentary <> " declare error: " <> show e <> "!")
 
 data CommonApiResult a = ApiResult a | ApiError Text deriving Show
 
