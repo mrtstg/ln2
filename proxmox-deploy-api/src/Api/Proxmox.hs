@@ -6,17 +6,21 @@ module Api.Proxmox
   , prepareProxmoxRequest
   , ProxmoxResponseWrapper(..)
   , commonHttpErrorHandler
+  , errorTextFromStatus
+  , DeclareResult(..)
   ) where
 
 import           Control.Exception                (catch)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.ByteString.Char8            (pack)
+import qualified Data.ByteString.Char8            as BS
 import           Data.Models.ProxmoxConfiguration (ProxmoxConfiguration (..))
 import           Data.Text                        (Text, unpack)
 import           Network.Connection
 import           Network.HTTP.Conduit
 import           Network.HTTP.Simple
+import           Network.HTTP.Types.Status        (Status (..))
 
 type NodeName = Text
 
@@ -24,6 +28,8 @@ newtype ProxmoxResponseWrapper a = ProxmoxResponseWrapper a deriving Show
 
 instance (FromJSON a) => FromJSON (ProxmoxResponseWrapper a) where
   parseJSON = withObject "ProxmoxResponseWrapper" $ \v -> ProxmoxResponseWrapper <$> v .: "data"
+
+data DeclareResult a = Existed | Created | DeclareError a deriving Show
 
 data CommonApiResult a = ApiResult a | ApiError Text deriving Show
 
@@ -61,3 +67,6 @@ prepareProxmoxRequest :: ProxmoxConfiguration -> Request -> IO Request
 prepareProxmoxRequest conf req = do
   let newReq = setRequestResponseTimeout (responseTimeoutMicro 60000000) $ addProxmoxAuth conf req
   setSSLIgnore conf newReq
+
+errorTextFromStatus :: Status -> String
+errorTextFromStatus status = show (statusCode status) <> BS.unpack (statusMessage status)
