@@ -3,17 +3,67 @@
 module Api.Proxmox.SDN
   ( getSDNZones
   , getSDNZones'
+  , createSimpleSDNZone'
+  , createSimpleSDNZone
+  , declareSimpleSDNZone
   ) where
 
 import           Api.Proxmox
 import           Control.Monad.Trans.Except
-import qualified Data.ByteString.Char8            as BS
+import           Data.Aeson
 import           Data.Models.ProxmoxAPI.SDNZone
 import           Data.Models.ProxmoxConfiguration
 import qualified Data.Text                        as T
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
 import           Yesod.Core                       (liftIO)
+
+type ZoneName = T.Text
+
+declareSimpleSDNZone :: ProxmoxConfiguration -> ZoneName -> IO (DeclareResult String)
+declareSimpleSDNZone conf zoneName = do
+  readRes <- getSDNZones' conf
+  case readRes of
+    (Left e) -> (return . DeclareError) e
+    (Right zones) -> do
+      let zoneExists = (not . null) $ filter ((==zoneName) . T.pack . getSDNZoneName) zones
+      if zoneExists then return Existed else do
+        createRes <- createSimpleSDNZone' conf zoneName
+        case createRes of
+          (Left e)   -> (return . DeclareError) e
+          (Right ()) -> do
+            (Right ()) <- applySDN' conf
+            return Created
+
+applySDN' :: ProxmoxConfiguration -> IO (Either String ())
+applySDN' = commonHttpErrorHandler . applySDN
+
+applySDN :: ProxmoxConfiguration -> ExceptT HttpException IO (Either String ())
+applySDN conf@(ProxmoxConfiguration { .. }) = do
+  let reqString = T.unpack $ "PUT " <> proxmoxBaseUrl <> "/cluster/sdn"
+  request' <- parseRequest reqString
+  request <- liftIO $ prepareProxmoxRequest conf request'
+  response <- httpBS request
+  let status = getResponseStatus response
+  case statusCode status of
+    200        -> return $ Right ()
+    _someError -> (return . Left) $ errorTextFromStatus status
+
+createSimpleSDNZone' :: ProxmoxConfiguration -> ZoneName -> IO (Either String ())
+createSimpleSDNZone' conf zoneName = commonHttpErrorHandler $ createSimpleSDNZone conf zoneName
+
+createSimpleSDNZone :: ProxmoxConfiguration -> ZoneName -> ExceptT HttpException IO (Either String ())
+createSimpleSDNZone conf@(ProxmoxConfiguration { .. }) zoneName = do
+  let reqString = T.unpack $ "POST " <> proxmoxBaseUrl <> "/cluster/sdn/zones"
+  request' <- parseRequest reqString
+  request <- liftIO $ prepareProxmoxRequest conf request'
+  let payload = object [ "type" .= String "simple", "zone" .= zoneName, "dhcp" .= String "dnsmasq"]
+  let jsonRequest = setRequestBodyJSON payload request
+  response <- httpBS jsonRequest
+  let status = getResponseStatus response
+  case statusCode status of
+    200        -> return $ Right ()
+    _someError -> (return . Left) $ errorTextFromStatus status
 
 getSDNZones' :: ProxmoxConfiguration -> IO (Either String [SDNZone])
 getSDNZones' = commonHttpErrorHandler . getSDNZones
@@ -31,4 +81,4 @@ getSDNZones conf@(ProxmoxConfiguration { .. }) = do
       case body of
         (Left e)                               -> (return . Left) $ show e
         (Right (ProxmoxResponseWrapper zones)) -> return $ Right zones
-    _someError -> (return . Left) $ show (statusCode status) <> BS.unpack (statusMessage status)
+    _someError -> (return . Left) $ errorTextFromStatus status
