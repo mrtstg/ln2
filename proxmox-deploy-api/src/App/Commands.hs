@@ -9,6 +9,9 @@ module App.Commands (
   runCommand
   ) where
 
+import           Api.Proxmox                      (DeclareResult (..),
+                                                   logDeclareResultIO)
+import           Api.Proxmox.SDN
 import           App.Types
 import           Control.Monad.Logger             (runStdoutLoggingT)
 import qualified Data.ByteString.Char8            as BS
@@ -39,6 +42,14 @@ runCreateDatabaseCommand = do
         flip runSqlPersistMPool pool $ do
           runMigration migrateAll
 
+declareSDN :: ProxmoxConfiguration -> IO ()
+declareSDN cfg@(ProxmoxConfiguration { .. }) = do
+  declareRes <- declareSimpleSDNZone cfg proxmoxSDNZone
+  () <- logDeclareResultIO "Deploy SDN zone" declareRes
+  case declareRes of
+    (DeclareError _) -> exitWith (ExitFailure 1)
+    _                -> return ()
+
 runServerCommand :: Int -> IO ()
 runServerCommand port = do
   postgresString' <- constructPostgreStringFromEnv
@@ -67,6 +78,7 @@ runServerCommand port = do
                 ((T.pack . getRConPass) rabbitCreds)
               postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
               let app = App postgresPool rabbitConn proxmoxConf
+              () <- declareSDN proxmoxConf
               _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
               warp port app
 
