@@ -13,7 +13,8 @@ module Api.Proxmox
   , logDeclareResultIO
   ) where
 
-import           Control.Exception                (catch)
+import           Control.Exception                (Exception (displayException),
+                                                   catch)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.ByteString.Char8            (pack)
@@ -52,7 +53,7 @@ data CommonApiResult a = ApiResult a | ApiError Text deriving Show
 commonHttpErrorHandler :: ExceptT HttpException IO (Either String a) -> IO (Either String a)
 commonHttpErrorHandler exc = let
   handler :: HttpException -> IO (Either HttpException (Either String a))
-  handler e = return $ Right (Left $ show e)
+  handler e = return $ Right (Left $ displayException e)
   in do
   r <- runExceptT exc `catch` handler
   case r of
