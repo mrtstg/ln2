@@ -11,6 +11,7 @@ module Api.Proxmox
   , DeclareResult(..)
   , logDeclareResult
   , logDeclareResultIO
+  , declareResultIsError
   ) where
 
 import           Control.Exception                (Exception (displayException),
@@ -36,6 +37,10 @@ instance (FromJSON a) => FromJSON (ProxmoxResponseWrapper a) where
   parseJSON = withObject "ProxmoxResponseWrapper" $ \v -> ProxmoxResponseWrapper <$> v .: "data"
 
 data DeclareResult a = Existed | Created | DeclareError a deriving (Show, Eq)
+
+declareResultIsError :: DeclareResult a -> Bool
+declareResultIsError (DeclareError {}) = True
+declareResultIsError _                 = False
 
 logDeclareResult :: (Show a) => Text -> DeclareResult a -> HandlerFor site ()
 logDeclareResult commentary Existed = $logInfo (commentary <> " existed!")
