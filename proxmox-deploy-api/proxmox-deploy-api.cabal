@@ -26,6 +26,7 @@ library
   exposed-modules:
       Api.Proxmox
       Api.Proxmox.SDN
+      Api.Proxmox.SDNNetwork
       Api.Proxmox.VM
       App.Commands
       App.Parser
@@ -35,6 +36,7 @@ library
       Data.Models.Proxmox.DeployNetwork
       Data.Models.Proxmox.DeployNetworkInterface
       Data.Models.Proxmox.DeployVM
+      Data.Models.ProxmoxAPI.SDNNetwork
       Data.Models.ProxmoxAPI.SDNZone
       Data.Models.ProxmoxAPI.VM
       Data.Models.ProxmoxConfiguration
