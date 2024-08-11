@@ -13,6 +13,7 @@ import           Api.Proxmox                      (DeclareResult (..),
                                                    logDeclareResultIO)
 import           Api.Proxmox.SDN
 import           App.Types
+import           Control.Monad                    (when)
 import           Control.Monad.Logger             (runStdoutLoggingT)
 import qualified Data.ByteString.Char8            as BS
 import           Data.Models.ProxmoxConfiguration
@@ -44,11 +45,10 @@ runCreateDatabaseCommand = do
 
 declareSDN :: ProxmoxConfiguration -> IO ()
 declareSDN cfg@(ProxmoxConfiguration { .. }) = do
-  declareRes <- declareSimpleSDNZone cfg proxmoxSDNZone ApplySDN
+  declareRes <- declareSimpleSDNZone cfg proxmoxSDNZone NotApplySDN
   () <- logDeclareResultIO "Deploy SDN zone" declareRes
-  case declareRes of
-    (DeclareError _) -> exitWith (ExitFailure 1)
-    _                -> return ()
+  when (declareRes == DeclareError {}) $ exitWith (ExitFailure 1)
+
 
 runServerCommand :: Int -> IO ()
 runServerCommand port = do

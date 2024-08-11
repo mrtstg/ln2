@@ -35,7 +35,7 @@ newtype ProxmoxResponseWrapper a = ProxmoxResponseWrapper a deriving Show
 instance (FromJSON a) => FromJSON (ProxmoxResponseWrapper a) where
   parseJSON = withObject "ProxmoxResponseWrapper" $ \v -> ProxmoxResponseWrapper <$> v .: "data"
 
-data DeclareResult a = Existed | Created | DeclareError a deriving Show
+data DeclareResult a = Existed | Created | DeclareError a deriving (Show, Enum, Eq)
 
 logDeclareResult :: (Show a) => Text -> DeclareResult a -> HandlerFor site ()
 logDeclareResult commentary Existed = $logInfo (commentary <> " existed!")
