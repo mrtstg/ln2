@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 module Api.Proxmox.SDN
-  ( getSDNZones
+  ( SDNApplyFlag(..)
+  , getSDNZones
   , getSDNZones'
   , createSimpleSDNZone'
   , createSimpleSDNZone
@@ -9,6 +10,7 @@ module Api.Proxmox.SDN
   ) where
 
 import           Api.Proxmox
+import           Control.Monad                    (when)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.Models.ProxmoxAPI.SDNZone
@@ -18,10 +20,12 @@ import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
 import           Yesod.Core                       (liftIO)
 
+data SDNApplyFlag = ApplySDN | NotApplySDN deriving (Show, Enum, Eq)
+
 type ZoneName = T.Text
 
-declareSimpleSDNZone :: ProxmoxConfiguration -> ZoneName -> IO (DeclareResult String)
-declareSimpleSDNZone conf zoneName = do
+declareSimpleSDNZone :: ProxmoxConfiguration -> ZoneName -> SDNApplyFlag -> IO (DeclareResult String)
+declareSimpleSDNZone conf zoneName applySDNFlag = do
   readRes <- getSDNZones' conf
   case readRes of
     (Left e) -> (return . DeclareError) e
@@ -32,7 +36,9 @@ declareSimpleSDNZone conf zoneName = do
         case createRes of
           (Left e)   -> (return . DeclareError) e
           (Right ()) -> do
-            (Right ()) <- applySDN' conf
+            when (applySDNFlag == ApplySDN) $ do
+              (Right ()) <- applySDN' conf
+              return ()
             return Created
 
 applySDN' :: ProxmoxConfiguration -> IO (Either String ())
