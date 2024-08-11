@@ -2,6 +2,9 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Api.Proxmox.SDN
   ( SDNApplyFlag(..)
+  , ZoneName
+  , applySDN'
+  , applySDN
   , getSDNZones
   , getSDNZones'
   , createSimpleSDNZone'
@@ -37,7 +40,7 @@ declareSimpleSDNZone conf zoneName applySDNFlag = do
           (Left e)   -> (return . DeclareError) e
           (Right ()) -> do
             when (applySDNFlag == ApplySDN) $ do
-              (Right ()) <- applySDN' conf
+              _ <- applySDN' conf
               return ()
             return Created
 
