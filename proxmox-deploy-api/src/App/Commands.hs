@@ -9,21 +9,23 @@ module App.Commands (
   runCommand
   ) where
 
-import           Api.Proxmox                      (DeclareResult (..),
-                                                   logDeclareResultIO)
+import           Api.Proxmox                       (declareResultIsError,
+                                                    logDeclareResultIO)
 import           Api.Proxmox.SDN
+import           Api.Proxmox.SDNNetwork
 import           App.Types
-import           Control.Monad                    (when)
-import           Control.Monad.Logger             (runStdoutLoggingT)
-import qualified Data.ByteString.Char8            as BS
+import           Control.Monad                     (when)
+import           Control.Monad.Logger              (runStdoutLoggingT)
+import qualified Data.ByteString.Char8             as BS
+import           Data.Models.ProxmoxAPI.SDNNetwork (defaultSDNNetworkCreate)
 import           Data.Models.ProxmoxConfiguration
-import qualified Data.Text                        as T
+import qualified Data.Text                         as T
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.MachineID
 import           Handlers.SDN
-import           Network.AMQP                     (openConnection')
-import           Network.Socket                   (PortNumber)
+import           Network.AMQP                      (openConnection')
+import           Network.Socket                    (PortNumber)
 import           Rabbit
 import           System.Exit
 import           Utils
@@ -47,8 +49,10 @@ declareSDN :: ProxmoxConfiguration -> IO ()
 declareSDN cfg@(ProxmoxConfiguration { .. }) = do
   declareRes <- declareSimpleSDNZone cfg proxmoxSDNZone NotApplySDN
   () <- logDeclareResultIO "Deploy SDN zone" declareRes
-  when (declareRes == DeclareError {}) $ exitWith (ExitFailure 1)
-
+  when (declareResultIsError declareRes) $ exitWith (ExitFailure 1)
+  networkDeclareRes <- declareSDNNetwork cfg (defaultSDNNetworkCreate (T.unpack proxmoxSDNZone) "internet") ApplySDN
+  () <- logDeclareResultIO "SDN network" networkDeclareRes
+  when (declareResultIsError networkDeclareRes) $ exitWith (ExitFailure 1)
 
 runServerCommand :: Int -> IO ()
 runServerCommand port = do
