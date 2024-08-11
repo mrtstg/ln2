@@ -44,7 +44,7 @@ runCreateDatabaseCommand = do
 
 declareSDN :: ProxmoxConfiguration -> IO ()
 declareSDN cfg@(ProxmoxConfiguration { .. }) = do
-  declareRes <- declareSimpleSDNZone cfg proxmoxSDNZone
+  declareRes <- declareSimpleSDNZone cfg proxmoxSDNZone ApplySDN
   () <- logDeclareResultIO "Deploy SDN zone" declareRes
   case declareRes of
     (DeclareError _) -> exitWith (ExitFailure 1)
