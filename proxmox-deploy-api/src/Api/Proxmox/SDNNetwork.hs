@@ -13,7 +13,6 @@ import           Api.Proxmox
 import           Api.Proxmox.SDN
 import           Control.Monad                     (when)
 import           Control.Monad.Trans.Except
-import           Data.Aeson
 import           Data.Models.ProxmoxAPI.SDNNetwork
 import           Data.Models.ProxmoxConfiguration
 import qualified Data.Text                         as T
