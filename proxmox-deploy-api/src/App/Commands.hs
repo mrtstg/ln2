@@ -13,6 +13,7 @@ import           Api.Proxmox                       (declareResultIsError,
                                                     logDeclareResultIO)
 import           Api.Proxmox.SDN
 import           Api.Proxmox.SDNNetwork
+import           Api.Proxmox.SDNSubnet
 import           App.Types
 import           Control.Monad                     (when)
 import           Control.Monad.Logger              (runStdoutLoggingT)
@@ -50,9 +51,12 @@ declareSDN cfg@(ProxmoxConfiguration { .. }) = do
   declareRes <- declareSimpleSDNZone cfg proxmoxSDNZone NotApplySDN
   () <- logDeclareResultIO "Deploy SDN zone" declareRes
   when (declareResultIsError declareRes) $ exitWith (ExitFailure 1)
-  networkDeclareRes <- declareSDNNetwork cfg (defaultSDNNetworkCreate (T.unpack proxmoxSDNZone) "internet") ApplySDN
+  networkDeclareRes <- declareSDNNetwork cfg (defaultSDNNetworkCreate (T.unpack proxmoxSDNZone) proxmoxOutNetwork) NotApplySDN
   () <- logDeclareResultIO "SDN network" networkDeclareRes
   when (declareResultIsError networkDeclareRes) $ exitWith (ExitFailure 1)
+  subnetDeclareRes <- declareSDNSubnet cfg (proxmoxNetworkConfigurationToPayload proxmoxSDNNetwork) ApplySDN
+  () <- logDeclareResultIO "SDN subnet" subnetDeclareRes
+  when (declareResultIsError subnetDeclareRes) $ exitWith (ExitFailure 1)
 
 runServerCommand :: Int -> IO ()
 runServerCommand port = do
