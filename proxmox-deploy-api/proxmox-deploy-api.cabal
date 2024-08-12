@@ -27,6 +27,7 @@ library
       Api.Proxmox
       Api.Proxmox.SDN
       Api.Proxmox.SDNNetwork
+      Api.Proxmox.SDNSubnet
       Api.Proxmox.VM
       App.Commands
       App.Parser
@@ -37,6 +38,7 @@ library
       Data.Models.Proxmox.DeployNetworkInterface
       Data.Models.Proxmox.DeployVM
       Data.Models.ProxmoxAPI.SDNNetwork
+      Data.Models.ProxmoxAPI.SDNSubnet
       Data.Models.ProxmoxAPI.SDNZone
       Data.Models.ProxmoxAPI.VM
       Data.Models.ProxmoxConfiguration
