@@ -5,15 +5,11 @@
 module Handlers.Login (getLoginR, postLoginR) where
 
 import           Api.Login
-import qualified Api.Login                   as L
-import           Control.Exception           (catch)
-import           Control.Monad.Trans.Except  (runExceptT)
 import           Data.Aeson
 import qualified Data.ByteString.Char8       as BS
 import           Data.Models.UserAuthRequest
 import           Data.Text                   (Text, pack, unpack)
 import           Foundation
-import           Network.HTTP.Simple         (HttpException)
 import           Network.HTTP.Types
 import           Web.Cookie
 import           Yesod.Core
@@ -48,32 +44,23 @@ loginForm = renderDivs $ LoginRequest
   <*> areq passwordField "Пароль" Nothing
 
 postLoginR :: Handler Value
-postLoginR =
-  let
-  handler :: HttpException -> IO (Either HttpException (L.AuthResult Text))
-  handler _ = return $ Right L.InternalError -- MUST return Right
-  in do
+postLoginR = do
   ((result, _), _) <- runFormPost loginForm
+  App { endpointsConfiguration = endpoints } <- getYesod
   case result of
     (FormSuccess (LoginRequest login password)) -> do
-      authRes' <- liftIO $ runExceptT (sendAuthRequest (UserAuthRequest login password)) `catch` handler
+      authRes' <- liftIO $ sendAuthRequest' endpoints (UserAuthRequest login password)
       case authRes' of
-        Left _ -> error "Unreachable pattern!" -- TODO: REPLACE
-        (Right authRes) -> do
-          case authRes of
-            L.InvalidCredentials -> redirect LoginR
-            (AuthResult token) -> do
-              setCookie $ defaultSetCookie { setCookieName = BS.pack "session", setCookieValue = BS.pack . unpack $ token }
-              redirect IndexR
-            _internalError -> redirect LoginR
+        (Left e) -> redirect LoginR
+        (Right token) -> do
+          setCookie $ defaultSetCookie { setCookieName = BS.pack "session", setCookieValue = BS.pack . unpack $ token }
+          redirect IndexR
     _formError -> do
       r@(UserAuthRequest {}) <- requireCheckJsonBody
-      authRes' <- liftIO $ runExceptT (sendAuthRequest r) `catch` handler
+      authRes' <- liftIO $ sendAuthRequest' endpoints r
       case authRes' of
-        Left _ -> error "Unreachable pattern!" -- TODO: REPLACE
-        (Right authRes) -> do
-          case authRes of
-            L.InvalidCredentials -> sendStatusJSON status400 $ object [ "error" .= String "Invalid credentials!" ]
-            (AuthResult token) -> do
-              sendStatusJSON status200 $ object [ "token" .= String token ]
-            _internalError -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
+        (Left e) -> case e of
+          InvalidCredentials -> sendStatusJSON status400 $ object [ "error" .= String "Invalid credentials!" ]
+          (OtherAuthError _) -> sendStatusJSON status500 $ object [ "error" .= String "Something went wrong!" ]
+        (Right token) -> do
+          sendStatusJSON status200 $ object [ "token" .= String token ]

@@ -11,5 +11,6 @@ getLogoutR = do
   case token of
     Nothing -> redirect LoginR
     (Just tokenValue) -> do
-      _ <- liftIO $ expireToken' tokenValue
+      App { endpointsConfiguration = endpoints } <- getYesod
+      _ <- liftIO $ expireToken' endpoints tokenValue
       redirect IndexR

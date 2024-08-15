@@ -1,136 +1,113 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Api.Login
   ( sendAuthRequest
-  , AuthResult(..)
+  , sendAuthRequest'
   , expireToken'
   , checkAuth
   , validateToken
+  , validateToken'
+  , AuthError(..)
   ) where
 
-import           Control.Exception           (catch, try)
+import           Api
+import           Control.Exception           (catch, displayException, try)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.ByteString             (ByteString)
-import qualified Data.ByteString.Lazy        as LBS
+import           Data.Models.Endpoints
 import           Data.Models.User
 import           Data.Models.UserAuthRequest
+import           Data.String                 (IsString (..), fromString)
 import           Data.Text                   (Text)
 import           Network.HTTP.Simple
-import           System.Environment
 import           Yesod.Core                  (HandlerFor, liftIO, lookupCookie)
-
-data AuthResult a = AuthResult !a | NoAuthURL | InternalError | InvalidCredentials deriving (Show, Eq)
 
 newtype AuthResponse = AuthResponse Text deriving (Show, Eq)
 
 instance FromJSON AuthResponse where
   parseJSON = withObject "AuthResponse" $ \v -> AuthResponse <$> v .: "token"
 
--- TODO: solve duplication with handlers.utils
-authHandler :: HttpException -> IO (Either HttpException (AuthResult m))
-authHandler _ = return $ Right InternalError -- MUST return Right
+data AuthError a = InvalidCredentials | OtherAuthError a deriving Show
 
-checkAuth :: HandlerFor a (Maybe UserDetails)
-checkAuth = do
+commonHttpAuthErrorHandler :: (IsString a) => ExceptT HttpException IO (Either (AuthError a) b) -> IO (Either (AuthError a) b)
+commonHttpAuthErrorHandler exc = let
+  handler :: (IsString a) => HttpException -> IO (Either HttpException (Either (AuthError a) b))
+  handler e = (return . Right . Left) $ OtherAuthError (fromString (displayException e))
+  in do
+  r <- runExceptT exc `catch` handler
+  case r of
+    ~(Right v) -> return v
+
+checkAuth :: EndpointsConfiguration -> HandlerFor a (Maybe UserDetails)
+checkAuth endpoints = do
   tokenValue' <- lookupCookie "session"
   case tokenValue' of
     Nothing -> return Nothing
     (Just tokenValue) -> do
-      validRes <- liftIO $ runExceptT (validateToken tokenValue) `catch` authHandler
+      validRes <- liftIO $ validateToken' endpoints tokenValue
       case validRes of
-        (Left _) -> return Nothing
-        (Right resp) -> case resp of
-          (AuthResult userDetails) -> return $ Just userDetails
-          _anyOther                -> return Nothing
+        (Left _)     -> return Nothing
+        (Right resp) -> return $ Just resp
 
-validateToken :: Text -> ExceptT HttpException IO (AuthResult UserDetails)
-validateToken token = do
-  httpApiUrl' <- liftIO $ lookupEnv "AUTH_SERVICE_URL"
-  case httpApiUrl' of
-    Nothing -> do
-      liftIO $ putStrLn "No auth api url provided!"
-      return NoAuthURL
-    Just httpApiUrl -> do
-      let payload = object [ "token" .= String token ]
-      let reqString = "POST " <> httpApiUrl <> "/validate"
-      request' <- liftIO . try $ parseRequest reqString :: (ExceptT HttpException IO (Either HttpException Request))
-      case request' of
-        (Left _) -> do
-          return InternalError
-        (Right request) -> do
-          let requestData = setRequestBodyJSON payload request
-          response <- httpBS requestData :: (ExceptT HttpException IO (Response ByteString))
-          let statusCode = getResponseStatusCode response
-          case statusCode of
-            v | v `elem` [403, 404] -> return InvalidCredentials
-            200 -> do
-              let requestBody = getResponseBody response
-              let parseRes = (eitherDecode . LBS.fromStrict) requestBody
-              case parseRes of
-                (Left e) -> do
-                  liftIO . putStrLn $ "Unexpected response from auth server: " <> show e
-                  return InternalError
-                (Right e@(UserDetails {})) -> do
-                  return $ AuthResult e
-            _unexpectedCode -> do
-              liftIO $ putStrLn ("Unexcepted login response code: " <> show statusCode)
-              return InternalError
+validateToken' :: EndpointsConfiguration -> Text -> IO (Either (AuthError String) UserDetails)
+validateToken' endpoints token = commonHttpAuthErrorHandler $ validateToken endpoints token
 
-expireToken' :: Text -> IO ()
-expireToken' token = do
-  _ <- liftIO $ runExceptT (expireToken token) `catch` authHandler
+validateToken :: EndpointsConfiguration -> Text -> ExceptT HttpException IO (Either (AuthError String) UserDetails)
+validateToken (EndpointsConfiguration { getAuthServiceUrl = httpApiUrl }) token = do
+  let payload = object [ "token" .= String token ]
+  let reqString = "POST " <> httpApiUrl <> "/validate"
+  request <- parseRequest reqString
+  let requestData = setRequestBodyJSON payload request
+  response <- httpJSONEither requestData
+  let statusCode = getResponseStatusCode response
+  case statusCode of
+    v | v `elem` [403, 404] -> (return . Left) InvalidCredentials
+    200 -> do
+      let requestBody = getResponseBody response
+      case requestBody of
+        (Left e) -> do
+          (return . Left) $ OtherAuthError (show e)
+        (Right e@(UserDetails {})) -> do
+          return $ Right e
+    _unexpectedCode -> do
+      (return . Left . OtherAuthError) $ errorTextFromStatus (getResponseStatus response)
+
+expireToken' :: EndpointsConfiguration -> Text -> IO ()
+expireToken' endpointsConfiguration token = do
+  _ <- commonHttpErrorHandler $ expireToken endpointsConfiguration token
   return ()
 
-expireToken :: Text -> ExceptT HttpException IO (AuthResult ())
-expireToken token = do
-  httpApiUrl' <- liftIO $ lookupEnv "AUTH_SERVICE_URL"
-  case httpApiUrl' of
-    Nothing -> do
-      liftIO $ putStrLn "No auth api url provided!"
-      return NoAuthURL
-    Just httpApiUrl -> do
-      let payload = object [ "token" .= String token ]
-      let reqString = "POST " <> httpApiUrl <> "/logout"
-      request' <- liftIO . try $ parseRequest reqString :: (ExceptT HttpException IO (Either HttpException Request))
-      case request' of
-        (Left _) -> do
-          return InternalError
-        (Right request) -> do
-          let requestData = setRequestBodyJSON payload request
-          response <- httpBS requestData :: (ExceptT HttpException IO (Response ByteString))
-          let statusCode = getResponseStatusCode response
-          case statusCode of
-            404 -> return InvalidCredentials
-            204 -> return $ AuthResult ()
-            _unexpectedCode -> do
-              liftIO $ putStrLn ("Unexcepted login response code: " <> show statusCode)
-              return InternalError
+expireToken :: EndpointsConfiguration -> Text -> ExceptT HttpException IO (Either String ())
+expireToken (EndpointsConfiguration { getAuthServiceUrl = httpApiUrl }) token = do
+  let payload = object [ "token" .= String token ]
+  let reqString = "POST " <> httpApiUrl <> "/logout"
+  request <- parseRequest reqString
+  let requestData = setRequestBodyJSON payload request
+  response <- httpBS requestData :: (ExceptT HttpException IO (Response ByteString))
+  let statusCode = getResponseStatusCode response
+  case statusCode of
+    404             -> return $ Left "Invalid credentials"
+    204             -> return $ Right ()
+    _unexpectedCode -> (return . Left) $ errorTextFromStatus (getResponseStatus response)
 
-sendAuthRequest :: UserAuthRequest -> ExceptT HttpException IO (AuthResult Text)
-sendAuthRequest (UserAuthRequest login pwd) = do
-  httpApiUrl' <- liftIO $ lookupEnv "AUTH_SERVICE_URL"
-  case httpApiUrl' of
-    Nothing -> do
-      liftIO $ putStrLn "No auth api url provided!"
-      return NoAuthURL
-    Just httpApiUrl -> do
-      let payload = object [ "login" .= login, "password" .= pwd ]
-      let reqString = "POST " <> httpApiUrl <> "/auth"
-      request' <- liftIO $ parseRequest reqString :: (ExceptT HttpException IO Request)
-      let requestData = setRequestBodyJSON payload request'
-      response <- httpBS requestData :: (ExceptT HttpException IO (Response ByteString))
-      let statusCode = getResponseStatusCode response
-      case statusCode of
-        403             -> return InvalidCredentials
-        200 -> do
-          let requestBody = getResponseBody response
-          let parseRes = (eitherDecode . LBS.fromStrict) requestBody
-          case parseRes of
-            (Left e) -> do
-              liftIO . putStrLn $ "Unexpected response from auth server: " <> show e
-              return InternalError
-            (Right (AuthResponse token)) -> do
-              return $ AuthResult token
-        _unexpectedCode -> do
-          liftIO $ putStrLn ("Unexcepted login response code: " <> show statusCode)
-          return InternalError
+sendAuthRequest' :: EndpointsConfiguration -> UserAuthRequest -> IO (Either (AuthError String) Text)
+sendAuthRequest' endpoints req = commonHttpAuthErrorHandler $ sendAuthRequest endpoints req
+
+sendAuthRequest :: EndpointsConfiguration -> UserAuthRequest -> ExceptT HttpException IO (Either (AuthError String) Text)
+sendAuthRequest (EndpointsConfiguration { getAuthServiceUrl = httpApiUrl }) (UserAuthRequest login pwd) = do
+  let payload = object [ "login" .= login, "password" .= pwd ]
+  let reqString = "POST " <> httpApiUrl <> "/auth"
+  request <- parseRequest reqString
+  let requestData = setRequestBodyJSON payload request
+  response <- httpJSONEither requestData
+  let statusCode = getResponseStatusCode response
+  case statusCode of
+    403             -> (return . Left) InvalidCredentials
+    200 -> do
+      let requestBody = getResponseBody response
+      case requestBody of
+        (Left e) -> do
+          (return . Left . OtherAuthError) (show e)
+        (Right (AuthResponse token)) -> do
+          return $ Right token
+    _unexpectedCode -> (return . Left . OtherAuthError) $ errorTextFromStatus (getResponseStatus response)
