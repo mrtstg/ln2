@@ -5,8 +5,6 @@ module Api.Proxmox
   ( NodeName
   , prepareProxmoxRequest
   , ProxmoxResponseWrapper(..)
-  , commonHttpErrorHandler
-  , errorTextFromStatus
   , DeclareResult(..)
   , logDeclareResult
   , logDeclareResultIO
@@ -51,16 +49,6 @@ logDeclareResultIO commentary Existed = putStrLn (commentary <> " existed!")
 logDeclareResultIO commentary Created = putStrLn (commentary <> " created!")
 logDeclareResultIO commentary (DeclareError e) = putStrLn (commentary <> " declare error: " <> show e <> "!")
 
--- common exceptT unwrapper
-commonHttpErrorHandler :: ExceptT HttpException IO (Either String a) -> IO (Either String a)
-commonHttpErrorHandler exc = let
-  handler :: HttpException -> IO (Either HttpException (Either String a))
-  handler e = return $ Right (Left $ displayException e)
-  in do
-  r <- runExceptT exc `catch` handler
-  case r of
-    ~(Right v) -> return v
-
 noSSLManager :: IO Manager
 noSSLManager = newManager $ mkManagerSettings tlsSettings Nothing where
   tlsSettings = TLSSettingsSimple
@@ -85,6 +73,3 @@ prepareProxmoxRequest :: ProxmoxConfiguration -> Request -> IO Request
 prepareProxmoxRequest conf req = do
   let newReq = setRequestResponseTimeout (responseTimeoutMicro 60000000) $ addProxmoxAuth conf req
   setSSLIgnore conf newReq
-
-errorTextFromStatus :: Status -> String
-errorTextFromStatus status = show (statusCode status) <> BS.unpack (statusMessage status)

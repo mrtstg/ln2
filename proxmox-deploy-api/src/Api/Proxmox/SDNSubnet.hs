@@ -8,6 +8,7 @@ module Api.Proxmox.SDNSubnet
   , createSDNSubnet'
   ) where
 
+import           Api
 import           Api.Proxmox
 import           Api.Proxmox.SDN
 import           Control.Monad                    (when)

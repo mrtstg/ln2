@@ -12,6 +12,7 @@ module Api.Proxmox.SDN
   , declareSimpleSDNZone
   ) where
 
+import           Api
 import           Api.Proxmox
 import           Control.Monad                    (when)
 import           Control.Monad.Trans.Except
