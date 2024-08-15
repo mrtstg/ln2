@@ -9,6 +9,7 @@ module Api.Proxmox.SDNNetwork
   , declareSDNNetwork
   ) where
 
+import           Api
 import           Api.Proxmox
 import           Api.Proxmox.SDN
 import           Control.Monad                     (when)

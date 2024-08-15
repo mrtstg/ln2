@@ -5,6 +5,7 @@ module Api.Proxmox.VM
   , getNodeVMs'
   ) where
 
+import           Api
 import           Api.Proxmox
 import           Control.Monad.Trans.Except
 import qualified Data.ByteString.Char8            as BS
