@@ -126,7 +126,8 @@ instance Yesod App where
 |]
   errorHandler e = defaultErrorHandler e
   defaultLayout widget = do
-    d' <- checkAuth
+    App { endpointsConfiguration = endpoints } <- getYesod
+    d' <- checkAuth endpoints
     pc <- widgetToPageContent widget
     withUrlRenderer [hamlet|
 $doctype 5

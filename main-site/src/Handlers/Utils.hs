@@ -23,9 +23,6 @@ import           Network.HTTP.Types
 import           Text.Read                  (readMaybe)
 import           Yesod.Core
 
-authHandler :: HttpException -> IO (Either HttpException (L.AuthResult m))
-authHandler _ = return $ Right L.InternalError -- MUST return Right
-
 api403Error :: Value
 api403Error = object [ "error" .= String "Unauthorized!" ]
 
@@ -50,12 +47,11 @@ requireApiAuth = do
   case tokenValue' of
     Nothing -> sendStatusJSON status403 api403Error
     (Just tokenValue) -> do
-      validRes <- liftIO $ runExceptT (validateToken tokenValue) `catch` authHandler
+      App { endpointsConfiguration = endpoints } <- getYesod
+      validRes <- liftIO $ validateToken' endpoints tokenValue
       case validRes of
         (Left _)     -> sendStatusJSON status403 api403Error
-        (Right resp) -> case resp of
-          (AuthResult userDetails) -> return userDetails
-          _anyOther                -> sendStatusJSON status403 api403Error
+        (Right resp) -> return resp
 
 requireAuth :: Handler UserDetails
 requireAuth = do
@@ -63,12 +59,11 @@ requireAuth = do
   case tokenValue' of
     Nothing -> redirect LoginR
     (Just tokenValue) -> do
-      validRes <- liftIO $ runExceptT (validateToken tokenValue) `catch` authHandler
+      App { endpointsConfiguration = endpoints } <- getYesod
+      validRes <- liftIO $ validateToken' endpoints tokenValue
       case validRes of
         (Left _)     -> redirect LoginR
-        (Right resp) -> case resp of
-          (AuthResult userDetails) -> return userDetails
-          _anyOther                -> redirect LoginR
+        (Right resp) -> return resp
 
 defaultPageSize :: Int
 defaultPageSize = 15
