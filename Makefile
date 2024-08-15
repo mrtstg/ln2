@@ -52,8 +52,11 @@ restore-images: ./images
 ./static/css:
 	mkdir ./static/css -p
 
-procfile: Procfile
-	foreman start
+procfile-full: Procfile
+	foreman start -f Procfile
+
+procfile-docker: Procfile-Docker
+	foreman start -f Procfile-Docker
 
 build-lib-image: deployment/Dockerfile
 	docker build -t ln2-haskell -f deployment/Dockerfile .
