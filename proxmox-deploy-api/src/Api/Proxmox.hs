@@ -2,8 +2,7 @@
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
 module Api.Proxmox
-  ( CommonApiResult(..)
-  , NodeName
+  ( NodeName
   , prepareProxmoxRequest
   , ProxmoxResponseWrapper(..)
   , commonHttpErrorHandler
@@ -51,8 +50,6 @@ logDeclareResultIO :: (Show a) => String -> DeclareResult a -> IO ()
 logDeclareResultIO commentary Existed = putStrLn (commentary <> " existed!")
 logDeclareResultIO commentary Created = putStrLn (commentary <> " created!")
 logDeclareResultIO commentary (DeclareError e) = putStrLn (commentary <> " declare error: " <> show e <> "!")
-
-data CommonApiResult a = ApiResult a | ApiError Text deriving Show
 
 -- common exceptT unwrapper
 commonHttpErrorHandler :: ExceptT HttpException IO (Either String a) -> IO (Either String a)
