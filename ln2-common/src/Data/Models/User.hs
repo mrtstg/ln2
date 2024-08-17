@@ -7,8 +7,8 @@ module Data.Models.User
   ) where
 
 import           Data.Aeson
-import           Data.Models.Role
-import           Data.Text        (Text)
+import           Data.Models.Auth.Role
+import           Data.Text             (Text)
 import           GHC.Generics
 
 data UserCreate = UserCreate

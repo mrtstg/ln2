@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.Role
+module Data.Models.Auth.Role
   ( RoleDetails(..)
   ) where
 

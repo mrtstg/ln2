@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Data.Models.UserAuthRequest (UserAuthRequest(..)) where
+module Data.Models.Auth.UserAuthRequest (UserAuthRequest(..)) where
 
 import           Data.Aeson
 import           Data.Text

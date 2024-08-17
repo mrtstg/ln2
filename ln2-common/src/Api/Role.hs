@@ -18,7 +18,7 @@ import           Data.Aeson
 import           Data.ByteString            (ByteString)
 import           Data.ByteString.Lazy       (fromStrict)
 import qualified Data.ByteString.Lazy       as LBS
-import           Data.Models.Role
+import           Data.Models.Auth.Role
 import           Network.HTTP.Simple
 import           System.Environment
 import           Yesod.Core                 (liftIO)

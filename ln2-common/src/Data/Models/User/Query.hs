@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.UserQuery (UserQuery(..)) where
+module Data.Models.User.Query (UserQuery(..)) where
 
 import           Data.Aeson
 import           Data.Models.User
