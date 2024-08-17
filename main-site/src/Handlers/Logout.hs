@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Handlers.Logout (getLogoutR) where
 
-import           Api.Login
+import           Api.Auth
 import           Foundation
 import           Yesod.Core
 

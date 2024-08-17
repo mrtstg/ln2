@@ -19,6 +19,8 @@ import           Data.Models.User
 import           Data.Text          (pack, unpack)
 import           Database.Persist
 import           Foundation
+import           Handlers.Auth
+import           Handlers.Params
 import           Handlers.Utils
 import           Network.HTTP.Types
 import           Utils.Auth
@@ -95,7 +97,8 @@ getApiCoursesR = let
   helper (Just (UserGetResult d)) = Just d
   helper _                        = Nothing
   in do
-  (UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- requireApiAuth endpoints
   pageN <- getPageNumber
   (courses, cAmount) <- getUserMembershipCourses getUserRoles pageN
   users <- liftIO $ U.retrieveCourseUsers courses
@@ -107,7 +110,8 @@ getApiCoursesR = let
 
 postApiCoursesR :: Handler Value
 postApiCoursesR = do
-  d@(UserDetails { getUserDetailsId = uId, getUserDetailsLogin = uLogin, getUserRoles = roles }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  d@(UserDetails { getUserDetailsId = uId, getUserDetailsLogin = uLogin, getUserRoles = roles }) <- requireApiAuth endpoints
   c@(CourseCreate { .. }) <- requireCheckJsonBody
   if not $ isUserCourseManager roles then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
     courseExists <- runDB $ exists [CourseName ==. getCourseCreateName]

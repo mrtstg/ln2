@@ -12,13 +12,14 @@ module Handlers.CoursePage
 
 import           Crud.Course
 import           Crud.CourseTask
-import           Crud.User
+import           Data.Models.Auth.Role
 import           Data.Models.Course
-import           Data.Models.Role
 import           Data.Models.User
-import           Data.Text          (pack, unpack)
+import           Data.Text             (pack, unpack)
 import           Database.Persist
 import           Foundation
+import           Handlers.Auth
+import           Handlers.Params       (defaultPageSize, getPageNumber)
 import           Handlers.Utils
 import           Network.HTTP.Types
 import           Utils.Auth
@@ -107,14 +108,16 @@ getCourseR cId@(CourseKey courseUUID) = do
 
 getApiCourseIdR :: CourseId -> Handler Value
 getApiCourseIdR cId = do
-  d <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  d <- requireApiAuth endpoints
   course <- validateApiCourseId cId d isUserCourseMember
   sendStatusJSON status200 $ courseDetailsFromModel course Nothing
 
 -- TODO: own model for patching
 patchApiCourseIdR :: CourseId -> Handler Value
 patchApiCourseIdR cId = do
-  d <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  d <- requireApiAuth endpoints
   _ <- validateApiCourseId cId d isUserCourseAdmin
   (CourseCreate cName cDesc) <- requireCheckJsonBody
   nameTaken <- runDB $ exists [CourseName ==. cName, CourseId !=. cId]
@@ -128,7 +131,8 @@ patchApiCourseIdR cId = do
 
 deleteApiCourseIdR :: CourseId -> Handler Value
 deleteApiCourseIdR (CourseKey courseUUID) = do
-  (UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- requireApiAuth endpoints
   if not $ isUserCourseManager getUserRoles then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
     let isAdmin = isUserCourseAdmin courseUUID getUserRoles
     if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You're not admin of this course!" ] else do

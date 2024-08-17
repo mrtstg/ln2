@@ -19,7 +19,7 @@
 
 module Foundation where
 
-import           Api.Login
+import           Api.Auth
 import           Data.ByteString.Char8
 import           Data.Maybe                  (isJust, isNothing)
 import           Data.Models.Endpoints

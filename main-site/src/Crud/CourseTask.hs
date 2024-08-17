@@ -15,7 +15,7 @@ import           Data.Models.User
 import           Data.Text              (Text)
 import           Database.Persist
 import           Foundation
-import           Handlers.Utils
+import           Handlers.Params        (defaultPageSize)
 import           Yesod.Persist
 
 
