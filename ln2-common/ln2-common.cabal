@@ -1,0 +1,80 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.36.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           ln2-common
+version:        0.1.0.2
+description:    Please see the README on GitHub at <https://github.com/githubuser/ln2-common#readme>
+homepage:       https://github.com/githubuser/ln2-common#readme
+bug-reports:    https://github.com/githubuser/ln2-common/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2024 Author name here
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/ln2-common
+
+library
+  exposed-modules:
+      Api
+      Api.Auth
+      Api.Role
+      Api.User
+      Data.Models.Auth.Role
+      Data.Models.Auth.UserAuthRequest
+      Data.Models.Endpoints
+      Data.Models.User
+      Data.Models.User.Patch
+      Data.Models.User.Query
+      Handlers.Auth
+      Handlers.Params
+      Utils.Auth
+  other-modules:
+      Paths_ln2_common
+  autogen-modules:
+      Paths_ln2_common
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      aeson ==2.1.2.1
+    , base >=4.7 && <5
+    , bytestring ==0.11.5.2
+    , containers ==0.6.7
+    , http-conduit ==2.3.8.1
+    , http-types ==0.12.3
+    , text >=2 && <2.1
+    , transformers ==0.5.6.2
+    , yesod-core ==1.6.24.5
+  default-language: Haskell2010
+
+test-suite ln2-common-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_ln2_common
+  autogen-modules:
+      Paths_ln2_common
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson ==2.1.2.1
+    , base >=4.7 && <5
+    , bytestring ==0.11.5.2
+    , containers ==0.6.7
+    , http-conduit ==2.3.8.1
+    , http-types ==0.12.3
+    , ln2-common
+    , text >=2 && <2.1
+    , transformers ==0.5.6.2
+    , yesod-core ==1.6.24.5
+  default-language: Haskell2010

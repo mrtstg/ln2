@@ -9,8 +9,8 @@ module Utils.Auth
   , isUserAnyCourseAdmin
   ) where
 
-import           Data.Models.Role
-import           Data.Text        (pack, unpack)
+import           Data.Models.Auth.Role
+import           Data.Text             (pack, unpack)
 
 generateCourseAdminsGroup :: String -> String
 generateCourseAdminsGroup uid = "admins-" <> uid

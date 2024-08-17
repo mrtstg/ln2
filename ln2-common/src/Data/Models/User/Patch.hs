@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.UserPatch
+module Data.Models.User.Patch
   ( UserPatch(..)
   ) where
 

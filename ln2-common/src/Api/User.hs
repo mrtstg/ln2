@@ -20,8 +20,8 @@ import           Data.ByteString            (ByteString)
 import           Data.ByteString.Lazy       (fromStrict)
 import           Data.Models.Endpoints
 import           Data.Models.User
-import           Data.Models.UserPatch
-import           Data.Models.UserQuery
+import           Data.Models.User.Patch
+import           Data.Models.User.Query
 import           Data.Text                  (Text)
 import           Network.HTTP.Simple
 import           System.Environment

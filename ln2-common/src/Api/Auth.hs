@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Api.Login
+module Api.Auth
   ( sendAuthRequest
   , sendAuthRequest'
   , expireToken'
@@ -10,17 +10,18 @@ module Api.Login
   ) where
 
 import           Api
-import           Control.Exception           (catch, displayException, try)
+import           Control.Exception                (catch, displayException, try)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
-import           Data.ByteString             (ByteString)
+import           Data.ByteString                  (ByteString)
+import           Data.Models.Auth.UserAuthRequest
 import           Data.Models.Endpoints
 import           Data.Models.User
-import           Data.Models.UserAuthRequest
-import           Data.String                 (IsString (..), fromString)
-import           Data.Text                   (Text)
+import           Data.String                      (IsString (..), fromString)
+import           Data.Text                        (Text)
 import           Network.HTTP.Simple
-import           Yesod.Core                  (HandlerFor, liftIO, lookupCookie)
+import           Yesod.Core                       (HandlerFor, liftIO,
+                                                   lookupCookie)
 
 newtype AuthResponse = AuthResponse Text deriving (Show, Eq)
 
