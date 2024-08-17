@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.ProxmoxAPI.SDNSubnet
+module Data.Models.Proxmox.API.SDNSubnet
   ( SDNSubnet(..)
   , SDNSubnetCreate(..)
   ) where

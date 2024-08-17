@@ -4,7 +4,7 @@ module Handlers.MachineID (getMachineIDsR) where
 
 import           Api.Proxmox.VM
 import           Data.Aeson
-import           Data.Models.ProxmoxAPI.VM
+import           Data.Models.Proxmox.API.VM
 import           Foundation
 import           Network.HTTP.Types
 import           Yesod.Core

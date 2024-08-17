@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Data.Models.ProxmoxAPI.VM
+module Data.Models.Proxmox.API.VM
   ( ProxmoxVMStatus(..)
   , ProxmoxVM(..) ) where
 

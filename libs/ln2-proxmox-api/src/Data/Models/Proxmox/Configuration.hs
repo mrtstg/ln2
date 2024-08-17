@@ -1,14 +1,14 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.ProxmoxConfiguration
+module Data.Models.Proxmox.Configuration
   ( ProxmoxConfiguration(..)
   , getProxmoxConfigurationFromEnv
   , proxmoxNetworkConfigurationToPayload
   , proxmoxOutNetwork
   ) where
 
-import           Data.Models.ProxmoxAPI.SDNSubnet (SDNSubnetCreate (..))
+import           Data.Models.Proxmox.API.SDNSubnet (SDNSubnetCreate (..))
 import           Data.Text
 import           System.Environment
 

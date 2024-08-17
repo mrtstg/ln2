@@ -9,24 +9,24 @@ module App.Commands (
   runCommand
   ) where
 
-import           Api.Proxmox                       (declareResultIsError,
-                                                    logDeclareResultIO)
+import           Api.Proxmox                        (declareResultIsError,
+                                                     logDeclareResultIO)
 import           Api.Proxmox.SDN
 import           Api.Proxmox.SDNNetwork
 import           Api.Proxmox.SDNSubnet
 import           App.Types
-import           Control.Monad                     (when)
-import           Control.Monad.Logger              (runStdoutLoggingT)
-import qualified Data.ByteString.Char8             as BS
-import           Data.Models.ProxmoxAPI.SDNNetwork (defaultSDNNetworkCreate)
-import           Data.Models.ProxmoxConfiguration
-import qualified Data.Text                         as T
+import           Control.Monad                      (when)
+import           Control.Monad.Logger               (runStdoutLoggingT)
+import qualified Data.ByteString.Char8              as BS
+import           Data.Models.Proxmox.API.SDNNetwork (defaultSDNNetworkCreate)
+import           Data.Models.Proxmox.Configuration
+import qualified Data.Text                          as T
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.MachineID
 import           Handlers.SDN
-import           Network.AMQP                      (openConnection')
-import           Network.Socket                    (PortNumber)
+import           Network.AMQP                       (openConnection')
+import           Network.Socket                     (PortNumber)
 import           Rabbit
 import           System.Exit
 import           Utils

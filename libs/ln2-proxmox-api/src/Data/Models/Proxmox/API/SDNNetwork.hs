@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.ProxmoxAPI.SDNNetwork
+module Data.Models.Proxmox.API.SDNNetwork
   ( SDNNetwork(..)
   , SDNNetworkCreate(..)
   , defaultSDNNetworkCreate

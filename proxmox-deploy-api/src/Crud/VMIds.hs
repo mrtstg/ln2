@@ -6,11 +6,11 @@ module Crud.VMIds
   ) where
 
 import           Api.Proxmox.VM
-import           Data.Models.ProxmoxAPI.VM        (ProxmoxVM (getProxmoxVMId))
-import           Data.Models.ProxmoxConfiguration
-import           Data.Text                        (Text)
+import           Data.Models.Proxmox.API.VM        (ProxmoxVM (getProxmoxVMId))
+import           Data.Models.Proxmox.Configuration
+import           Data.Text                         (Text)
 import           Database.Persist
-import           Database.Persist.Postgresql      (toSqlKey)
+import           Database.Persist.Postgresql       (toSqlKey)
 import           Foundation
 import           Yesod.Core
 import           Yesod.Persist

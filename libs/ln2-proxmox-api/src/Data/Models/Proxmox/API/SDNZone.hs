@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.ProxmoxAPI.SDNZone
+module Data.Models.Proxmox.API.SDNZone
   ( SDNZone(..)
   ) where
 

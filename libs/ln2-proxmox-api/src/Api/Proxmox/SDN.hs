@@ -14,15 +14,15 @@ module Api.Proxmox.SDN
 
 import           Api
 import           Api.Proxmox
-import           Control.Monad                    (when)
+import           Control.Monad                     (when)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
-import           Data.Models.ProxmoxAPI.SDNZone
-import           Data.Models.ProxmoxConfiguration
-import qualified Data.Text                        as T
+import           Data.Models.Proxmox.API.SDNZone
+import           Data.Models.Proxmox.Configuration
+import qualified Data.Text                         as T
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
-import           Yesod.Core                       (liftIO)
+import           Yesod.Core                        (liftIO)
 
 data SDNApplyFlag = ApplySDN | NotApplySDN deriving (Show, Enum, Eq)
 

@@ -11,19 +11,14 @@ module Api.Proxmox
   , declareResultIsError
   ) where
 
-import           Control.Exception                (Exception (displayException),
-                                                   catch)
-import           Control.Monad.Trans.Except
 import           Data.Aeson
-import           Data.ByteString.Char8            (pack)
-import qualified Data.ByteString.Char8            as BS
-import           Data.Models.ProxmoxConfiguration (ProxmoxConfiguration (..))
-import           Data.Text                        (Text, unpack)
-import qualified Data.Text                        as T
+import           Data.ByteString.Char8             (pack)
+import           Data.Models.Proxmox.Configuration (ProxmoxConfiguration (..))
+import           Data.Text                         (Text, unpack)
+import qualified Data.Text                         as T
 import           Network.Connection
 import           Network.HTTP.Conduit
 import           Network.HTTP.Simple
-import           Network.HTTP.Types.Status        (Status (..))
 import           Yesod.Core
 
 type NodeName = Text
