@@ -7,19 +7,21 @@ module Api.Proxmox.SDNNetwork
   , createSDNNetwork
   , createSDNNetwork'
   , declareSDNNetwork
+  , deleteSDNNetwork
+  , deleteSDNNetwork'
   ) where
 
 import           Api
 import           Api.Proxmox
 import           Api.Proxmox.SDN
-import           Control.Monad                     (when)
+import           Control.Monad                      (when)
 import           Control.Monad.Trans.Except
-import           Data.Models.ProxmoxAPI.SDNNetwork
-import           Data.Models.ProxmoxConfiguration
-import qualified Data.Text                         as T
+import           Data.Models.Proxmox.API.SDNNetwork
+import           Data.Models.Proxmox.Configuration
+import qualified Data.Text                          as T
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
-import           Yesod.Core                        (liftIO)
+import           Yesod.Core                         (liftIO)
 
 declareSDNNetwork :: ProxmoxConfiguration -> SDNNetworkCreate -> SDNApplyFlag -> IO (DeclareResult String)
 declareSDNNetwork conf networkPayload@(SDNNetworkCreate { .. }) applySDNFlag = do
@@ -42,6 +44,19 @@ declareSDNNetwork conf networkPayload@(SDNNetworkCreate { .. }) applySDNFlag = d
                 _ <- applySDN' conf
                 return ()
               return Created
+
+deleteSDNNetwork' :: ProxmoxConfiguration -> String -> IO (Either String ())
+deleteSDNNetwork' conf networkName = commonHttpErrorHandler $ deleteSDNNetwork conf networkName
+
+deleteSDNNetwork :: ProxmoxConfiguration -> String -> ExceptT HttpException IO (Either String ())
+deleteSDNNetwork conf@(ProxmoxConfiguration { .. }) networkName = do
+  if null networkName || length networkName > 8 then return (Left "Network length must be from 1 to 8 symbols!") else do
+    let reqString = "DELETE " <> T.unpack proxmoxBaseUrl <> "/cluster/sdn/vnets/" <> networkName
+    request' <- parseRequest reqString
+    request <- liftIO $ prepareProxmoxRequest conf request'
+    response <- httpBS request
+    let status = getResponseStatus response
+    if statusIsSuccessful status then return $ Right () else (return . Left) $ errorTextFromStatus status
 
 createSDNNetwork' :: ProxmoxConfiguration -> SDNNetworkCreate -> IO (Either String ())
 createSDNNetwork' conf payload = commonHttpErrorHandler $ createSDNNetwork conf payload

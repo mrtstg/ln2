@@ -20,11 +20,11 @@
 module Foundation where
 
 import           Data.ByteString.Char8
-import           Data.Models.ProxmoxConfiguration
-import           Data.Pool                        (Pool)
+import           Data.Models.Proxmox.Configuration
+import           Data.Pool                         (Pool)
 import           Data.Text
 import           Database.Persist.Postgresql
-import qualified Network.AMQP                     as R
+import qualified Network.AMQP                      as R
 import           Yesod.Core
 import           Yesod.Persist
 

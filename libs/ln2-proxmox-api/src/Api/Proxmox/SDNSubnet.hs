@@ -6,25 +6,29 @@ module Api.Proxmox.SDNSubnet
   , declareSDNSubnet
   , createSDNSubnet
   , createSDNSubnet'
+  , deleteSDNSubnet
+  , deleteSDNSubnet'
+  , deleteVnetSubnets'
   ) where
 
 import           Api
 import           Api.Proxmox
 import           Api.Proxmox.SDN
-import           Control.Monad                    (when)
+import           Control.Monad                     (when)
 import           Control.Monad.Trans.Except
-import           Data.Models.ProxmoxAPI.SDNSubnet
-import           Data.Models.ProxmoxConfiguration
-import           Data.Text                        (Text)
-import qualified Data.Text                        as T
+import           Data.Models.Proxmox.API.SDNSubnet
+import           Data.Models.Proxmox.Configuration
+import           Data.Text                         (Text)
+import qualified Data.Text                         as T
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
-import           Yesod.Core                       (liftIO)
+import           Yesod.Core                        (liftIO)
 
 type VnetName = Text
+type SubnetId = Text -- for compatibility, maybe make string
 
 declareSDNSubnet :: ProxmoxConfiguration -> SDNSubnetCreate -> SDNApplyFlag -> IO (DeclareResult String)
-declareSDNSubnet conf@(ProxmoxConfiguration { .. }) payload@(SDNSubnetCreate { .. }) applySDNFlag = do
+declareSDNSubnet conf payload@(SDNSubnetCreate { .. }) applySDNFlag = do
   readRes <- getVnetSubnets' conf (T.pack getSDNSubnetCreateVnet)
   case readRes of
     (Left e) -> (return . DeclareError) e
@@ -39,6 +43,36 @@ declareSDNSubnet conf@(ProxmoxConfiguration { .. }) payload@(SDNSubnetCreate { .
               _ <- applySDN' conf
               return ()
             return Created
+
+deleteVnetSubnets' :: ProxmoxConfiguration -> VnetName -> IO (Either [String] ())
+deleteVnetSubnets' conf vnet = let
+  deleteNetworks :: [String] -> [T.Text] -> IO (Either [String] ())
+  deleteNetworks [] []    = (return . Right) ()
+  deleteNetworks stack [] = (return . Left) stack
+  deleteNetworks stack (nid:els) = do
+    res <- deleteSDNSubnet' conf vnet nid
+    case res of
+      (Left e)   -> deleteNetworks (e:stack) els
+      (Right ()) -> deleteNetworks stack els
+  in do
+  subnets' <- getVnetSubnets' conf vnet
+  case subnets' of
+    (Left e) -> return (Left [e])
+    (Right subnets) -> do
+      let subnetIds = map (T.pack . getSDNSubnetID) subnets
+      deleteNetworks [] subnetIds
+
+deleteSDNSubnet' :: ProxmoxConfiguration -> VnetName -> SubnetId -> IO (Either String ())
+deleteSDNSubnet' conf vnet netid = commonHttpErrorHandler $ deleteSDNSubnet conf vnet netid
+
+deleteSDNSubnet :: ProxmoxConfiguration -> VnetName -> SubnetId -> ExceptT HttpException IO (Either String ())
+deleteSDNSubnet conf@(ProxmoxConfiguration { .. }) vnet netid = do
+  let reqString = T.unpack $ "DELETE " <> proxmoxBaseUrl <> "/cluster/sdn/vnets/" <> vnet <> "/subnets/" <> netid
+  request' <- parseRequest reqString
+  request <- liftIO $ prepareProxmoxRequest conf request'
+  response <- httpBS request
+  let status = getResponseStatus response
+  if statusIsSuccessful status then return (Right ()) else (return . Left) $ errorTextFromStatus status
 
 createSDNSubnet' :: ProxmoxConfiguration -> SDNSubnetCreate -> IO (Either String ())
 createSDNSubnet' conf payload = commonHttpErrorHandler $ createSDNSubnet conf payload

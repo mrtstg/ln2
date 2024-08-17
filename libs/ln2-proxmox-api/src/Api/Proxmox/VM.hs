@@ -8,13 +8,13 @@ module Api.Proxmox.VM
 import           Api
 import           Api.Proxmox
 import           Control.Monad.Trans.Except
-import qualified Data.ByteString.Char8            as BS
-import           Data.Models.ProxmoxAPI.VM
-import           Data.Models.ProxmoxConfiguration
-import qualified Data.Text                        as T
+import qualified Data.ByteString.Char8             as BS
+import           Data.Models.Proxmox.API.VM
+import           Data.Models.Proxmox.Configuration
+import qualified Data.Text                         as T
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
-import           Yesod.Core                       (liftIO)
+import           Yesod.Core                        (liftIO)
 
 getNodeVMs' :: ProxmoxConfiguration -> IO (Either String [ProxmoxVM])
 getNodeVMs' conf@(ProxmoxConfiguration { proxmoxNodeName = nodeName }) = commonHttpErrorHandler $ getNodeVMs conf nodeName
