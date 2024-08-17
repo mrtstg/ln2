@@ -150,7 +150,6 @@ test-suite main-site-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Data.Models.RoleSpec
       Paths_main_site
   autogen-modules:
       Paths_main_site
