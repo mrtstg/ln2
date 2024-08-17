@@ -7,14 +7,16 @@ import           Data.Maybe         (fromMaybe)
 import           Data.Models.User   (UserDetails (..))
 import           Data.Text
 import           Foundation
-import           Handlers.Utils
+import           Handlers.Auth
+import           Handlers.Params
 import           Network.HTTP.Types
 import           Utils.Auth
 import           Yesod.Core
 
 getQueryCourseR :: Text -> Handler Value
 getQueryCourseR courseId = do
-  (UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- requireApiAuth endpoints
   if not $ isUserAnyCourseAdmin getUserRoles then sendStatusJSON status403 $ object [ "error" .= String "Unauthorized!" ] else do
     queryValue' <- lookupGetParam "query"
     getMembers <- getBoolParameter "getMembers"

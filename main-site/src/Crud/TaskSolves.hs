@@ -13,7 +13,7 @@ import           Crud.User
 import           Data.Aeson             (eitherDecode)
 import           Data.ByteString.Lazy   (fromStrict)
 import           Data.List              (intersect)
-import           Data.Models.Role
+import           Data.Models.Auth.Role
 import           Data.Models.StandCheck
 import           Data.Models.User
 import qualified Data.Text              as T
@@ -22,7 +22,7 @@ import           Data.Time.Clock
 import           Database.Persist
 import           Database.Persist.Sql
 import           Foundation
-import           Handlers.Utils
+import           Handlers.Params        (defaultPageSize)
 import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist

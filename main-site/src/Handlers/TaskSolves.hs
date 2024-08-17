@@ -12,7 +12,8 @@ import           Data.Models.User
 import           Data.Text
 import           Data.Time.Clock
 import           Foundation
-import           Handlers.Utils
+import           Handlers.Auth
+import           Handlers.Params
 import           Network.HTTP.Types
 import           Utils.Auth
 import           Yesod.Core
@@ -25,7 +26,8 @@ instance FromJSON TaskAnswer where
 
 getApiTaskSolvesR :: CourseTaskId -> Handler Value
 getApiTaskSolvesR ctId = do
-  UserDetails { .. } <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  UserDetails { .. } <- requireApiAuth endpoints
   pageN <- getPageNumber
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
@@ -48,7 +50,8 @@ getApiTaskSolvesR ctId = do
 postApiTaskSolvesR :: CourseTaskId -> Handler Value
 postApiTaskSolvesR ctId = do
   reqTime <- liftIO getCurrentTime
-  d <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  d <- requireApiAuth endpoints
   (TaskAnswer ans) <- requireCheckJsonBody
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of

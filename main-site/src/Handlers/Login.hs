@@ -4,11 +4,11 @@
 {-# LANGUAGE TypeFamilies      #-}
 module Handlers.Login (getLoginR, postLoginR) where
 
-import           Api.Login
+import           Api.Auth
 import           Data.Aeson
-import qualified Data.ByteString.Char8       as BS
-import           Data.Models.UserAuthRequest
-import           Data.Text                   (Text, pack, unpack)
+import qualified Data.ByteString.Char8            as BS
+import           Data.Models.Auth.UserAuthRequest
+import           Data.Text                        (Text, pack, unpack)
 import           Foundation
 import           Network.HTTP.Types
 import           Web.Cookie

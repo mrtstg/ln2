@@ -8,11 +8,11 @@ module Crud.User
   ) where
 
 import           Api.User
-import qualified Data.Map         as M
-import           Data.Models.Role
+import qualified Data.Map              as M
+import           Data.Models.Auth.Role
 import           Data.Models.User
-import           Data.Text        (unpack)
-import qualified Data.Text        as T
+import           Data.Text             (unpack)
+import qualified Data.Text             as T
 import           Database.Persist
 import           Foundation
 

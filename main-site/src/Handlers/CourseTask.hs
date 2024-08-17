@@ -25,6 +25,8 @@ import           Data.Models.User
 import qualified Data.Text              as T
 import           Database.Persist
 import           Foundation
+import           Handlers.Auth
+import           Handlers.Params
 import           Handlers.Utils
 import           Network.HTTP.Types
 import           Utils.Auth
@@ -47,7 +49,8 @@ checkStages = helper where
 getApiAcceptTaskR :: CourseTaskId -> Int -> Handler Value
 getApiAcceptTaskR ctId uId = do
   redirect' <- getBoolParameter "redirect"
-  (UserDetails { .. }) <- if redirect' then requireAuth else requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- if redirect' then requireAuth else requireApiAuth endpoints
   courseTask' <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case (courseTask', redirect') of
     (Nothing, True) -> notFound
@@ -75,7 +78,8 @@ getApiAcceptTaskR ctId uId = do
 -- TODO: stand identifier existence check
 postApiCourseTaskR :: CourseId -> Handler Value
 postApiCourseTaskR cId = do
-  (UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- requireApiAuth endpoints
   (CourseTaskCreate { .. }) <- requireCheckJsonBody
   () <- checkStages getCourseTaskCreateStandActions
   courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
@@ -156,7 +160,8 @@ getCourseTaskR ctId = do
 
 getApiCourseTaskR :: CourseId -> Handler Value
 getApiCourseTaskR cId = do
-  d@(UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  d@(UserDetails { .. }) <- requireApiAuth endpoints
   courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
   case courseRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ]
@@ -174,7 +179,8 @@ getApiCourseTaskR cId = do
 
 patchApiTaskR :: CourseTaskId -> Handler Value
 patchApiTaskR ctId = do
-  (UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- requireApiAuth endpoints
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
@@ -190,7 +196,8 @@ patchApiTaskR ctId = do
 
 deleteApiTaskR :: CourseTaskId -> Handler Value
 deleteApiTaskR ctId = do
-  (UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- requireApiAuth endpoints
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
@@ -209,7 +216,8 @@ deleteApiTaskR ctId = do
 
 getApiTaskR :: CourseTaskId -> Handler Value
 getApiTaskR ctId = do
-  d@(UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  d@(UserDetails { .. }) <- requireApiAuth endpoints
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]

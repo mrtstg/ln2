@@ -14,7 +14,6 @@ import           Crud.CourseTask              (getCourseTasks)
 import           Crud.Task
 import           Crud.TaskSolves              (getAvailableCourseSolveUserIds,
                                                getTaskSolves)
-import           Crud.User
 import qualified Data.Map                     as M
 import           Data.Maybe                   (isJust)
 import           Data.Models.StandCheckResult
@@ -22,6 +21,7 @@ import           Data.Models.User
 import           Data.Text.Encoding           (decodeUtf8)
 import           Database.Persist
 import           Foundation
+import           Handlers.Params
 import           Handlers.Utils
 import           Utils                        (taskStatusToText)
 import           Utils.Auth

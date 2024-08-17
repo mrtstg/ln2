@@ -9,20 +9,20 @@ module Handlers.UserApi
 import           Api.User
 import           Data.Aeson
 import           Data.Models.User
-import           Data.Models.UserPatch
+import           Data.Models.User.Patch
 import           Foundation
-import           Handlers.Utils
+import           Handlers.Auth
 import           Network.HTTP.Types
 import           Utils.Auth
 import           Yesod.Core
 
 postUserApiCreateR :: Handler Value
 postUserApiCreateR = do
-  (UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- requireApiAuth endpoints
   let isAdmin = adminRoleGranted getUserRoles
   if not isAdmin then sendStatusJSON status403 $ object ["error" .= String "Forbidden"] else do
     createData@(UserCreate {}) <- requireCheckJsonBody
-    App { endpointsConfiguration = endpoints } <- getYesod
     resp <- liftIO $ createUser' endpoints createData
     case resp of
       (UserGetError err) -> sendStatusJSON status400 $ object ["error" .= err]
@@ -31,10 +31,10 @@ postUserApiCreateR = do
 
 deleteUserApiWrapperR :: Int -> Handler Value
 deleteUserApiWrapperR uId = do
-  (UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- requireApiAuth endpoints
   let isAdmin = adminRoleGranted getUserRoles
   if not isAdmin then sendStatusJSON status403 $ object ["error" .= String "Forbidden"] else do
-    App { endpointsConfiguration = endpoints } <- getYesod
     resp <- liftIO $ deleteUser' endpoints uId
     case resp of
       Api.User.NotFound -> sendStatusJSON status404 $ object ["error" .= String "Not found"]
@@ -43,7 +43,8 @@ deleteUserApiWrapperR uId = do
 
 patchUserApiWrapperR :: Int -> Handler Value
 patchUserApiWrapperR uId = do
-  (UserDetails { .. }) <- requireApiAuth
+  App { endpointsConfiguration = endpoints } <- getYesod
+  (UserDetails { .. }) <- requireApiAuth endpoints
   let isAdmin = adminRoleGranted getUserRoles
   if not isAdmin then sendStatusJSON status403 $ object ["error" .= String "Forbidden"] else do
     patchData@(UserPatch {}) <- requireCheckJsonBody
