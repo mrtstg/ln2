@@ -60,6 +60,7 @@ test-suite ln2-common-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Data.Models.RoleSpec
       Paths_ln2_common
   autogen-modules:
       Paths_ln2_common
@@ -71,6 +72,8 @@ test-suite ln2-common-test
     , base >=4.7 && <5
     , bytestring ==0.11.5.2
     , containers ==0.6.7
+    , hspec >=2.0.0
+    , hspec-discover
     , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , ln2-common

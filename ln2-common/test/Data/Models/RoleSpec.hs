@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Models.RoleSpec (spec) where
 
-import           Data.Models.Role
+import           Data.Models.Auth.Role
 import           Test.Hspec
+import           Utils.Auth
 
 spec :: Spec
 spec = do

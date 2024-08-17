@@ -46,3 +46,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - ln2-common
+    - hspec >= 2.0.0
+    - hspec-discover
