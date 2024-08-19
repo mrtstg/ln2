@@ -33,7 +33,7 @@ declareSDNSubnet conf payload@(SDNSubnetCreate { .. }) applySDNFlag = do
   case readRes of
     (Left e) -> (return . DeclareError) e
     (Right subnets) -> do
-      let subnetExists = (not . null) $ filter ((==) getSDNSubnetCreateName . getSDNSubnetNetwork) subnets
+      let subnetExists = any ((==) getSDNSubnetCreateName . getSDNSubnetCIDR) subnets
       if subnetExists then return Existed else do
         createRes <- createSDNSubnet' conf payload
         case createRes of
