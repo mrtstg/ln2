@@ -49,6 +49,7 @@ TakenDisplay
   deriving Show
 MachineTemplate
   proxmoxId Int
+  name Text
   comment Text default=''
   MachineTemplateUnique proxmoxId
   deriving Show
