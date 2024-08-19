@@ -67,7 +67,6 @@ mkYesodData
   "App"
   [parseRoutes|
 /vm/ids MachineIDsR GET
-/sdn SDNR GET
 |]
 
 -- /templates TemplatesR GET POST
