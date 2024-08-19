@@ -20,6 +20,7 @@ import           Control.Monad.Logger               (runStdoutLoggingT)
 import qualified Data.ByteString.Char8              as BS
 import           Data.Models.Proxmox.API.SDNNetwork (defaultSDNNetworkCreate)
 import           Data.Models.Proxmox.Configuration
+import           Data.Models.Rabbit.ConnectionData
 import qualified Data.Text                          as T
 import           Database.Persist.Postgresql
 import           Foundation
@@ -29,7 +30,7 @@ import           Network.AMQP                       (openConnection')
 import           Network.Socket                     (PortNumber)
 import           Rabbit
 import           System.Exit
-import           Utils
+import           Utils.Environment
 import           Yesod.Core
 
 mkYesodDispatch "App" resourcesApp
@@ -84,8 +85,9 @@ runServerCommand port = do
                 "/"
                 ((T.pack . getRConUser) rabbitCreds)
                 ((T.pack . getRConPass) rabbitCreds)
+              devEnabled <- isDevEnabled
               postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-              let app = App postgresPool rabbitConn proxmoxConf
+              let app = App postgresPool rabbitConn proxmoxConf devEnabled
               () <- declareSDN proxmoxConf
               _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
               warp port app
