@@ -6,11 +6,14 @@ import           Api.Proxmox.VM
 import           Data.Aeson
 import           Data.Models.Proxmox.API.VM
 import           Foundation
+import           Handlers.Auth              (requireApiAuth)
+import           Handlers.Utils
 import           Network.HTTP.Types
 import           Yesod.Core
 
 getMachineIDsR :: Handler Value
 getMachineIDsR = do
+  () <- requireAdminAuth' requireApiAuth
   App { .. } <- getYesod
   response <- liftIO $ getNodeVMs' proxmoxConfiguration
   case response of
