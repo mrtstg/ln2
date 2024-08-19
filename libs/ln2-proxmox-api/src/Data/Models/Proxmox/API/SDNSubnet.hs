@@ -45,7 +45,7 @@ data SDNSubnet = SDNSubnet
   , getSDNSubnetGateway :: !String
   , getSDNSubnetMask    :: !String
   , getSDNSubnetSnat    :: !Bool
-  }
+  } deriving Show
 
 instance FromJSON SDNSubnet where
   parseJSON = withObject "SDNSubnet" $ \v -> SDNSubnet
