@@ -20,6 +20,7 @@
 module Foundation where
 
 import           Data.ByteString.Char8
+import           Data.Models.Endpoints             (EndpointsConfiguration)
 import           Data.Models.Proxmox.Configuration
 import           Data.Pool                         (Pool)
 import           Data.Text
@@ -29,10 +30,11 @@ import           Yesod.Core
 import           Yesod.Persist
 
 data App = App
-  { postgresqlPool       :: !(Pool SqlBackend)
-  , rabbitConnection     :: !R.Connection
-  , proxmoxConfiguration :: !ProxmoxConfiguration
-  , devEnabled           :: !Bool
+  { postgresqlPool         :: !(Pool SqlBackend)
+  , endpointsConfiguration :: !EndpointsConfiguration
+  , rabbitConnection       :: !R.Connection
+  , proxmoxConfiguration   :: !ProxmoxConfiguration
+  , devEnabled             :: !Bool
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
@@ -51,7 +53,7 @@ MachineTemplate
   proxmoxId Int
   name Text
   comment Text default=''
-  MachineTemplateUnique proxmoxId
+  Primary proxmoxId
   deriving Show
 MachineDeployment
   Id String
@@ -61,15 +63,15 @@ MachineDeployment
   deriving Show
 |]
 
--- /templates/#MachineTemplateId TemplateR DELETE
--- /templates TemplatesR GET POST
--- /ports/reserve DELETE
 mkYesodData
   "App"
   [parseRoutes|
 /vm/ids MachineIDsR GET
 /sdn SDNR GET
 |]
+
+-- /templates TemplatesR GET POST
+-- /templates/#MachineTemplateProxmoxId TemplateR PATCH DELETE
 
 instance Yesod App where
   makeSessionBackend _ = return Nothing
