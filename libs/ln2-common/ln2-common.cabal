@@ -31,12 +31,14 @@ library
       Data.Models.Auth.Role
       Data.Models.Auth.UserAuthRequest
       Data.Models.Endpoints
+      Data.Models.Rabbit.ConnectionData
       Data.Models.User
       Data.Models.User.Patch
       Data.Models.User.Query
       Handlers.Auth
       Handlers.Params
       Utils.Auth
+      Utils.Environment
   other-modules:
       Paths_ln2_common
   autogen-modules:
