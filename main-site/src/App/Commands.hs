@@ -10,10 +10,11 @@ module App.Commands (
   ) where
 
 import           App.Types
-import           Control.Monad.Logger        (runStdoutLoggingT)
-import qualified Data.ByteString.Char8       as BS
+import           Control.Monad.Logger              (runStdoutLoggingT)
+import qualified Data.ByteString.Char8             as BS
 import           Data.Models.Endpoints
-import qualified Data.Text                   as T
+import           Data.Models.Rabbit.ConnectionData
+import qualified Data.Text                         as T
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.AssignMember
@@ -31,15 +32,15 @@ import           Handlers.QueryCourse
 import           Handlers.TaskSolves
 import           Handlers.UserApi
 import           Handlers.Users
-import           Network.AMQP                (openConnection')
-import           Network.Socket              (PortNumber)
+import           Network.AMQP                      (openConnection')
+import           Network.Socket                    (PortNumber)
 import           Network.Wai.Handler.Warp
 import           Network.Wai.Middleware.Cors
 import           Rabbit
-import           System.Environment          (lookupEnv)
+import           System.Environment                (lookupEnv)
 import           System.Exit
 import           System.Random
-import           Utils
+import           Utils.Environment
 import           Yesod.Core
 
 mkYesodDispatch "App" resourcesApp
@@ -55,13 +56,6 @@ runCreateDatabaseCommand = do
       runStdoutLoggingT $ withPostgresqlPool (BS.pack v) 1 $ \pool -> liftIO $ do
         flip runSqlPersistMPool pool $ do
           runMigration migrateAll
-
-isDevEnabled :: IO Bool
-isDevEnabled = do
-  devV <- lookupEnv "DEV"
-  case devV of
-    Nothing  -> return False
-    (Just v) -> return $ v == "1"
 
 runServerCommand :: Int -> IO ()
 runServerCommand port = do
