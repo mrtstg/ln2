@@ -28,10 +28,12 @@ library
       App.Parser
       App.Types
       Crud.DisplayNumbers
+      Crud.Template
       Crud.VMIds
       Data.Models.Proxmox.DeployNetwork
       Data.Models.Proxmox.DeployNetworkInterface
       Data.Models.Proxmox.DeployVM
+      Data.Models.Proxmox.Template
       Foundation
       Handlers.MachineID
       Handlers.SDN
