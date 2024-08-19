@@ -37,7 +37,6 @@ library
       Handlers.SDN
       Handlers.Utils
       Rabbit
-      Utils
   other-modules:
       Paths_proxmox_deploy_api
   autogen-modules:

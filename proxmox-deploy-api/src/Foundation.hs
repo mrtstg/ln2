@@ -32,6 +32,7 @@ data App = App
   { postgresqlPool       :: !(Pool SqlBackend)
   , rabbitConnection     :: !R.Connection
   , proxmoxConfiguration :: !ProxmoxConfiguration
+  , devEnabled           :: !Bool
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|

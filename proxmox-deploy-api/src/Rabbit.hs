@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 module Rabbit
-  ( RabbitConnectionData(..)
-  , getEnvRabbitConnectionData
-  , prepareRabbitConsumer
+  ( prepareRabbitConsumer
   , rabbitResultConsumer
   ) where
 
@@ -16,29 +14,6 @@ import           Foundation
 import           Network.AMQP
 import           System.Environment          (lookupEnv)
 import           Text.Read                   (readMaybe)
-
-data RabbitConnectionData = RConData
-  { getRConUser :: !String
-  , getRConPass :: !String
-  , getRConHost :: !String
-  , getRConPort :: !Int
-  } deriving (Show, Eq)
-
-getEnvRabbitConnectionData :: IO (Maybe RabbitConnectionData)
-getEnvRabbitConnectionData = do
-  user'' <- lookupEnv "RABBITMQ_DEFAULT_USER"
-  pass'' <- lookupEnv "RABBITMQ_DEFAULT_PASS"
-  host'' <- lookupEnv "RABBITMQ_HOST"
-  port''' <- lookupEnv "RABBITMQ_PORT"
-  case port''' of
-    Nothing -> return Nothing
-    (Just v) -> do
-      let port'' = readMaybe v :: Maybe Int
-      return $ do
-        user' <- user''
-        pass' <- pass''
-        host' <- host''
-        RConData user' pass' host' <$> port''
 
 prepareRabbitConsumer :: Connection -> ((Message, Envelope) -> IO ()) -> IO ()
 prepareRabbitConsumer rCon cCallback = do
