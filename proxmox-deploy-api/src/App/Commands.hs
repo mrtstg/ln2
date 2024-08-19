@@ -18,6 +18,7 @@ import           App.Types
 import           Control.Monad                      (when)
 import           Control.Monad.Logger               (runStdoutLoggingT)
 import qualified Data.ByteString.Char8              as BS
+import           Data.Models.Endpoints
 import           Data.Models.Proxmox.API.SDNNetwork (defaultSDNNetworkCreate)
 import           Data.Models.Proxmox.Configuration
 import           Data.Models.Rabbit.ConnectionData
@@ -79,18 +80,24 @@ runServerCommand port = do
               putStrLn "No proxmox configuration!"
               exitWith $ ExitFailure 1
             Just proxmoxConf -> do
-              rabbitConn <- openConnection'
-                (getRConHost rabbitCreds)
-                (read $ (show . getRConPort) rabbitCreds :: PortNumber)
-                "/"
-                ((T.pack . getRConUser) rabbitCreds)
-                ((T.pack . getRConPass) rabbitCreds)
-              devEnabled <- isDevEnabled
-              postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-              let app = App postgresPool rabbitConn proxmoxConf devEnabled
-              () <- declareSDN proxmoxConf
-              _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
-              warp port app
+              endpoints' <- getEndpointsFromEnv
+              case endpoints' of
+                Nothing -> do
+                  putStrLn "No endpoints configuration"
+                  exitWith $ ExitFailure 1
+                (Just endpoints) -> do
+                  rabbitConn <- openConnection'
+                    (getRConHost rabbitCreds)
+                    (read $ (show . getRConPort) rabbitCreds :: PortNumber)
+                    "/"
+                    ((T.pack . getRConUser) rabbitCreds)
+                    ((T.pack . getRConPass) rabbitCreds)
+                  devEnabled <- isDevEnabled
+                  postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
+                  let app = App postgresPool endpoints rabbitConn proxmoxConf devEnabled
+                  () <- declareSDN proxmoxConf
+                  _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
+                  warp port app
 
 runCommand :: AppOpts -> IO ()
 runCommand (AppOpts _ CreateDatabase) = runCreateDatabaseCommand
