@@ -60,7 +60,7 @@ instance FromJSON SDNSubnet where
     <*> v .: "mask"
     <*> snatParser (KM.lookup "snat" v) where
       f = \case
-        "1" -> pure True
+        1 -> pure True
         _anyOther -> pure False
       snatParser Nothing   = fail "Snat flag is not specified!"
-      snatParser (Just v') = withText "SDNSubnetSnat" f v'
+      snatParser (Just v') = withScientific "SDNSubnetSnat" f v'
