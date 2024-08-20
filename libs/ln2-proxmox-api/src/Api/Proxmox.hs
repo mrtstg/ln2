@@ -23,10 +23,13 @@ import           Yesod.Core
 
 type NodeName = Text
 
-newtype ProxmoxResponseWrapper a = ProxmoxResponseWrapper a deriving Show
+data ProxmoxResponseWrapper a = ProxmoxResponseWrapper
+  { getProxmoxResponseData   :: !a
+  , getProxmoxResponseErrors :: !(Maybe Value)
+  } deriving Show
 
 instance (FromJSON a) => FromJSON (ProxmoxResponseWrapper a) where
-  parseJSON = withObject "ProxmoxResponseWrapper" $ \v -> ProxmoxResponseWrapper <$> v .: "data"
+  parseJSON = withObject "ProxmoxResponseWrapper" $ \v -> ProxmoxResponseWrapper <$> v .: "data" <*> v .:? "errors"
 
 data DeclareResult a = Existed | Created | DeclareError a deriving (Show, Eq)
 
