@@ -103,6 +103,6 @@ getVnetSubnets conf@(ProxmoxConfiguration { .. }) vnet = do
     200 -> do
       let body = getResponseBody response
       case body of
-        (Left e)                                 -> (return . Left) $ show e
-        (Right (ProxmoxResponseWrapper subnets)) -> return $ Right subnets
+        (Left e)                                   -> (return . Left) $ show e
+        (Right (ProxmoxResponseWrapper subnets _)) -> return $ Right subnets
     _someError -> (return . Left) $ errorTextFromStatus status

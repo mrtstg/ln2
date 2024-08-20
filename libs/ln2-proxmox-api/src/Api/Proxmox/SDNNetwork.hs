@@ -95,6 +95,6 @@ getSDNNetworks conf@(ProxmoxConfiguration { .. }) = do
     200 -> do
       let body = getResponseBody response
       case body of
-        (Left e)                                  -> (return . Left) $ show e
-        (Right (ProxmoxResponseWrapper networks)) -> return $ Right networks
+        (Left e)                                    -> (return . Left) $ show e
+        (Right (ProxmoxResponseWrapper networks _)) -> return $ Right networks
     _someError -> (return . Left) $ errorTextFromStatus status
