@@ -89,6 +89,6 @@ getSDNZones conf@(ProxmoxConfiguration { .. }) = do
     200 -> do
       let body = getResponseBody response
       case body of
-        (Left e)                               -> (return . Left) $ show e
-        (Right (ProxmoxResponseWrapper zones)) -> return $ Right zones
+        (Left e)                                 -> (return . Left) $ show e
+        (Right (ProxmoxResponseWrapper zones _)) -> return $ Right zones
     _someError -> (return . Left) $ errorTextFromStatus status
