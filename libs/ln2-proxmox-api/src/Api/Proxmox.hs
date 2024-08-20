@@ -9,6 +9,7 @@ module Api.Proxmox
   , logDeclareResult
   , logDeclareResultIO
   , declareResultIsError
+  , setSSLIgnore
   ) where
 
 import           Data.Aeson
