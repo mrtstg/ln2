@@ -33,6 +33,7 @@ library
       Data.Models.Proxmox.API.SDNSubnet
       Data.Models.Proxmox.API.SDNZone
       Data.Models.Proxmox.API.VM
+      Data.Models.Proxmox.API.VMClone
       Data.Models.Proxmox.Configuration
   other-modules:
       Paths_ln2_proxmox_api
