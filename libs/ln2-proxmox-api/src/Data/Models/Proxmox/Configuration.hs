@@ -60,6 +60,7 @@ data ProxmoxConfiguration = ProxmoxConfiguration
   , proxmoxNodeName      :: !Text
   , proxmoxSDNZone       :: !Text
   , proxmoxSDNNetwork    :: !ProxmoxNetworkConfiguration
+  , proxmoxFSAgentURL    :: !Text
   } deriving (Show)
 
 getProxmoxConfigurationFromEnv :: IO (Maybe ProxmoxConfiguration)
@@ -73,6 +74,7 @@ getProxmoxConfigurationFromEnv = let
   proxmox_token' <- lookupEnv "PROXMOX_API_TOKEN_SECRET"
   proxmox_token_id' <- lookupEnv "PROXMOX_API_TOKEN_ID"
   proxmox_fs_token'<- lookupEnv "PROXMOX_AGENT_ACCESS_TOKEN"
+  proxmox_agent_url' <- lookupEnv "PROXMOX_AGENT_URL"
   proxmox_verify_ssl' <- lookupEnv "PROXMOX_VERIFY_SSL"
   proxmox_node_name' <- lookupEnv "PROXMOX_NODE_NAME"
   proxmox_sdn_zone' <- lookupEnv "PROXMOX_DEPLOY_SDN_ZONE"
@@ -85,6 +87,7 @@ getProxmoxConfigurationFromEnv = let
     proxmox_node_name <- proxmox_node_name'
     proxmox_sdn_zone <- proxmox_sdn_zone'
     proxmox_sdn_network <- proxmox_sdn_network'
+    proxmox_agent_url <- proxmox_agent_url'
     let proxmox_verify_ssl = boolWrapper proxmox_verify_ssl'
     return $ ProxmoxConfiguration
       { proxmoxBaseUrl = pack proxmox_url
@@ -95,4 +98,5 @@ getProxmoxConfigurationFromEnv = let
       , proxmoxNodeName = pack proxmox_node_name
       , proxmoxSDNZone = pack proxmox_sdn_zone
       , proxmoxSDNNetwork = proxmox_sdn_network
+      , proxmoxFSAgentURL = pack proxmox_agent_url
       }
