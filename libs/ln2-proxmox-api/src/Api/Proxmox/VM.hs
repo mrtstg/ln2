@@ -1,23 +1,57 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 module Api.Proxmox.VM
   ( getNodeVMs
   , getNodeVMs'
+  , cloneAndWaitVM'
   , cloneVM
   , cloneVM'
   ) where
 
 import           Api
 import           Api.Proxmox
+import           Control.Concurrent                (threadDelay)
 import           Control.Monad.Trans.Except
 import qualified Data.ByteString.Char8             as BS
+import           Data.Maybe                        (isJust)
 import           Data.Models.Proxmox.API.VM
 import           Data.Models.Proxmox.API.VMClone
 import           Data.Models.Proxmox.Configuration
 import qualified Data.Text                         as T
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
+import           System.Timeout
 import           Yesod.Core                        (liftIO)
+
+cloneAndWaitVM' :: ProxmoxConfiguration -> VMCloneParams -> Maybe Int -> IO (Either String ProxmoxVM)
+cloneAndWaitVM' conf payload timeoutLength = let
+  timeoutFunction :: IO a -> Maybe Int -> IO (Maybe a)
+  timeoutFunction f = \case
+    Nothing -> do
+      res <- f
+      (pure . pure) res
+    (Just timeout') -> timeout timeout' f
+  waitForVM :: VMCloneParams -> IO ProxmoxVM
+  waitForVM p@(VMCloneParams { .. }) = do
+    vms' <- getNodeVMs' conf
+    vms <- case vms' of
+      (Left _)    -> return []
+      (Right vms) -> return vms
+    let filteredVMs = filter (\(ProxmoxVM { .. }) -> getVMCloneVMID == getProxmoxVMId && isJust getProxmoxVMLock) vms
+    if null filteredVMs then do
+      () <- threadDelay 500000
+      waitForVM p
+    else return (head filteredVMs)
+  in do
+    cloneRes <- cloneVM' conf payload
+    case cloneRes of
+      (Left e) -> return (Left e)
+      (Right ()) -> do
+        vmRes <- timeoutFunction (waitForVM payload) timeoutLength
+        case vmRes of
+          Nothing       -> (return . Left) "Timeout reached!"
+          (Just vmInfo) -> (return . Right) vmInfo
 
 cloneVM' :: ProxmoxConfiguration -> VMCloneParams -> IO (Either String ())
 cloneVM' conf payload = commonHttpErrorHandler $ cloneVM conf payload
