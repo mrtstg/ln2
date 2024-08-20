@@ -25,10 +25,12 @@ source-repository head
 library
   exposed-modules:
       Api.Proxmox
+      Api.Proxmox.Agent
       Api.Proxmox.SDN
       Api.Proxmox.SDNNetwork
       Api.Proxmox.SDNSubnet
       Api.Proxmox.VM
+      Data.Models.Proxmox.Agent
       Data.Models.Proxmox.API.SDNNetwork
       Data.Models.Proxmox.API.SDNSubnet
       Data.Models.Proxmox.API.SDNZone
