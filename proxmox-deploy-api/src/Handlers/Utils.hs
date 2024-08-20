@@ -2,6 +2,7 @@
 module Handlers.Utils
   ( requireAuth'
   , requireAdminAuth'
+  , requireAnyAuth'
   ) where
 
 import           Data.Models.Endpoints
@@ -19,6 +20,9 @@ requireAuth' authF validationF = do
   if devEnabled then return () else do
     userDetails <- authF endpointsConfiguration
     if validationF userDetails then return () else sendStatusJSON status403 api403Error
+
+requireAnyAuth' :: (EndpointsConfiguration -> HandlerFor App UserDetails) -> Handler ()
+requireAnyAuth' = flip requireAuth' (const True)
 
 requireAdminAuth' :: (EndpointsConfiguration -> HandlerFor App UserDetails) -> Handler ()
 requireAdminAuth' = flip requireAuth' (adminRoleGranted . getUserRoles)
