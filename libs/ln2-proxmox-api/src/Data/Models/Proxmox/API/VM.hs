@@ -25,6 +25,7 @@ data ProxmoxVM = ProxmoxVM
   , getProxmoxVMName    :: !(Maybe String)
   , getProxmoxVMPid     :: !(Maybe Int)
   , getProxmoxVMUptime  :: !(Maybe Int)
+  , getProxmoxVMLock    :: !(Maybe String)
   } deriving Show
 
 instance FromJSON ProxmoxVM where
@@ -37,3 +38,4 @@ instance FromJSON ProxmoxVM where
     <*> v .:? "name"
     <*> v .:? "pid"
     <*> v .:? "uptime"
+    <*> v .:? "lock"
