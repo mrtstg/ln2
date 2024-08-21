@@ -36,6 +36,7 @@ library
       Data.Models.Proxmox.Template
       Foundation
       Handlers.MachineID
+      Handlers.Templates
       Handlers.Utils
       Rabbit
   other-modules:

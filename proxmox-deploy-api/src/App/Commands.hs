@@ -26,6 +26,7 @@ import qualified Data.Text                          as T
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.MachineID
+import           Handlers.Templates
 import           Network.AMQP                       (openConnection')
 import           Network.Socket                     (PortNumber)
 import           Rabbit
