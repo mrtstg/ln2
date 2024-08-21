@@ -67,6 +67,8 @@ mkYesodData
   "App"
   [parseRoutes|
 /vm/ids MachineIDsR GET
+/templates TemplatesR GET POST
+/templates/#Int TemplateR PATCH DELETE
 |]
 
 -- /templates TemplatesR GET POST
