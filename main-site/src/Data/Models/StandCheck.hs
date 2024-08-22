@@ -280,11 +280,11 @@ instance FromJSON StandCheckStage where
 
 
 -- развертка макросов в простые составные блоки
-convertStandCheckList :: StdGen -> EndpointsConfiguration -> T.Text -> [StandCheckStage] -> IO (Either String [StandCheckStage])
-convertStandCheckList rnd endpoints answer stages = let
+convertStandCheckList :: EndpointsConfiguration -> T.Text -> [StandCheckStage] -> IO (Either String [StandCheckStage])
+convertStandCheckList endpoints answer stages = let
   randomFilePath :: Int -> String -> (String, String)
   randomFilePath ln ext = ("/" <> r <> "." <> ext, r) where
-    r = unsafeRandomString rnd ln
+    r = unsafeRandomString ln
   f :: StandCheckStage -> IO (Either String [StandCheckStage])
   f (PSQLGenerateDatabase target db) = do
     resp <- convertCreateDB' endpoints db

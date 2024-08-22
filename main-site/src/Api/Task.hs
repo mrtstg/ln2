@@ -38,9 +38,9 @@ data TaskResult a = TaskResult !a | TaskError !String deriving (Show, Eq)
 taskHandler' :: HttpException -> IO (Either HttpException (TaskResult a))
 taskHandler' _ = return $ Right (TaskError "Unknown error!")
 
-createTask'' :: StdGen -> EndpointsConfiguration -> Text -> StandName -> [StandCheckStage] -> IO (TaskResult String)
-createTask'' rnd endpoints answer standName standActions = do
-  convertRes <- convertStandCheckList rnd endpoints answer standActions
+createTask'' :: EndpointsConfiguration -> Text -> StandName -> [StandCheckStage] -> IO (TaskResult String)
+createTask'' endpoints answer standName standActions = do
+  convertRes <- convertStandCheckList endpoints answer standActions
   case convertRes of
     (Left e) -> return $ TaskError e
     (Right actions) -> do

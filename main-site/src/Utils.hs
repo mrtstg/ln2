@@ -6,6 +6,7 @@ module Utils
 
 import           Data.Text          (Text)
 import           System.Environment
+import           System.IO.Unsafe   (unsafePerformIO)
 import           System.Random
 
 taskStatusToText :: String -> Text
@@ -19,5 +20,5 @@ taskStatusToText "cancelled"  = "Проверка прервана"
 taskStatusToText "timeout"    = "Тайм-аут проверки"
 taskStatusToText _            = "Неизвестный статус"
 
-unsafeRandomString :: StdGen -> Int -> String
-unsafeRandomString rnd n = take n $ randomRs ('a', 'z') rnd
+unsafeRandomString :: Int -> String
+unsafeRandomString n = take n $ randomRs ('a', 'z') (unsafePerformIO newStdGen)

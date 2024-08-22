@@ -39,7 +39,6 @@ data App = App
   { postgresqlPool         :: !(Pool SqlBackend)
   , rabbitConnection       :: !R.Connection
   , endpointsConfiguration :: !EndpointsConfiguration
-  , randomGenerator        :: !StdGen
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
