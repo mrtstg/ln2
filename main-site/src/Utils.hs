@@ -1,13 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Utils
-  ( unsafeRandomString
-  , taskStatusToText
+  ( taskStatusToText
   ) where
 
-import           Data.Text          (Text)
-import           System.Environment
-import           System.IO.Unsafe   (unsafePerformIO)
-import           System.Random
+import           Data.Text (Text)
 
 taskStatusToText :: String -> Text
 taskStatusToText "queued"     = "В очереди на выполнение"
@@ -19,6 +15,3 @@ taskStatusToText "accepted"   = "Зачтена"
 taskStatusToText "cancelled"  = "Проверка прервана"
 taskStatusToText "timeout"    = "Тайм-аут проверки"
 taskStatusToText _            = "Неизвестный статус"
-
-unsafeRandomString :: Int -> String
-unsafeRandomString n = take n $ randomRs ('a', 'z') (unsafePerformIO newStdGen)
