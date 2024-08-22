@@ -11,7 +11,7 @@ import           Data.Models.Database
 import           Data.Models.Endpoints (EndpointsConfiguration)
 import qualified Data.Text             as T
 import           System.Random         (StdGen)
-import           Utils                 (unsafeRandomString)
+import           Utils.Random          (randomIOString)
 
 type StageTarget = String
 
@@ -282,13 +282,14 @@ instance FromJSON StandCheckStage where
 -- развертка макросов в простые составные блоки
 convertStandCheckList :: EndpointsConfiguration -> T.Text -> [StandCheckStage] -> IO (Either String [StandCheckStage])
 convertStandCheckList endpoints answer stages = let
-  randomFilePath :: Int -> String -> (String, String)
-  randomFilePath ln ext = ("/" <> r <> "." <> ext, r) where
-    r = unsafeRandomString ln
+  randomFilePath :: Int -> String -> IO (String, String)
+  randomFilePath ln ext = do
+    r' <- randomIOString ln
+    pure ("/" <> r' <> "." <> ext, r')
   f :: StandCheckStage -> IO (Either String [StandCheckStage])
   f (PSQLGenerateDatabase target db) = do
     resp <- convertCreateDB' endpoints db
-    (path, _) <- return $ randomFilePath 15 "sql"
+    (path, _) <- randomFilePath 15 "sql"
     case resp of
       (DBApiResult query) ->
         return $
@@ -304,7 +305,7 @@ convertStandCheckList endpoints answer stages = let
       [ CopyFile { getStageTarget = getStageTarget, getStageFilePath = getStageFilePath, getStageFileContent = answer }
       ]
   f (PSQLTableExists { .. }) = do
-    (path, name) <- return $ randomFilePath 15 "sql"
+    (path, name) <- randomFilePath 15 "sql"
     let query = "SELECT CASE WHEN EXISTS(SELECT * FROM pg_tables WHERE tablename = '" <> getStageTableName <> "' AND schemaname = '" <> getStageDatabaseSchema <> "') THEN 1 ELSE 0 END;"
     return $
       return
@@ -330,7 +331,7 @@ convertStandCheckList endpoints answer stages = let
           }
         ]
   f (PSQLColumnTypeCheck { .. }) = do
-    (path, name) <- return $ randomFilePath 15 "sql"
+    (path, name) <- randomFilePath 15 "sql"
     let query = "SELECT CASE WHEN ((SELECT data_type FROM information_schema.columns WHERE table_name = '" <> getStageTableName <> "' AND column_name = '" <> getStageColumnName <> "' AND table_schema = '" <> getStageDatabaseSchema <> "') = '" <> getStageAwaitedType <> "') THEN 1 ELSE 0 END;"
     return $
       return
@@ -352,7 +353,7 @@ convertStandCheckList endpoints answer stages = let
           }
         ]
   f (PSQLExists { .. }) = do
-    (path, name) <- return $ randomFilePath 15 "sql"
+    (path, name) <- randomFilePath 15 "sql"
     let query' = if T.last getStageQuery == ';' then T.init getStageQuery else getStageQuery
     let query = "select (CASE WHEN EXISTS(" <> query' <> ") THEN 1 ELSE 0 END);"
     return $
@@ -375,7 +376,7 @@ convertStandCheckList endpoints answer stages = let
           }
         ]
   f (PSQLQuery { .. }) = do
-    (path, _) <- return $ randomFilePath 15 "sql"
+    (path, _) <- randomFilePath 15 "sql"
     return $
       return
         [ CopyFile { getStageTarget = getStageTarget, getStageFilePath = path, getStageFileContent = getStageQuery }
@@ -389,7 +390,7 @@ convertStandCheckList endpoints answer stages = let
           }
         ]
   f (PSQLAnswerQuery { .. }) = do
-    (path, _) <- return $ randomFilePath 15 "sql"
+    (path, _) <- randomFilePath 15 "sql"
     return $
       return
         [ CopyFile { getStageTarget = getStageTarget, getStageFilePath = path, getStageFileContent = answer }
