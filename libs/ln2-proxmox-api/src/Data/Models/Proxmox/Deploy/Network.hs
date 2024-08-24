@@ -5,10 +5,13 @@ module Data.Models.Proxmox.Deploy.Network
   , DeployNetworkSubnet(..)
   , DeployNetwork(..)
   , NetworkNameReplaceMap
+  , deployNetworkToPayload
   ) where
 
+import           Api.Proxmox.SDN                    (ZoneName)
 import           Data.Aeson
-import qualified Data.Map   as M
+import qualified Data.Map                           as M
+import           Data.Models.Proxmox.API.SDNNetwork
 import           Data.Text
 
 type NetworkNameReplaceMap = M.Map Text String
@@ -57,6 +60,18 @@ data DeployNetwork = DeployNetwork
   , getDeployNetworkVlanAware :: !Bool
   , getDeployNetworkSubnets   :: ![DeployNetworkSubnet]
   } deriving Show
+
+deployNetworkToPayload :: ZoneName -> NetworkNameReplaceMap -> DeployNetwork -> SDNNetworkCreate
+deployNetworkToPayload zoneName networksMap (DeployNetwork { .. }) = SDNNetworkCreate
+  { getSDNNetworkCreateZone = unpack zoneName
+  , getSDNNetworkCreateVlanaware = getDeployNetworkVlanAware
+  , getSDNNetworkCreateTag = Nothing
+  , getSDNNetworkCreateName = name'
+  , getSDNNetworkCreateAlias = Nothing
+  } where
+    name' = case M.lookup getDeployNetworkName networksMap of
+      Nothing     -> unpack getDeployNetworkName
+      (Just name) -> name
 
 instance FromJSON DeployNetwork where
   parseJSON = withObject "DeployNetwork" $ \v -> DeployNetwork
