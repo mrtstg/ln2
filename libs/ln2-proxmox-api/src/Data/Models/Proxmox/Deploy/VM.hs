@@ -10,6 +10,7 @@ import           Data.Aeson
 import qualified Data.Aeson.KeyMap                           as K
 import qualified Data.Map                                    as M
 import           Data.Models.Proxmox.API.VMClone
+import           Data.Models.Proxmox.Deploy.Network
 import           Data.Models.Proxmox.Deploy.NetworkInterface
 import           Data.Text                                   (Text)
 

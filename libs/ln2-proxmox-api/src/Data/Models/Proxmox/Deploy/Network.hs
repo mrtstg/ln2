@@ -4,10 +4,14 @@ module Data.Models.Proxmox.Deploy.Network
   ( DeployNetworkDHCPRange(..)
   , DeployNetworkSubnet(..)
   , DeployNetwork(..)
+  , NetworkNameReplaceMap
   ) where
 
 import           Data.Aeson
+import qualified Data.Map   as M
 import           Data.Text
+
+type NetworkNameReplaceMap = M.Map Text String
 
 data DeployNetworkDHCPRange = DeployNetworkDHCPRange
   { getDeployNetworkDHCPRangeStart :: !Text
