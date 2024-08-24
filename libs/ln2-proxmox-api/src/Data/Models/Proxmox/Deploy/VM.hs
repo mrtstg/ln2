@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.Proxmox.DeployVM
+module Data.Models.Proxmox.Deploy.VM
   ( DeployVM(..)
   ) where
 
 import           Data.Aeson
-import qualified Data.Aeson.KeyMap                          as K
-import qualified Data.Map                                   as M
-import           Data.Models.Proxmox.DeployNetworkInterface
-import           Data.Text                                  (Text)
+import qualified Data.Aeson.KeyMap                           as K
+import qualified Data.Map                                    as M
+import           Data.Models.Proxmox.Deploy.NetworkInterface
+import           Data.Text                                   (Text)
 
 data DeployVM = TemplateDeployVM
   { getDeployVMTemplateName      :: !Text
