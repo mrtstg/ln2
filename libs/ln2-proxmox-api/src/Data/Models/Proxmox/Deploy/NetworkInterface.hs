@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.Proxmox.DeployNetworkInterface
+module Data.Models.Proxmox.Deploy.NetworkInterface
   ( NetworkIntefaceType(..)
   , NetworkConnection(..)
   ) where

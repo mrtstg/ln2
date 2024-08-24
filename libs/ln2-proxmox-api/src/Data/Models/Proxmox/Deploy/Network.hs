@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.Proxmox.DeployNetwork
+module Data.Models.Proxmox.Deploy.Network
   ( DeployNetworkDHCPRange(..)
   , DeployNetworkSubnet(..)
   , DeployNetwork(..)
