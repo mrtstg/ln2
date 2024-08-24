@@ -5,16 +5,14 @@ module Data.Models.Proxmox.Deploy.NetworkInterface
   ( NetworkIntefaceType(..)
   , NetworkConnection(..)
   , networkConnectionsToPayload
-  , NetworkNameReplaceMap
   ) where
 
 import           Data.Aeson
-import           Data.Aeson.Types (Pair)
-import           Data.List        (intercalate)
-import qualified Data.Map         as M
-import           Data.Text        (Text, pack, unpack)
-
-type NetworkNameReplaceMap = M.Map Text String
+import           Data.Aeson.Types                   (Pair)
+import           Data.List                          (intercalate)
+import qualified Data.Map                           as M
+import           Data.Models.Proxmox.Deploy.Network
+import           Data.Text                          (Text, pack, unpack)
 
 data NetworkConnection = NetworkConnection
   { getNetworkConnectionDeviceType :: !NetworkIntefaceType
