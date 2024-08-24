@@ -14,8 +14,9 @@ data DeployVM = TemplateDeployVM
   { getDeployVMTemplateName      :: !Text
   , getDeployVMName              :: !Text
   , getDeployVMTemplateSnapname  :: !(Maybe Text)
-  , getDeployVMSockets           :: !Int
-  , getDeployVMCores             :: !Int
+  , getDeployVMSockets           :: !(Maybe Int)
+  , getDeployVMCores             :: !(Maybe Int)
+  , getDeployVMMemory            :: !(Maybe Int)
   , getDeployVMAdditionalConfig  :: !(M.Map Text Text)
   , getDeployVMNetworkInterfaces :: ![NetworkConnection]
   } deriving Show
@@ -27,8 +28,9 @@ instance FromJSON DeployVM where
       <$> v .: "template"
       <*> v .: "name"
       <*> v .:? "snapshot"
-      <*> v .:? "sockets" .!= 1
-      <*> v .: "cores"
+      <*> v .:? "sockets"
+      <*> v .:? "cores"
+      <*> v .:? "memory"
       <*> v .:? "config" .!= M.empty
       <*> v .: "networks"
     _unknownType -> fail "Unknown type!"
@@ -40,6 +42,7 @@ instance ToJSON DeployVM where
     , "snapshot" .= getDeployVMTemplateSnapname
     , "sockets" .= getDeployVMSockets
     , "cores" .= getDeployVMCores
+    , "memory" .= getDeployVMMemory
     , "config" .= getDeployVMAdditionalConfig
     , "networks" .= getDeployVMNetworkInterfaces
     ]
