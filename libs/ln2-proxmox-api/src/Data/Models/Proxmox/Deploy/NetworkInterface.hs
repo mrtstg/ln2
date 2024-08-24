@@ -4,10 +4,17 @@
 module Data.Models.Proxmox.Deploy.NetworkInterface
   ( NetworkIntefaceType(..)
   , NetworkConnection(..)
+  , networkConnectionsToPayload
+  , NetworkNameReplaceMap
   ) where
 
 import           Data.Aeson
-import           Data.Text  (Text)
+import           Data.Aeson.Types (Pair)
+import           Data.List        (intercalate)
+import qualified Data.Map         as M
+import           Data.Text        (Text, pack, unpack)
+
+type NetworkNameReplaceMap = M.Map Text String
 
 data NetworkConnection = NetworkConnection
   { getNetworkConnectionDeviceType :: !NetworkIntefaceType
@@ -16,6 +23,27 @@ data NetworkConnection = NetworkConnection
   , getNetworkConnectionRate       :: !(Maybe Float)
   , getNetworkConnectionTag        :: !(Maybe Text)
   } deriving Show
+
+networkConnectionsToPayload :: NetworkNameReplaceMap -> [NetworkConnection] -> [Pair]
+networkConnectionsToPayload networkNameMap = helper 0 [] where
+  helper :: Int -> [Pair] -> [NetworkConnection] -> [Pair]
+  helper _ pairs' [] = pairs'
+  helper iNum pairs' ((NetworkConnection { .. }):connections) = helper (iNum + 1) ((read ("net" <> show iNum), String networkData):pairs') connections where
+    networkData = (pack . intercalate ",") fields
+    bridge' = case M.lookup getNetworkConnectionBridge networkNameMap of
+      Nothing                -> unpack getNetworkConnectionBridge
+      (Just replacedNetwork) -> replacedNetwork
+    fields =
+      [ "model=" <> show getNetworkConnectionDeviceType
+      , "bridge=" <> bridge'
+      , "firewall=" <> (if getNetworkConnectionFirewall then "1" else "0")
+      ] <> tagField <> rateField
+    tagField = case getNetworkConnectionTag of
+      (Just tag) -> ["tag=" <> unpack tag]
+      Nothing    -> []
+    rateField = case getNetworkConnectionRate of
+      (Just rate) -> ["rate=" <> show rate]
+      Nothing     -> []
 
 instance FromJSON NetworkConnection where
   parseJSON = withObject "NetworkConnection" $ \v -> NetworkConnection
@@ -47,7 +75,7 @@ data NetworkIntefaceType = E1000
   | PCNET
   | RTL8139
   | VIRTIO
-  | VMXNET3 deriving Show
+  | VMXNET3
 
 instance FromJSON NetworkIntefaceType where
   parseJSON = withText "NetworkIntefaceType" $ \case
@@ -67,6 +95,22 @@ instance FromJSON NetworkIntefaceType where
     "vmxnet3" -> pure VMXNET3
     "-" -> pure VIRTIO
     _ -> fail "Invalid interface type!"
+
+instance Show NetworkIntefaceType where
+  show E1000         = "e1000"
+  show E1000_82540EM = "e1000-82540em"
+  show E1000_82544GC = "e1000-82544gc"
+  show E1000_82545EM = "e1000-82545em"
+  show E1000E        = "e1000e"
+  show I82551        = "i82551"
+  show I82557B       = "i82557b"
+  show I82559ER      = "i82559er"
+  show NE2K_ISA      = "ne2k_isa"
+  show NE2K_PCI      = "ne2k_pci"
+  show PCNET         = "pcnet"
+  show RTL8139       = "rtl8139"
+  show VIRTIO        = "virtio"
+  show VMXNET3       = "vmxnet3"
 
 instance ToJSON NetworkIntefaceType where
   toJSON E1000         = String "e1000"
