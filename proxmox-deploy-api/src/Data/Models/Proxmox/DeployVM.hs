@@ -11,7 +11,7 @@ import           Data.Models.Proxmox.DeployNetworkInterface
 import           Data.Text                                  (Text)
 
 data DeployVM = TemplateDeployVM
-  { getDeployVMTemplateId        :: !Int
+  { getDeployVMTemplateName      :: !Text
   , getDeployVMName              :: !Text
   , getDeployVMTemplateSnapname  :: !(Maybe Text)
   , getDeployVMSockets           :: !Int
@@ -24,7 +24,7 @@ instance FromJSON DeployVM where
   parseJSON = withObject "DeployVM" $ \v -> case K.lookup "type" v of
     Nothing -> fail "Missing VM type!"
     (Just (String "template")) -> TemplateDeployVM
-      <$> v .: "templateId"
+      <$> v .: "template"
       <*> v .: "name"
       <*> v .:? "snapshot"
       <*> v .:? "sockets" .!= 1
@@ -35,7 +35,7 @@ instance FromJSON DeployVM where
 
 instance ToJSON DeployVM where
   toJSON (TemplateDeployVM { .. }) = object
-    [ "templateId" .= getDeployVMTemplateId
+    [ "template" .= getDeployVMTemplateName
     , "name" .= getDeployVMName
     , "snapshot" .= getDeployVMTemplateSnapname
     , "sockets" .= getDeployVMSockets
