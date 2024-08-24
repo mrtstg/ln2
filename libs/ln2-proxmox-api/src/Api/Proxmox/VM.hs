@@ -7,12 +7,15 @@ module Api.Proxmox.VM
   , cloneAndWaitVM'
   , cloneVM
   , cloneVM'
+  , patchVM
+  , patchVM'
   ) where
 
 import           Api
 import           Api.Proxmox
 import           Control.Concurrent                (threadDelay)
 import           Control.Monad.Trans.Except
+import           Data.Aeson
 import qualified Data.ByteString.Char8             as BS
 import           Data.Maybe                        (isJust)
 import           Data.Models.Proxmox.API.VM
@@ -23,6 +26,25 @@ import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
 import           System.Timeout
 import           Yesod.Core                        (liftIO)
+
+patchVM' :: ProxmoxConfiguration -> Int -> Value -> IO (Either String ())
+patchVM' conf vmid payload = commonHttpErrorHandler $ patchVM conf vmid payload
+
+patchVM :: ProxmoxConfiguration -> Int -> Value -> ExceptT HttpException IO (Either String ())
+patchVM conf@(ProxmoxConfiguration { .. }) vmid payload = do
+  let reqString = T.unpack $ "PUT " <> proxmoxBaseUrl <> "/nodes/" <> proxmoxNodeName <> "/qemu/" <> (T.pack . show) vmid <> "/config"
+  request' <- parseRequest reqString
+  request <- liftIO $ prepareProxmoxRequest conf request'
+  let jsonRequest = setRequestBodyJSON payload request
+  response <- httpJSONEither jsonRequest :: ExceptT HttpException IO (Response (Either JSONException (ProxmoxResponseWrapper (Maybe Value))))
+  let status = getResponseStatus response
+  case getResponseBody response of
+    (Left e) -> (return . Left) $ show e
+    (Right (ProxmoxResponseWrapper _ errors)) -> do
+      if statusIsSuccessful status then return (Right ()) else do
+        case errors of
+          Nothing        -> (return . Left) $ errorTextFromStatus status
+          (Just errors') -> (return . Left) $ show errors'
 
 cloneAndWaitVM' :: ProxmoxConfiguration -> VMCloneParams -> Maybe Int -> IO (Either String ProxmoxVM)
 cloneAndWaitVM' conf payload timeoutLength = let
