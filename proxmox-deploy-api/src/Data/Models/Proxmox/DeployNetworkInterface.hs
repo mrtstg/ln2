@@ -65,6 +65,7 @@ instance FromJSON NetworkIntefaceType where
     "rtl8139" -> pure RTL8139
     "virtio" -> pure VIRTIO
     "vmxnet3" -> pure VMXNET3
+    "-" -> pure VIRTIO
     _ -> fail "Invalid interface type!"
 
 instance ToJSON NetworkIntefaceType where
