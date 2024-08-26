@@ -25,6 +25,7 @@ import           Data.Models.Rabbit.ConnectionData
 import qualified Data.Text                          as T
 import           Database.Persist.Postgresql
 import           Foundation
+import           Handlers.AuthR
 import           Handlers.MachineID
 import           Handlers.Templates
 import           Network.AMQP                       (openConnection')
