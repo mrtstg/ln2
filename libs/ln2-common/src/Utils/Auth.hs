@@ -7,10 +7,21 @@ module Utils.Auth
   , generateCourseAdminsGroup
   , generateCourseMembersGroup
   , isUserAnyCourseAdmin
+  , getUserAdminCourses'
+  , getUserMemberCourses'
   ) where
 
 import           Data.Models.Auth.Role
 import           Data.Text             (pack, unpack)
+import qualified Data.Text             as T
+
+getUserAdminCourses' :: [RoleDetails] -> [String]
+getUserAdminCourses' roles = map (\(RoleDetails name _) -> (unpack . T.drop 7) name) $
+  filter (\(RoleDetails name _ ) -> T.take 8 name == "admins-") roles
+
+getUserMemberCourses' :: [RoleDetails] -> [String]
+getUserMemberCourses' roles = map (\(RoleDetails name _) -> (unpack . T.drop 8) name) $
+    filter (\(RoleDetails name _) -> T.take 8 name == "members-") roles
 
 generateCourseAdminsGroup :: String -> String
 generateCourseAdminsGroup uid = "admins-" <> uid
