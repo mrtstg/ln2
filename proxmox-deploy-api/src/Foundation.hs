@@ -59,6 +59,7 @@ MachineDeployment
   Id String
   userId Int default=0
   status String default='created'
+  payload ByteString
   data ByteString
   deriving Show
 |]
@@ -69,6 +70,7 @@ mkYesodData
 /vm/ids MachineIDsR GET
 /templates TemplatesR GET POST
 /templates/#Int TemplateR PATCH DELETE
+/auth AuthR GET
 |]
 
 -- /templates TemplatesR GET POST
