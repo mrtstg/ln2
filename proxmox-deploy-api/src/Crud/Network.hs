@@ -1,4 +1,4 @@
-module Crud.Networks
+module Crud.Network
   ( suggestVMName
   ) where
 
