@@ -6,15 +6,15 @@ module Handlers.AuthR (getAuthR) where
 import           Data.Aeson
 import qualified Data.ByteString.Char8         as BS
 import           Data.ByteString.Lazy          (fromStrict)
-import           Data.Models.DeploymentPayload (DeploymentPayload (DeploymentPayload, getDeploymentVMIDs))
+import           Data.Models.DeploymentPayload (DeploymentPayload (getDeploymentVMIDs))
 import           Data.Models.User
 import qualified Data.Text                     as T
 import           Database.Persist
 import           Foundation
 import           Handlers.Auth
-import           Handlers.Response
 import           Network.HTTP.Types            (status204, status401)
 import           Text.Read                     (readMaybe)
+import           Utils.Auth                    (adminRoleGranted)
 import           Yesod.Core
 import           Yesod.Persist
 
@@ -33,6 +33,7 @@ getAuthR = do
           case userDetails' of
             Nothing                     -> sendStatusJSON status401 ()
             (Just (UserDetails { .. })) -> do
+              let isAdmin = adminRoleGranted getUserRoles
               userDeployments <- runDB $ selectList [ MachineDeploymentUserId ==. getUserDetailsId ] []
               let deploymentsPayload = map (\(Entity _ e) -> machineDeploymentPayload e) userDeployments
               let parseResult = traverse (decode . fromStrict) deploymentsPayload :: Maybe [DeploymentPayload]
@@ -42,4 +43,4 @@ getAuthR = do
                   sendStatusJSON status401 ()
                 (Just parsedPayloads) -> do
                   let accessedVMIds = concatMap getDeploymentVMIDs parsedPayloads
-                  sendStatusJSON (if vmid `elem` accessedVMIds then status204 else status401) ()
+                  sendStatusJSON (if vmid `elem` accessedVMIds || isAdmin then status204 else status401) ()
