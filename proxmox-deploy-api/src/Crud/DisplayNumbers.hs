@@ -1,6 +1,8 @@
 module Crud.DisplayNumbers
   ( freeDisplayNumbers
   , reserveDisplay
+  , portToDisplayNumber
+  , displayNumberToPort
   ) where
 
 import           Data.Maybe       (fromMaybe)
@@ -8,6 +10,12 @@ import           Data.Text        (Text)
 import           Database.Persist
 import           Foundation
 import           Yesod.Persist
+
+portToDisplayNumber :: Int -> Int
+portToDisplayNumber n = n - 5900
+
+displayNumberToPort :: Int -> Int
+displayNumberToPort = (+ 5900)
 
 displayNumbers :: [Int]
 -- taking up to 30000 port
