@@ -41,7 +41,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 ReservedMachine
   number Int
   comment Text default=''
-  ReservedMachineUnique number
+  Primary number
   deriving Show
 TakenDisplay
   number Int
