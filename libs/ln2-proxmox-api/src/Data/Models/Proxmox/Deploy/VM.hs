@@ -4,6 +4,7 @@ module Data.Models.Proxmox.Deploy.VM
   ( DeployVM(..)
   , deployVMToCloneParams
   , deployVMToConfigPayload
+  , DeployVM'(..)
   ) where
 
 import           Data.Aeson
