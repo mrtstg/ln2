@@ -3,7 +3,6 @@ module Api.Auth
   ( sendAuthRequest
   , sendAuthRequest'
   , expireToken'
-  , checkAuth
   , validateToken
   , validateToken'
   , AuthError(..)
@@ -38,17 +37,6 @@ commonHttpAuthErrorHandler exc = let
   r <- runExceptT exc `catch` handler
   case r of
     ~(Right v) -> return v
-
-checkAuth :: EndpointsConfiguration -> HandlerFor a (Maybe UserDetails)
-checkAuth endpoints = do
-  tokenValue' <- lookupCookie "session"
-  case tokenValue' of
-    Nothing -> return Nothing
-    (Just tokenValue) -> do
-      validRes <- liftIO $ validateToken' endpoints tokenValue
-      case validRes of
-        (Left _)     -> return Nothing
-        (Right resp) -> return $ Just resp
 
 validateToken' :: EndpointsConfiguration -> Text -> IO (Either (AuthError String) UserDetails)
 validateToken' endpoints token = commonHttpAuthErrorHandler $ validateToken endpoints token

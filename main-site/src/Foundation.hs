@@ -19,7 +19,6 @@
 
 module Foundation where
 
-import           Api.Auth
 import           Data.ByteString.Char8
 import           Data.Maybe                  (isJust, isNothing)
 import           Data.Models.Endpoints
@@ -28,8 +27,8 @@ import           Data.Pool                   (Pool)
 import           Data.Text
 import           Data.Time.Clock
 import           Database.Persist.Postgresql
+import           Handlers.Auth
 import qualified Network.AMQP                as R
-import           System.Random               (StdGen)
 import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Form
