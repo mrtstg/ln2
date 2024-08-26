@@ -12,7 +12,7 @@ import           Data.Models.Proxmox.Deploy.Request
 import           Data.Models.Proxmox.Deploy.VM
 import qualified Data.Text                                   as T
 
-data DeployValidaionError = UndefinedNetwork String | UndefinedTemplate String deriving Show
+data DeployValidaionError = UndefinedNetwork String | UndefinedTemplate String | ForbiddenNetwork String deriving Show
 
 serviceNetworks :: [T.Text]
 serviceNetworks = [T.pack proxmoxOutNetwork]
@@ -34,7 +34,11 @@ validateDeployVM existingTemplates existingNetworks (TemplateDeployVM { .. }) = 
 
 validateDeployRequest :: [T.Text] -> DeployRequest -> Either DeployValidaionError ()
 validateDeployRequest templatesList (DeployRequest { .. }) = do
-  let existingNetworks = map getDeployNetworkName getDeployRequestNetworks ++ serviceNetworks
-  case traverse (validateDeployVM templatesList existingNetworks) getDeployRequestVMs of
-    (Left e)  -> Left e
-    (Right _) -> pure ()
+  let networkNames = map getDeployNetworkName getDeployRequestNetworks
+  if T.pack proxmoxOutNetwork `elem` networkNames then
+    Left $ ForbiddenNetwork "internet"
+  else do
+    let existingNetworks = networkNames ++ serviceNetworks
+    case traverse (validateDeployVM templatesList existingNetworks) getDeployRequestVMs of
+      (Left e)  -> Left e
+      (Right _) -> pure ()
