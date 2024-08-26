@@ -10,8 +10,8 @@ import           Data.Models.Proxmox.API.VM        (ProxmoxVM (getProxmoxVMId))
 import           Data.Models.Proxmox.Configuration
 import           Data.Text                         (Text)
 import           Database.Persist
-import           Database.Persist.Postgresql       (toSqlKey)
 import           Foundation
+import           Utils.IO                          (retryIOEither')
 import           Yesod.Core
 import           Yesod.Persist
 
@@ -21,7 +21,7 @@ vmIDsRange = [100..999999999]
 -- returns VERY big list
 suggestVMIds :: ProxmoxConfiguration -> Handler (Either String [Int])
 suggestVMIds conf = do
-  vms' <- liftIO $ getNodeVMs' conf
+  vms' <- liftIO $ retryIOEither' (getNodeVMs' conf)
   case vms' of
     (Left e) -> return $ Left e
     (Right vms) -> do
