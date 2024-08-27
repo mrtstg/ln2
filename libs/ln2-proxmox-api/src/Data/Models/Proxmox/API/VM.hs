@@ -2,10 +2,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Models.Proxmox.API.VM
   ( ProxmoxVMStatus(..)
-  , ProxmoxVM(..) ) where
+  , ProxmoxVM(..)
+  , ProxmoxVMStatusWrapper(..)
+  ) where
 
 import           Data.Aeson
 import           Data.Text
+
+newtype ProxmoxVMStatusWrapper = ProxmoxVMStatusWrapper ProxmoxVMStatus deriving Show
+
+instance FromJSON ProxmoxVMStatusWrapper where
+  parseJSON = withObject "ProxmoxVMStatusWrapper" $ \v -> ProxmoxVMStatusWrapper
+    <$> v .: "status"
 
 data ProxmoxVMStatus = VMStopped | VMRunning deriving Show
 
