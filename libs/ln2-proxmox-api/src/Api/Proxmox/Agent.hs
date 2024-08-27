@@ -35,7 +35,7 @@ setVMDisplay' :: ProxmoxConfiguration -> AgentRequest -> IO (Either String ())
 setVMDisplay' conf payload = commonHttpErrorHandler $ setVMDisplay conf payload
 
 setVMDisplay :: ProxmoxConfiguration -> AgentRequest -> ExceptT HttpException IO (Either String ())
-setVMDisplay conf@(ProxmoxConfiguration { proxmoxFSAgentURL = agentUrl, proxmoxAccessToken = token }) payload@(AgentRequest { getAgentRequestVMID = vmid }) = do
+setVMDisplay conf@(ProxmoxConfiguration { proxmoxFSAgentURL = agentUrl, proxmoxFSAgentToken = token }) payload@(AgentRequest { getAgentRequestVMID = vmid }) = do
   let reqString = T.unpack $ "POST " <> agentUrl <> "/args/vnc/" <> (T.pack . show) vmid
   request <- parseRequest reqString
     >>= (liftIO . setSSLIgnore conf)
