@@ -8,6 +8,7 @@ module Data.Models.Proxmox.Deploy.NetworkInterface
   ) where
 
 import           Data.Aeson
+import           Data.Aeson.Key
 import           Data.Aeson.Types                   (Pair)
 import           Data.List                          (intercalate)
 import qualified Data.Map                           as M
@@ -26,7 +27,7 @@ networkConnectionsToPayload :: NetworkNameReplaceMap -> [NetworkConnection] -> [
 networkConnectionsToPayload networkNameMap = helper 0 [] where
   helper :: Int -> [Pair] -> [NetworkConnection] -> [Pair]
   helper _ pairs' [] = pairs'
-  helper iNum pairs' ((NetworkConnection { .. }):connections) = helper (iNum + 1) ((read ("net" <> show iNum), String networkData):pairs') connections where
+  helper iNum pairs' ((NetworkConnection { .. }):connections) = helper (iNum + 1) ((fromString $ "net" <> show iNum, String networkData):pairs') connections where
     networkData = (pack . intercalate ",") fields
     bridge' = case M.lookup getNetworkConnectionBridge networkNameMap of
       Nothing                -> unpack getNetworkConnectionBridge
