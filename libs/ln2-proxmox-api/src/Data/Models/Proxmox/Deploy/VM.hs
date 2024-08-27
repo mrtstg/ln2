@@ -103,4 +103,5 @@ instance ToJSON DeployVM where
     , "memory" .= getDeployVMMemory
     , "config" .= getDeployVMAdditionalConfig
     , "networks" .= getDeployVMNetworkInterfaces
+    , "type" .= String "template"
     ]
