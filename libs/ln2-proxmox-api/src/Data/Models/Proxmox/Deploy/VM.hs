@@ -22,6 +22,7 @@ type NodeName = Text
 data DeployVM' = TemplateDeployVM'
   { getDeployVMID'           :: !VMID
   , getDeployVMCloneID'      :: !VMID
+  , getDeployVMDisplay       :: !Int
   , getDeployVMNode'         :: !NodeName
   , getDeployVMTemplateData' :: !DeployVM
   }
@@ -53,6 +54,7 @@ instance ToJSON DeployVM' where
   toJSON (TemplateDeployVM' { .. }) = object
     [ "vmid" .= getDeployVMID'
     , "cloneid" .= getDeployVMCloneID'
+    , "display" .= getDeployVMDisplay
     , "node" .= getDeployVMNode'
     , "data" .= getDeployVMTemplateData'
     , "type" .= String "template"
@@ -64,6 +66,7 @@ instance FromJSON DeployVM' where
     (Just (String "template")) -> TemplateDeployVM'
       <$> v .: "vmid"
       <*> v .: "cloneid"
+      <*> v .: "display"
       <*> v .: "node"
       <*> v .: "data"
     _unknownType -> fail "Unknown type!"
