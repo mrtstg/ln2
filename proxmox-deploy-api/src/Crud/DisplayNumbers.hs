@@ -1,8 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Crud.DisplayNumbers
   ( freeDisplayNumbers
   , reserveDisplay
   , portToDisplayNumber
   , displayNumberToPort
+  , reserveDisplays
   ) where
 
 import           Data.Maybe       (fromMaybe)
@@ -36,6 +39,21 @@ suggestDisplayNumbers = do
 freeDisplayNumbers :: [Int] -> Handler ()
 freeDisplayNumbers displayNums = runDB $ do
   deleteWhere [TakenDisplayNumber <-. displayNums]
+
+reserveDisplays :: [Int] -> Text -> Handler (Either String [Entity TakenDisplay])
+reserveDisplays vmIds displayComment = let
+  helper :: [Entity TakenDisplay] -> [Int] -> Handler (Either String [Entity TakenDisplay])
+  helper acc [] = (pure . pure) acc
+  helper acc (vmid:lst) = do
+    reserveRes <- reserveDisplay (Just vmid) displayComment
+    case reserveRes of
+      (Left e) -> do
+        let displayNumbers' = map (\(Entity _ e') -> takenDisplayNumber e') acc
+        () <- freeDisplayNumbers displayNumbers'
+        return (Left e)
+      (Right e@(Entity _ TakenDisplay { .. })) -> do
+        helper (e:acc) lst
+  in helper [] vmIds
 
 reserveDisplay :: Maybe Int -> Text -> Handler (Either String (Entity TakenDisplay))
 reserveDisplay vmId displayComment = let
