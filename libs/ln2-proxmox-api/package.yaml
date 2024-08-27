@@ -1,5 +1,5 @@
 name:                ln2-proxmox-api
-version:             0.1.0.9
+version:             0.1.0.10
 github:              "githubuser/ln2-proxmox-api"
 license:             BSD-3-Clause
 author:              "Author name here"
