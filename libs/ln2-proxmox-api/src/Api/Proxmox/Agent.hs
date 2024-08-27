@@ -9,7 +9,9 @@ module Api.Proxmox.Agent
 import           Api
 import           Api.Proxmox                       (setSSLIgnore)
 import           Control.Monad.Trans.Except
+import           Data.Aeson
 import           Data.ByteString.Char8             (pack)
+import           Data.Functor                      ((<&>))
 import           Data.Models.Proxmox.Agent
 import           Data.Models.Proxmox.Configuration
 import qualified Data.Text                         as T
@@ -35,10 +37,10 @@ setVMDisplay' conf payload = commonHttpErrorHandler $ setVMDisplay conf payload
 setVMDisplay :: ProxmoxConfiguration -> AgentRequest -> ExceptT HttpException IO (Either String ())
 setVMDisplay conf@(ProxmoxConfiguration { proxmoxFSAgentURL = agentUrl, proxmoxAccessToken = token }) payload@(AgentRequest { getAgentRequestVMID = vmid }) = do
   let reqString = T.unpack $ "POST " <> agentUrl <> "/args/vnc/" <> (T.pack . show) vmid
-  request' <- parseRequest reqString
-  request <- liftIO $ setSSLIgnore conf request'
-  let jsonRequest = addRequestHeader "Authorization" (pack $ "Bearer " <> T.unpack token) $ setRequestBodyJSON payload request
-  response <- httpBS jsonRequest
+  request <- parseRequest reqString
+    >>= (liftIO . setSSLIgnore conf)
+    <&> (setRequestBodyJSON payload . addRequestHeader "Authorization" (pack $ "Bearer " <> T.unpack token))
+  response <- httpJSONEither request :: ExceptT HttpException IO (Response (Either JSONException ()))
   let status = getResponseStatus response
   if statusIsSuccessful status then do return (Right ()) else do
     return $ case statusCode status of
