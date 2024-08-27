@@ -49,7 +49,7 @@ reserveVMIds idComment ids amount = let
                                     result <- runDB $ reservePort' el
                                     if result == 0 then iteratePorts accC acc els else iteratePorts (accC + 1) (result:acc) els
   in do
-    if amount < 1 then return (Left "Invalid port amount!") else do
+    if amount < 0 then return (Left "Invalid port amount!") else do
       ports <- iteratePorts 0 [] ids
       if length ports /= amount then do
         freeVMIds ports
