@@ -2,6 +2,7 @@
 module Api.Proxmox.Agent
   ( setVMDisplay
   , setVMDisplay'
+  , setVMDisplay''
   , DisplaySetResponse(..)
   ) where
 
@@ -18,8 +19,8 @@ import           Yesod.Core                        (MonadIO (liftIO))
 
 data DisplaySetResponse = DisplaySetOk | Unauthorized | AlreadySet | NotFound | DisplaySetError String deriving Show
 
-setVMDisplay' :: ProxmoxConfiguration -> AgentRequest -> IO DisplaySetResponse
-setVMDisplay' conf payload = do
+setVMDisplay'' :: ProxmoxConfiguration -> AgentRequest -> IO DisplaySetResponse
+setVMDisplay'' conf payload = do
   res <- commonHttpErrorHandler $ setVMDisplay conf payload
   case res of
     (Right ())            -> return DisplaySetOk
@@ -27,6 +28,9 @@ setVMDisplay' conf payload = do
     (Left "Unauthorized") -> return Unauthorized
     (Left "Already set")  -> return AlreadySet
     (Left other)          -> return (DisplaySetError other)
+
+setVMDisplay' :: ProxmoxConfiguration -> AgentRequest -> IO (Either String ())
+setVMDisplay' conf payload = commonHttpErrorHandler $ setVMDisplay conf payload
 
 setVMDisplay :: ProxmoxConfiguration -> AgentRequest -> ExceptT HttpException IO (Either String ())
 setVMDisplay conf@(ProxmoxConfiguration { proxmoxFSAgentURL = agentUrl, proxmoxAccessToken = token }) payload@(AgentRequest { getAgentRequestVMID = vmid }) = do
