@@ -22,3 +22,9 @@ instance ToJSON DeploymentData where
     , "vms" .= getDeploymentVMs
     , "networks" .= getDeploymentNetworks
     ]
+
+instance FromJSON DeploymentData where
+  parseJSON = withObject "DeploymentData" $ \v -> DeploymentData
+    <$> v .: "networkMap"
+    <*> v .: "vms"
+    <*> v .: "networks"
