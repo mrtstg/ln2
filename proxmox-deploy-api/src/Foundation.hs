@@ -58,7 +58,7 @@ MachineTemplate
 MachineDeployment
   Id String
   userId Int default=0
-  status String default='created'
+  status String default='queued'
   payload ByteString
   data ByteString
   deriving Show
