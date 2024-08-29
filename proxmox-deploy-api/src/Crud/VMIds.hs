@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Crud.VMIds
   ( reserveVMIds
+  , reserveVMIds'
   , suggestVMIds
   , freeVMIds
   ) where
@@ -34,6 +35,14 @@ freeVMIds :: [Int] -> Handler ()
 freeVMIds vmIds = runDB $ do
   deleteWhere [TakenDisplayVmid <-. vmIds]
   deleteWhere [ReservedMachineNumber <-. vmIds]
+
+-- simplified function that takes ids by itself
+reserveVMIds' :: ProxmoxConfiguration -> Text -> Int -> Handler (Either String [Int])
+reserveVMIds' conf idComment amount = do
+  vmIds' <- suggestVMIds conf
+  case vmIds' of
+    (Left e)      -> (pure . Left) e
+    (Right vmIds) -> reserveVMIds idComment vmIds amount
 
 reserveVMIds :: Text -> [Int] -> Int -> Handler (Either String [Int])
 reserveVMIds idComment ids amount = let
