@@ -16,6 +16,7 @@ data DeploymentStatus =
   | CreateError
   | Deleting
   | DeleteError
+  | Deleted
   deriving (Eq, Enum)
 
 instance Show DeploymentStatus where
@@ -25,6 +26,7 @@ instance Show DeploymentStatus where
   show CreateError = "createError"
   show Deleting    = "deleting"
   show DeleteError = "deleteError"
+  show Deleted     = "deleted"
 
 instance ToJSON DeploymentStatus where
   toJSON Queued      = String "queued"
@@ -33,6 +35,7 @@ instance ToJSON DeploymentStatus where
   toJSON CreateError = String "createError"
   toJSON Deleting    = String "deleting"
   toJSON DeleteError = String "deleteError"
+  toJSON Deleted     = String "deleted"
 
 instance FromJSON DeploymentStatus where
   parseJSON = withText "DeploymentStatus" $ \case
@@ -42,6 +45,7 @@ instance FromJSON DeploymentStatus where
     "createError" -> pure CreateError
     "deleting" -> pure Deleting
     "deleteError" -> pure DeleteError
+    "deleted" -> pure Deleted
     _ -> error "Invalid type"
 
 deploymentStatusFromString :: (ToString a) => a -> Maybe DeploymentStatus
@@ -53,4 +57,5 @@ deploymentStatusFromString = f . toString where
     "createError" -> pure CreateError
     "deleting" -> pure Deleting
     "deleteError" -> pure DeleteError
+    "deleted" -> pure Deleted
     _ -> Nothing
