@@ -5,7 +5,7 @@ cabal-version: 2.2
 -- see: https://github.com/sol/hpack
 
 name:           ln2-proxmox-api
-version:        0.1.1.1
+version:        0.1.1.2
 description:    Please see the README on GitHub at <https://github.com/githubuser/ln2-proxmox-api#readme>
 homepage:       https://github.com/githubuser/ln2-proxmox-api#readme
 bug-reports:    https://github.com/githubuser/ln2-proxmox-api/issues
@@ -30,6 +30,9 @@ library
       Api.Proxmox.SDNNetwork
       Api.Proxmox.SDNSubnet
       Api.Proxmox.VM
+      Data.Models.DeploymentRequest
+      Data.Models.DeploymentResponse
+      Data.Models.DeploymentStatus
       Data.Models.Proxmox.Agent
       Data.Models.Proxmox.API.SDNNetwork
       Data.Models.Proxmox.API.SDNSubnet
@@ -61,6 +64,7 @@ library
     , ln2-common
     , network ==3.1.4.0
     , text >=2 && <2.1
+    , tostring ==0.2.1.1
     , transformers ==0.5.6.2
     , yesod-core ==1.6.24.5
   default-language: Haskell2010
@@ -87,6 +91,7 @@ test-suite ln2-proxmox-api-test
     , ln2-proxmox-api
     , network ==3.1.4.0
     , text >=2 && <2.1
+    , tostring ==0.2.1.1
     , transformers ==0.5.6.2
     , yesod-core ==1.6.24.5
   default-language: Haskell2010
