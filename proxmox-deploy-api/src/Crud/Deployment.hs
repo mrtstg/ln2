@@ -11,6 +11,7 @@ module Crud.Deployment
   , generateTemplatesMap
   ) where
 
+import           Control.Monad.Trans.Reader
 import           Data.Aeson
 import qualified Data.ByteString                    as BS
 import           Data.ByteString.Lazy               (fromStrict)
@@ -31,8 +32,6 @@ import           Utils.Validate
 import           Yesod.Core
 import           Yesod.Persist
 
-type OptionalDeploymentId = Maybe String
-
 data DeploymentCreateRequest = DeploymentCreateRequest String Int DeployRequest
 
 instance FromJSON DeploymentCreateRequest where
@@ -41,16 +40,14 @@ instance FromJSON DeploymentCreateRequest where
     <*> v .: "userId"
     <*> v .: "data"
 
-deploymentErrorLog :: OptionalDeploymentId -> Text -> Handler ()
-deploymentErrorLog Nothing message = $logError message
-deploymentErrorLog (Just deploymentId) message = $logError ("Deployment " <> T.pack deploymentId <> ": " <> message)
-
--- unified wrapper for either list
-deploymentErrorLog' :: OptionalDeploymentId -> Text -> [Either String a] -> Handler [String]
-deploymentErrorLog' depId comment errors' = do
+deploymentErrorLog :: (MonadIO m, MonadLogger m) => Text -> [Either String a] -> DeployM m [String]
+deploymentErrorLog comment errors' = do
+  DeployEnv { .. } <- ask
   let errors = (map (fromLeft "") . filter isLeft) errors'
-  deploymentErrorLog depId (comment <> ": " <> (T.pack . show) errors)
-  pure errors
+  _ <- case deploymentId of
+    Nothing -> $logError (comment <> ": " <> (T.pack . show) errors)
+    (Just did) -> $logError (T.pack did <> ": " <> comment <> ": " <> (T.pack . show) errors)
+  return errors
 
 generateTemplatesMap :: [DeployVM] -> Handler (Either String TemplatesMap)
 generateTemplatesMap = helper M.empty where
