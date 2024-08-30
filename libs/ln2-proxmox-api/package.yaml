@@ -1,5 +1,5 @@
 name:                ln2-proxmox-api
-version:             0.1.1.1
+version:             0.1.1.2
 github:              "githubuser/ln2-proxmox-api"
 license:             BSD-3-Clause
 author:              "Author name here"
@@ -30,6 +30,7 @@ dependencies:
 - http-types == 0.12.3
 - http-conduit == 2.3.8.1
 - transformers == 0.5.6.2
+- tostring == 0.2.1.1
 - ln2-common
 
 ghc-options:
