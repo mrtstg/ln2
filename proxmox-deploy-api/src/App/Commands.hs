@@ -99,6 +99,7 @@ runServerCommand port = do
                   let app = App postgresPool endpoints rabbitConn proxmoxConf devEnabled
                   () <- declareSDN proxmoxConf
                   _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
+                  _ <- prepareRabbitQuery rabbitConn
                   warp port app
 
 runCommand :: AppOpts -> IO ()
