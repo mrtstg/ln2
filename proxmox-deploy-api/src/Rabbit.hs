@@ -13,6 +13,7 @@ import           Data.Models.DeploymentData
 import           Data.Models.DeploymentRequest
 import           Data.Models.DeploymentResponse
 import qualified Data.Models.DeploymentStatus   as S
+import           Data.Models.Proxmox.Deploy.VM
 import           Database.Persist
 import           Database.Persist.Postgresql
 import           Foundation
@@ -56,8 +57,21 @@ rabbitResultConsumer App { .. } (msg, env) = let
       let deploymentFilter = [ MachineDeploymentId ==. MachineDeploymentKey getDeploymentResponseId ]
       _ <- case getDeploymentResponseStatus of
         S.Deleted -> do
-          -- TODO: clearing of vmids and displays
-          runDB $ deleteWhere deploymentFilter
+          deployment' <- runDB $ selectFirst deploymentFilter []
+          case deployment' of
+            Nothing -> do
+              putStrLn $ "Deployment " <> getDeploymentResponseId <> " not found"
+            (Just (Entity _ (MachineDeployment { .. }))) -> do
+              case (eitherDecode (BL.fromStrict machineDeploymentData) :: Either String DeploymentData) of
+                (Left e) -> do
+                  putStrLn $ "Deployment " <> getDeploymentResponseId <> " failed to decode data: " <> e
+                  runDB $ updateWhere deploymentFilter [ MachineDeploymentStatus =. show S.DeleteError ]
+                (Right (DeploymentData { .. })) -> do
+                  let vmIds = map getDeployVMID' getDeploymentVMs
+                  runDB $ do
+                    deleteWhere [TakenDisplayVmid <-. vmIds]
+                    deleteWhere [ReservedMachineNumber <-. vmIds]
+                    deleteWhere deploymentFilter
         otherStatus -> do
           runDB $ updateWhere
             deploymentFilter
