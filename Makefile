@@ -1,4 +1,4 @@
-HS_SERVICES=auth-service db-gen-api docker-master-server main-site md-render-api proxmox-fs-agent proxmox-deploy-api
+HS_SERVICES=auth-service db-gen-api docker-master-server main-site md-render-api proxmox-fs-agent proxmox-deploy-api proxmox-deploy-agent
 IMAGES_LIST=ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api ln2-proxmox-deploy-api
 COMPOSE_BIN=docker compose
 ENV_FILE=.env

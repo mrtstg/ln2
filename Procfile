@@ -5,3 +5,4 @@ main-site: make -C main-site run
 md-render-api: make -C md-render-api run
 db-gen-api: make -C db-gen-api run
 proxmox-deploy-api: make -C proxmox-deploy-api run
+proxmox-deploy-agent: make -C proxmox-deploy-agent run
