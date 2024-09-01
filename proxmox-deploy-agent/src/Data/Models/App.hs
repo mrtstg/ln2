@@ -7,8 +7,8 @@ import           Data.Models.Proxmox.Configuration
 import           Network.AMQP                      (Connection)
 
 data App = App
-  { endpoints           :: !EndpointsConfiguration
-  , rabbitConnection    :: !Connection
-  , proxmoxConfigration :: !ProxmoxConfiguration
-  , devEnabled          :: !Bool
+  { endpoints            :: !EndpointsConfiguration
+  , rabbitConnection     :: !Connection
+  , proxmoxConfiguration :: !ProxmoxConfiguration
+  , devEnabled           :: !Bool
   }
