@@ -66,7 +66,8 @@ ioLog msg errors' = do
 rabbitRequestConsumer' :: App -> (Message, Envelope) -> IO ()
 rabbitRequestConsumer' App { .. } (msg, env) = let
   sendStatus :: DeploymentRequest -> DeploymentStatus -> IO ()
-  sendStatus (DeploymentRequest { getDeploymentRequestId = did }) status =
+  sendStatus (DeploymentRequest { getDeploymentRequestId = did }) status = do
+    putStrLn $ "Deployment " <> did <> ": " <> show status
     putDeploymentResponse rabbitConnection (DeploymentResponse
       { getDeploymentResponseStatus = status
       , getDeploymentResponseId = did
