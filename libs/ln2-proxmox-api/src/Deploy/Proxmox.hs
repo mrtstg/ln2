@@ -9,6 +9,8 @@ module Deploy.Proxmox
   , deployNetworks
   , linkVMData
   , TemplatesMap
+  , standPresent
+  , standNotPresent
   ) where
 
 import           Api.Proxmox.Agent
@@ -24,6 +26,8 @@ import           Data.Functor                       ((<&>))
 import qualified Data.Map                           as M
 import           Data.Maybe
 import           Data.Models.Proxmox.Agent
+import           Data.Models.Proxmox.API.SDNNetwork
+import           Data.Models.Proxmox.API.VM
 import           Data.Models.Proxmox.Configuration
 import           Data.Models.Proxmox.Deploy.Network
 import           Data.Models.Proxmox.Deploy.VM
@@ -44,6 +48,51 @@ type DeployM m = ReaderT (ProxmoxDeployEnv m) m
 
 delayWrapper :: (MonadIO m) => Maybe Int -> m a -> m a
 delayWrapper delay' v = liftIO (threadDelay (fromMaybe 1000000 delay')) >>= const v
+
+standNotPresent :: (MonadIO m) => NetworkNameReplaceMap -> [DeployVM'] -> DeployM m (Either String ())
+standNotPresent networksMap vmData = do
+  DeployEnv { .. } <- ask
+  let vmIds = map getDeployVMID' vmData
+  vms' <- (liftIO . retryIOEither 5 1000000) $ getNodeVMs' proxmoxConfiguration
+  case vms' of
+    (Left e) -> return (Left e)
+    (Right vms) -> do
+      let nodeVMIds = map getProxmoxVMId vms
+      if any (`elem` nodeVMIds) vmIds then
+        return (Left "Some VMs is still presented")
+      else do
+        let networkNames = (map snd . M.toList) networksMap
+        networks' <- (liftIO . retryIOEither 5 1000000) $ getSDNNetworks' proxmoxConfiguration
+        case networks' of
+          (Left e) -> return (Left e)
+          (Right networks) -> do
+            let networkNames' = map getSDNNetworkName networks
+            if any (`elem` networkNames') networkNames then do
+              return (Left "Some networks is still presented")
+            else return (Right ())
+
+standPresent :: (MonadIO m) => NetworkNameReplaceMap -> [DeployVM'] -> DeployM m (Either String ())
+standPresent networksMap vmData = do
+  DeployEnv { .. } <- ask
+  let networkNames = (map snd . M.toList) networksMap
+  networks' <- (liftIO . retryIOEither 5 1000000) $ getSDNNetworks' proxmoxConfiguration
+  case networks' of
+    (Left e) -> return (Left e)
+    (Right networks) -> do
+      let networkNames' = map getSDNNetworkName networks
+      if any (`notElem` networkNames') networkNames then do
+        return (Left "Some networks is not created")
+      else do
+        let vmIds = map getDeployVMID' vmData
+        vms' <- (liftIO . retryIOEither 5 1000000) $ getNodeVMs' proxmoxConfiguration
+        case vms' of
+          (Left e) -> return (Left e)
+          (Right vms) -> do
+            let nodeVMIds = map getProxmoxVMId vms
+            if any (`notElem` nodeVMIds) vmIds then
+              return (Left "Some VMs is not created")
+            else
+              return (Right ())
 
 destroyNetworks :: (MonadIO m) => NetworkNameReplaceMap -> DeployM m (Either [String] ())
 destroyNetworks networkMap = do
