@@ -19,9 +19,14 @@ build-frontend: ./static/js ./static/css
 	make -C frontend/course-task-edit-form build
 	make -C frontend/course-members-form build
 
-build-bin:
+build-bin: $(HS_SERVICES)
 	@for n in $(HS_SERVICES); do \
 		(cd $$n && echo "Building $$n" && stack build); \
+	done
+
+install-deps: $(HS_SERVICES)
+	@for n in $(HS_SERVICES); do \
+		(cd $$n && stack install --only-dependencies); \
 	done
 
 build-images:
