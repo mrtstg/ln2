@@ -126,5 +126,5 @@ rabbitRequestConsumer' App { .. } (msg, env) = let
         "destroy" -> do
           () <- sendStatus r S.Deleting
           _ <- runReaderT (destroyWrapper r) deployEnv
-          return ()
+          ackEnv env
         otherAction -> putStrLn $ "Unknown action: " <> otherAction
