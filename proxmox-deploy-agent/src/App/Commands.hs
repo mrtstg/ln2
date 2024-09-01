@@ -45,8 +45,8 @@ runServerCommand = do
                 ((T.pack . getRConPass) rabbitCreds)
               devEnabled <- isDevEnabled
               let app = App endpoints rabbitConn proxmoxConf devEnabled
-              _ <- prepareRabbitConsumer rabbitConn (rabbitRequestConsumer app)
               _ <- prepareRabbitQuery rabbitConn
+              _ <- prepareRabbitConsumer rabbitConn (rabbitRequestConsumer app)
               forever $ threadDelay 1000000
 
 runCommand :: AppOpts -> IO ()
