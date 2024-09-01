@@ -1,6 +1,5 @@
 **/.stack-work
 pgdata
-Makefile
 Procfile
 .env
 sample.env
