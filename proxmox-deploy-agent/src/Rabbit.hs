@@ -74,38 +74,30 @@ rabbitRequestConsumer' App { .. } (msg, env) = let
       })
   deployWrapper :: DeploymentRequest -> DeployM IO ()
   deployWrapper r@(DeploymentRequest { .. }) = do
-    networkRes <- deployNetworks getDeploymentRequestNetworks getDeploymentRequestNetworkMap
-    case networkRes of
-      (Left _) -> do
-        () <- liftIO $ sendStatus r S.CreateError
+    DeployEnv { errorLog = errorLog } <- ask
+    _ <- deployNetworks getDeploymentRequestNetworks getDeploymentRequestNetworkMap
+    _ <- deployVMs getDeploymentRequestNetworkMap getDeploymentRequestVMs
+    standPresent' <- standPresent getDeploymentRequestNetworkMap getDeploymentRequestVMs
+    case standPresent' of
+      (Left e) -> do
         _ <- destroyNetworks getDeploymentRequestNetworkMap
-        return ()
+        _ <- destroyVMs getDeploymentRequestVMs
+        _ <- errorLog "Deploy error" [Left e]
+        liftIO $ sendStatus r S.CreateError
       (Right _) -> do
-        vmRes <- deployVMs getDeploymentRequestNetworkMap getDeploymentRequestVMs
-        case vmRes of
-          (Left _) -> do
-            () <- liftIO $ sendStatus r S.CreateError
-            _ <- destroyVMs getDeploymentRequestVMs
-            return ()
-          (Right _) -> do
-            () <- liftIO $ sendStatus r S.Created
-            return ()
+        liftIO $ sendStatus r S.Created
   destroyWrapper :: DeploymentRequest -> DeployM IO ()
   destroyWrapper r@(DeploymentRequest { .. }) = do
-    vmRes <- destroyVMs getDeploymentRequestVMs
-    case vmRes of
-      (Left _) -> do
-        () <- liftIO $ sendStatus r S.DeleteError
-        return ()
+    DeployEnv { errorLog = errorLog } <- ask
+    _ <- destroyVMs getDeploymentRequestVMs
+    _ <- destroyNetworks getDeploymentRequestNetworkMap
+    standNotPresent' <- standNotPresent getDeploymentRequestNetworkMap getDeploymentRequestVMs
+    case standNotPresent' of
+      (Left e) -> do
+        _ <- errorLog "Delete error" [Left e]
+        liftIO $ sendStatus r S.DeleteError
       (Right _) -> do
-        networkRes <- destroyNetworks getDeploymentRequestNetworkMap
-        case networkRes of
-          (Left _) -> do
-            () <- liftIO $ sendStatus r S.DeleteError
-            return ()
-          (Right _) -> do
-            () <- liftIO $ sendStatus r S.Deleted
-            return ()
+        liftIO $ sendStatus r S.Deleted
   in do
   let msgBody' = msgBody msg
   let msgParseRes = eitherDecode msgBody'
