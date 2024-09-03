@@ -3,3 +3,4 @@ RUN apt-get update && apt-get install make -y
 WORKDIR /ln2
 COPY . .
 RUN make install-deps
+COPY libs /usr/src/libs
