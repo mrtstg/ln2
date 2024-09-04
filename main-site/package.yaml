@@ -50,6 +50,7 @@ dependencies:
 - cassava == 0.5.3.0
 - vector == 0.13.1.0
 - ln2-common
+- ln2-proxmox-api
 
 ghc-options:
 - -Wall

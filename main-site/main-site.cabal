@@ -52,6 +52,7 @@ library
       Handlers.CourseSolves
       Handlers.CourseTask
       Handlers.CourseTaskEdit
+      Handlers.Deployments
       Handlers.ImportUser
       Handlers.Index
       Handlers.Login
@@ -61,6 +62,7 @@ library
       Handlers.UserApi
       Handlers.Users
       Handlers.Utils
+      Handlers.VMConsole
       Rabbit
       Utils
   other-modules:
@@ -83,6 +85,7 @@ library
     , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , ln2-common
+    , ln2-proxmox-api
     , load-env ==0.2.1.0
     , monad-logger ==0.3.40
     , network ==3.1.4.0
@@ -125,6 +128,7 @@ executable main-site-exe
     , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , ln2-common
+    , ln2-proxmox-api
     , load-env ==0.2.1.0
     , main-site
     , monad-logger ==0.3.40
@@ -171,6 +175,7 @@ test-suite main-site-test
     , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , ln2-common
+    , ln2-proxmox-api
     , load-env ==0.2.1.0
     , main-site
     , monad-logger ==0.3.40
