@@ -1,13 +1,36 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Api
   ( commonHttpErrorHandler
   , errorTextFromStatus
+  , ApiPageWrapper(..)
   ) where
 
 import           Control.Exception
 import           Control.Monad.Trans.Except
+import           Data.Aeson
 import qualified Data.ByteString.Char8      as BS
 import           Network.HTTP.Conduit
 import           Network.HTTP.Types.Status  (Status (..))
+
+data ApiPageWrapper t = ApiPageWrapper
+  { getPageWrapperSize    :: !Int
+  , getPageWrapperObjects :: !t
+  , getPageWrapperTotal   :: !Int
+  }
+
+instance (ToJSON t) => ToJSON (ApiPageWrapper t) where
+  toJSON (ApiPageWrapper { .. }) = object
+    [ "total" .= getPageWrapperTotal
+    , "pageSize" .= getPageWrapperSize
+    , "objects" .= getPageWrapperObjects
+    ]
+
+instance (FromJSON t) => FromJSON (ApiPageWrapper t) where
+  parseJSON = withObject "ApiPageWrapper" $ \v -> ApiPageWrapper
+    <$> v .: "size"
+    <*> v .: "objects"
+    <*> v .: "total"
 
 errorTextFromStatus :: Status -> String
 errorTextFromStatus status = show (statusCode status) <> BS.unpack (statusMessage status)
