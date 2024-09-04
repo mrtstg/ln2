@@ -10,6 +10,8 @@ import           Control.Monad.Trans.Reader
 import           Crud.Deployment
 import           Crud.DisplayNumbers
 import           Crud.Network
+import           Crud.Template                      (TemplatePresentError (..),
+                                                     templatesPresented)
 import           Crud.VMIds
 import           Data.Aeson
 import           Data.ByteString.Lazy               (toStrict)
@@ -66,29 +68,41 @@ postDeploymentsR = do
                 (Left e) -> do
                   sendStatusJSON status500 $ object [ "error" .= T.pack e, "type" .= T.pack "template" ]
                 (Right templatesMap) -> do
-                  let displayArray = map (\(Entity _ TakenDisplay { .. }) -> (takenDisplayVmid, takenDisplayNumber)) displayPorts
-                  vmData' <- runReaderT (linkVMData templatesMap displayArray getDeployRequestVMs) (DeployEnv
-                    {errorLog=deploymentErrorLog, deploymentId=Just deploymentId, proxmoxConfiguration=proxmox}
-                    )
-                  case vmData' of
-                    (Left e) -> do
-                      () <- freeVMIds reservedVMIDs
-                      sendStatusJSON status500 $ object [ "error" .= T.pack e, "type" .= T.pack "link" ]
-                    (Right vmData) -> do
-                      let deploymentData = DeploymentData networkNamesMap vmData getDeployRequestNetworks
-                      let encodedDeploymentData = toStrict $ encode deploymentData
-                      let deploymentPayload = (toStrict . encode) $ (DeploymentPayload . map (\(Entity _ e) -> takenDisplayNumber e)) displayPorts
-                      _ <- runDB $ insertKey
-                        (MachineDeploymentKey deploymentId) $
-                        MachineDeployment uid (show S.Created) deploymentPayload encodedDeploymentData
-                      _ <- liftIO $ putDeploymentRequest rCon (DeploymentRequest
-                        { getDeploymentRequestVMs = vmData
-                        , getDeploymentRequestNetworks = getDeployRequestNetworks
-                        , getDeploymentRequestNetworkMap = networkNamesMap
-                        , getDeploymentRequestId = deploymentId
-                        , getDeploymentRequestAction = "deploy"
-                        })
-                      sendStatusJSON status200 $ object ["id" .= deploymentId]
+                  templatesPresented' <- liftIO $ templatesPresented proxmox templatesMap
+                  case templatesPresented' of
+                    (Left (TemplateIsNotPresent templateName)) -> sendStatusJSON status404 $ object
+                      [ "error" .= (T.pack "Template " <> templateName <> T.pack " is not presented")
+                      , "type" .= T.pack "templateNotFound"
+                      , "template" .= templateName
+                      ]
+                    (Left (TemplatePresentError otherError)) -> sendStatusJSON status500 $ object
+                      [ "error" .= T.pack otherError
+                      , "type" .= T.pack "other"
+                      ]
+                    (Right _) -> do
+                      let displayArray = map (\(Entity _ TakenDisplay { .. }) -> (takenDisplayVmid, takenDisplayNumber)) displayPorts
+                      vmData' <- runReaderT (linkVMData templatesMap displayArray getDeployRequestVMs) (DeployEnv
+                        {errorLog=deploymentErrorLog, deploymentId=Just deploymentId, proxmoxConfiguration=proxmox}
+                        )
+                      case vmData' of
+                        (Left e) -> do
+                          () <- freeVMIds reservedVMIDs
+                          sendStatusJSON status500 $ object [ "error" .= T.pack e, "type" .= T.pack "link" ]
+                        (Right vmData) -> do
+                          let deploymentData = DeploymentData networkNamesMap vmData getDeployRequestNetworks
+                          let encodedDeploymentData = toStrict $ encode deploymentData
+                          let deploymentPayload = (toStrict . encode) $ (DeploymentPayload . map (\(Entity _ e) -> takenDisplayNumber e)) displayPorts
+                          _ <- runDB $ insertKey
+                            (MachineDeploymentKey deploymentId) $
+                            MachineDeployment uid (show S.Created) deploymentPayload encodedDeploymentData
+                          _ <- liftIO $ putDeploymentRequest rCon (DeploymentRequest
+                            { getDeploymentRequestVMs = vmData
+                            , getDeploymentRequestNetworks = getDeployRequestNetworks
+                            , getDeploymentRequestNetworkMap = networkNamesMap
+                            , getDeploymentRequestId = deploymentId
+                            , getDeploymentRequestAction = "deploy"
+                            })
+                          sendStatusJSON status200 $ object ["id" .= deploymentId]
 
 deleteDeploymentR :: String -> Handler Value
 deleteDeploymentR deploymentId' = do
