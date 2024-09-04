@@ -3,21 +3,21 @@
 {-# LANGUAGE TemplateHaskell   #-}
 module Handlers.AuthR (getAuthR) where
 
-import           Control.Monad                 (when)
-import           Crud.DisplayNumbers           (portToDisplayNumber)
+import           Control.Monad                  (when)
+import           Crud.DisplayNumbers            (portToDisplayNumber)
 import           Data.Aeson
-import qualified Data.ByteString.Char8         as BS
-import           Data.ByteString.Lazy          (fromStrict)
-import           Data.Models.DeploymentPayload
+import qualified Data.ByteString.Char8          as BS
+import           Data.ByteString.Lazy           (fromStrict)
+import           Data.Models.Deployment.Payload
 import           Data.Models.User
-import qualified Data.Text                     as T
+import qualified Data.Text                      as T
 import           Database.Persist
 import           Foundation
 import           Handlers.Auth
-import           Network.HTTP.Types            (status204, status401)
-import           Text.Read                     (readMaybe)
-import           Utils.Auth                    (adminRoleGranted,
-                                                getUserAdminCourses')
+import           Network.HTTP.Types             (status204, status401)
+import           Text.Read                      (readMaybe)
+import           Utils.Auth                     (adminRoleGranted,
+                                                 getUserAdminCourses')
 import           Yesod.Core
 import           Yesod.Persist
 
