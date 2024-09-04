@@ -58,6 +58,8 @@ MachineTemplate
 MachineDeployment
   Id String
   userId Int default=0
+  courseId String default=''
+  taskId Int default=0
   status String default='queued'
   payload ByteString
   data ByteString
@@ -71,12 +73,10 @@ mkYesodData
 /templates TemplatesR GET POST
 /templates/#Int TemplateR PATCH DELETE
 /auth AuthR GET
+/deployments/user/#Int UserDeploymentsR GET
 /deployment DeploymentsR POST
 /deployment/#String DeploymentR DELETE
 |]
-
--- /templates TemplatesR GET POST
--- /templates/#MachineTemplateProxmoxId TemplateR PATCH DELETE
 
 instance Yesod App where
   makeSessionBackend _ = return Nothing
