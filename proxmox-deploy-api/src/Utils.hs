@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Utils (toMachineDeploymentRead) where
 
+import           Crud.DisplayNumbers           (displayNumberToPort)
 import           Data.Aeson
 import           Data.ByteString.Lazy          (fromStrict)
 import qualified Data.Map                      as M
@@ -15,7 +16,7 @@ import           Foundation
 toMachineDeploymentRead :: MachineDeployment -> Either String Deployment
 toMachineDeploymentRead (MachineDeployment { .. }) = let
   f :: DeployVM' -> M.Map Text Int -> M.Map Text Int
-  f (TemplateDeployVM' { getDeployVMTemplateData' = TemplateDeployVM { .. },.. }) = M.insert getDeployVMName getDeployVMDisplay'
+  f (TemplateDeployVM' { getDeployVMTemplateData' = TemplateDeployVM { .. },.. }) = M.insert getDeployVMName (displayNumberToPort getDeployVMDisplay')
   in do
   let status' = deploymentStatusFromString machineDeploymentStatus
   case status' of
