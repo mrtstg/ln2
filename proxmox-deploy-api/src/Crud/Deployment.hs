@@ -17,8 +17,8 @@ import qualified Data.ByteString                    as BS
 import           Data.ByteString.Lazy               (fromStrict)
 import           Data.Either
 import qualified Data.Map                           as M
-import           Data.Models.DeploymentData
-import           Data.Models.DeploymentPayload
+import           Data.Models.Deployment.Data
+import           Data.Models.Deployment.Payload
 import           Data.Models.DeploymentStatus
 import           Data.Models.Proxmox.Deploy.Request
 import           Data.Models.Proxmox.Deploy.VM

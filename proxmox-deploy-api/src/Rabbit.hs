@@ -9,7 +9,7 @@ module Rabbit
 
 import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8     as BL
-import           Data.Models.DeploymentData
+import           Data.Models.Deployment.Data
 import           Data.Models.DeploymentRequest
 import           Data.Models.DeploymentResponse
 import qualified Data.Models.DeploymentStatus   as S

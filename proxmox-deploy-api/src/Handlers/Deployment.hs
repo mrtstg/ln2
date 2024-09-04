@@ -16,8 +16,8 @@ import           Crud.VMIds
 import           Data.Aeson
 import           Data.ByteString.Lazy               (toStrict)
 import           Data.Functor                       ((<&>))
-import           Data.Models.DeploymentData
-import           Data.Models.DeploymentPayload
+import           Data.Models.Deployment.Data
+import           Data.Models.Deployment.Payload
 import           Data.Models.DeploymentRequest
 import qualified Data.Models.DeploymentStatus       as S
 import           Data.Models.Proxmox.Deploy.Request (DeployRequest (..))

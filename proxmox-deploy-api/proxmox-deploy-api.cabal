@@ -32,8 +32,6 @@ library
       Crud.Network
       Crud.Template
       Crud.VMIds
-      Data.Models.DeploymentData
-      Data.Models.DeploymentPayload
       Data.Models.Proxmox.Template
       Foundation
       Handlers.AuthR
