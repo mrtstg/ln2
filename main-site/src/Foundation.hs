@@ -90,6 +90,8 @@ mkYesodData
 /task/#CourseId/#CourseTaskId/edit CourseTaskEditR GET
 /users/admin EditUsersR GET
 /users/import ImportUserR GET POST
+/vm/#Int/console VMConsoleR GET
+/deployments DeploymentsR GET
 /api/user UserApiCreateR POST
 /api/user/#Int UserApiWrapperR DELETE PATCH
 /api/courses ApiCoursesR GET POST
@@ -124,7 +126,7 @@ instance Yesod App where
 |]
   errorHandler e = defaultErrorHandler e
   defaultLayout widget = do
-    App { endpointsConfiguration = endpoints } <- getYesod
+    App { endpointsConfiguration = endpoints@(EndpointsConfiguration { getVMDeployAPIUrl = deployApi }) } <- getYesod
     d' <- checkAuth endpoints
     pc <- widgetToPageContent widget
     withUrlRenderer [hamlet|
@@ -156,6 +158,9 @@ $doctype 5
           $if isJust d'
             <a href=@{CoursesR} .navbar-item>
               Мои курсы
+            $if isJust deployApi
+              <a href=@{DeploymentsR} .navbar-item>
+                Развертывания
 
         <div .navbar-end>
           $case d'

@@ -24,6 +24,7 @@ import           Handlers.Courses
 import           Handlers.CourseSolves
 import           Handlers.CourseTask
 import           Handlers.CourseTaskEdit
+import           Handlers.Deployments
 import           Handlers.ImportUser
 import           Handlers.Index
 import           Handlers.Login
@@ -32,6 +33,7 @@ import           Handlers.QueryCourse
 import           Handlers.TaskSolves
 import           Handlers.UserApi
 import           Handlers.Users
+import           Handlers.VMConsole
 import           Network.AMQP                      (openConnection')
 import           Network.Socket                    (PortNumber)
 import           Network.Wai.Handler.Warp
