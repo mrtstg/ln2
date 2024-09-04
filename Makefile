@@ -1,5 +1,6 @@
 HS_SERVICES=auth-service db-gen-api docker-master-server main-site md-render-api proxmox-fs-agent proxmox-deploy-api proxmox-deploy-agent
 IMAGES_LIST=ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api ln2-proxmox-deploy-api ln2-proxmox-deploy-agent
+FRONTEND_PROJECTS=admin-course-form admin-users-form course-task-form users-solves-form course-create-form course-task-edit-form course-members-form novnc-connector
 COMPOSE_BIN=docker compose
 ENV_FILE=.env
 DOCKER_ENV_FILE=docker.env
@@ -11,13 +12,9 @@ build-websockify: ./deployment/websockify/Dockerfile
 
 build-frontend: ./static/js ./static/css
 	make -C frontend build
-	make -C frontend/admin-course-form build
-	make -C frontend/admin-users-form build
-	make -C frontend/course-task-form build
-	make -C frontend/users-solves-form build
-	make -C frontend/course-create-form build
-	make -C frontend/course-task-edit-form build
-	make -C frontend/course-members-form build
+	@for n in $(FRONTEND_PROJECTS); do \
+		(make -C frontend/$$n build); \
+	done
 
 build-bin: $(HS_SERVICES)
 	@for n in $(HS_SERVICES); do \
