@@ -29,6 +29,7 @@ import           Handlers.AuthR
 import           Handlers.Deployment
 import           Handlers.MachineID
 import           Handlers.Templates
+import           Handlers.UserDeployments
 import           Network.AMQP                       (openConnection')
 import           Network.Socket                     (PortNumber)
 import           Rabbit
