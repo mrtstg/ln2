@@ -38,8 +38,10 @@ library
       Handlers.Deployment
       Handlers.MachineID
       Handlers.Templates
+      Handlers.UserDeployments
       Handlers.Utils
       Rabbit
+      Utils
   other-modules:
       Paths_proxmox_deploy_api
   autogen-modules:
