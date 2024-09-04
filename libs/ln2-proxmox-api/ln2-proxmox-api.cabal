@@ -30,6 +30,9 @@ library
       Api.Proxmox.SDNNetwork
       Api.Proxmox.SDNSubnet
       Api.Proxmox.VM
+      Data.Models.Deployment
+      Data.Models.Deployment.Data
+      Data.Models.Deployment.Payload
       Data.Models.DeploymentRequest
       Data.Models.DeploymentResponse
       Data.Models.DeploymentStatus

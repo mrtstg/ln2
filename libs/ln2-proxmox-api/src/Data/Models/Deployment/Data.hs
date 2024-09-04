@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Data.Models.DeploymentData (
+module Data.Models.Deployment.Data (
   DeploymentData(..)
   ) where
 
