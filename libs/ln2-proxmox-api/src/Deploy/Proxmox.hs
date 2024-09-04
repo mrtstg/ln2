@@ -138,7 +138,7 @@ deployVMs networks vmData = do
     if any isLeft patchRes then do
       errorLog "Failed to patch VMs" patchRes <&> Left
     else do
-      assignRes <- mapM (liftIO . delayWrapper (Just 500000) . setVMDisplay' proxmoxConfiguration . uncurry AgentRequest . (\e -> (getDeployVMDisplay e, getDeployVMID' e))) vmData
+      assignRes <- mapM (liftIO . delayWrapper (Just 500000) . setVMDisplay' proxmoxConfiguration . uncurry AgentRequest . (\e -> (getDeployVMDisplay' e, getDeployVMID' e))) vmData
       if any isLeft assignRes then do
         errorLog "Failed to assign VM port" assignRes <&> Left
       else do
@@ -180,7 +180,7 @@ linkVMData
             getDeployVMNode' = nodeName,
             getDeployVMID' = vmid,
             getDeployVMCloneID' = templateId,
-            getDeployVMDisplay = displayNumber
+            getDeployVMDisplay' = displayNumber
             }
           helper nodeName (deployVM':acc) vms' displays
     helper _ _ _ [] = pure (Left "Not enough displays")

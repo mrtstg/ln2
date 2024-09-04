@@ -22,7 +22,7 @@ type NodeName = Text
 data DeployVM' = TemplateDeployVM'
   { getDeployVMID'           :: !VMID
   , getDeployVMCloneID'      :: !VMID
-  , getDeployVMDisplay       :: !Int
+  , getDeployVMDisplay'      :: !Int
   , getDeployVMNode'         :: !NodeName
   , getDeployVMTemplateData' :: !DeployVM
   }
@@ -54,7 +54,7 @@ instance ToJSON DeployVM' where
   toJSON (TemplateDeployVM' { .. }) = object
     [ "vmid" .= getDeployVMID'
     , "cloneid" .= getDeployVMCloneID'
-    , "display" .= getDeployVMDisplay
+    , "display" .= getDeployVMDisplay'
     , "node" .= getDeployVMNode'
     , "data" .= getDeployVMTemplateData'
     , "type" .= String "template"
