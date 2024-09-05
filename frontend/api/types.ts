@@ -1,30 +1,13 @@
-import * as CheckStage from "./check_stage.ts"
+import * as CheckStage from "./checkStage.ts"
+import * as U from "./types/user.ts"
 
 export type ContainerSummary = {
   image: string,
   name: string
 }
 
-export type RoleDetails = {
-  name: string,
-  displayName: string
-}
-
-export type UserDetails = {
-  id: number,
-  name: string,
-  login: string,
-  roles: [RoleDetails]
-}
-
-export type UserQuery = {
-  total: number,
-  pageSize: number,
-  objects: [UserDetails]
-}
-
 export type CommonCourseDetails = {
-  author: UserDetails | null,
+  author: U.UserDetails | null,
   authorId: number,
   createdAt: Date,
   id: string,
@@ -93,18 +76,6 @@ export type TaskResult = {
 
 export type TaskCreateResponse = {
   uuid: string
-}
-
-export type UserCreate = {
-  name: string,
-  password: string,
-  login: string
-}
-
-export type UserPatch = {
-  name?: string | null,
-  password?: string | null,
-  login?: string | null
 }
 
 export type CourseTaskPatch = {
