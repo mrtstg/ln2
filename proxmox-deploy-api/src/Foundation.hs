@@ -73,7 +73,6 @@ mkYesodData
 /templates TemplatesR GET POST
 /templates/#Int TemplateR PATCH DELETE
 /auth AuthR GET
-/api/deployments UserDeploymentsApiR GET
 /deployments/user/#Int UserDeploymentsR GET
 /deployment DeploymentsR POST
 /deployment/#String DeploymentR DELETE

@@ -1,26 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
 module Handlers.UserDeployments
   ( getUserDeploymentsR
-  , getUserDeploymentsApiR
   ) where
 
-import           Data.Models.User
 import qualified Data.Text          as T
 import           Database.Persist
 import           Foundation
-import           Handlers.Auth
 import           Handlers.Params
 import           Network.HTTP.Types
 import           Utils              (toMachineDeploymentRead)
 import           Yesod.Core
 import           Yesod.Persist
-
-getUserDeploymentsApiR :: Handler Value
-getUserDeploymentsApiR = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiAuth endpoints
-  getUserDeploymentsR getUserDetailsId
 
 getUserDeploymentsR :: Int -> Handler Value
 getUserDeploymentsR userId = do
