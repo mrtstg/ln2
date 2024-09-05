@@ -1,5 +1,6 @@
 <script lang="ts">
   import NoVnc from "../../components/vnc/NoVNC.svelte";
+  import { generateVNCLink } from "../../api/utils/vnc"
 
   //@ts-ignore
   const proto = WS_PROTO;
@@ -24,7 +25,7 @@
 
 {#if vmID != null}
   {#if isDev}
-    { JSON.stringify(proto + "://" + url + "/vm/" + vmID + "/vnc") }
+    { JSON.stringify(proto + "://" + url + generateVNCLink(vmID)) }
   {/if}
-  <NoVnc url={proto + "://" + url + "/vm/" + vmID + "/vnc"}/>
+  <NoVnc url={proto + "://" + url + generateVNCLink(vmID)}/>
 {/if}
