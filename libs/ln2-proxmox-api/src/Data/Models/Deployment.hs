@@ -11,11 +11,13 @@ import           Data.Models.DeploymentStatus
 import           Data.Text                      (Text)
 
 data Deployment = Deployment
-  { getDeploymentVMMap    :: !(M.Map Text Int)
-  , getDeploymentUserId   :: !Int
-  , getDeploymentCourseId :: !Text
-  , getDeploymentTaskId   :: !Int
-  , getDeploymentStatus   :: !DeploymentStatus
+  { getDeploymentVMMap      :: !(M.Map Text Int)
+  , getDeploymentUserId     :: !Int
+  , getDeploymentCourseId   :: !Text
+  , getDeploymentTaskId     :: !Int
+  , getDeploymentStatus     :: !DeploymentStatus
+  , getDeploymentCourseName :: !(Maybe Text)
+  , getDeploymentTaskName   :: !(Maybe Text)
   }
 
 instance FromJSON Deployment where
@@ -25,6 +27,8 @@ instance FromJSON Deployment where
     <*> v .: "courseId"
     <*> v .: "taskId"
     <*> v .: "status"
+    <*> v .: "courseName"
+    <*> v .: "taskName"
 
 instance ToJSON Deployment where
   toJSON (Deployment { .. }) = object
@@ -33,4 +37,6 @@ instance ToJSON Deployment where
     , "courseId" .= getDeploymentCourseId
     , "taskId" .= getDeploymentTaskId
     , "status" .= getDeploymentStatus
+    , "courseName" .= getDeploymentCourseName
+    , "taskName" .= getDeploymentTaskName
     ]
