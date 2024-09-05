@@ -1,5 +1,5 @@
 <script lang="ts">
-  import NoVnc from "./lib/NoVNC.svelte";
+  import NoVnc from "../../components/vnc/NoVNC.svelte";
 
   //@ts-ignore
   const proto = WS_PROTO;
