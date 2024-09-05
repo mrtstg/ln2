@@ -28,7 +28,7 @@ instance (ToJSON t) => ToJSON (ApiPageWrapper t) where
 
 instance (FromJSON t) => FromJSON (ApiPageWrapper t) where
   parseJSON = withObject "ApiPageWrapper" $ \v -> ApiPageWrapper
-    <$> v .: "size"
+    <$> v .: "pageSize"
     <*> v .: "objects"
     <*> v .: "total"
 
