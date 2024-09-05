@@ -5,7 +5,10 @@
   const proto = WS_PROTO;
 
   //@ts-ignore
-  const url = API_URL;
+  let url: string = API_URL;
+  if (url.length == 0) {
+    url = window.location.host
+  }
 
   //@ts-ignore
   const isDev = DEV_MODE === "1"
