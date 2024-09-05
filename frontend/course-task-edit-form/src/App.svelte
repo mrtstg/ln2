@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ApiClient } from "../../api/client"
-  import { processStageData, countStages, StageType, stageDataToCheckStage, stageTypeList, defaultCheckStageData } from "../../api/check_stage"
-  import type { CheckStage, StageData } from "../../api/check_stage";
+  import { processStageData, countStages, StageType, stageDataToCheckStage, stageTypeList, defaultCheckStageData } from "../../api/checkStage"
+  import type { CheckStage, StageData } from "../../api/checkStage";
   import type { CommonCourseDetails, CourseTaskDetails, ContainerSummary } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
   import CheckStageWidget from "../../components/CheckStage.svelte"
@@ -9,6 +9,7 @@
   import { taskPatchErrorToString } from "../../api/utils"
 
   // client declaration
+  //@ts-ignore
   const url = API_URL;
   const api = new ApiClient(url)
 
