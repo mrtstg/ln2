@@ -33,4 +33,6 @@ toMachineDeploymentRead (MachineDeployment { .. }) = let
             , getDeploymentTaskId = machineDeploymentTaskId
             , getDeploymentStatus = status
             , getDeploymentCourseId = T.pack machineDeploymentCourseId
+            , getDeploymentCourseName = Nothing
+            , getDeploymentTaskName = Nothing
             }
