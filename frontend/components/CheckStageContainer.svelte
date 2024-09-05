@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type CheckStage, stageTypeList, defaultCheckStageData } from "../api/check_stage"
+  import { type CheckStage, stageTypeList, defaultCheckStageData } from "../api/checkStage"
   import CheckStageWidget from "../components/CheckStage.svelte"
   export let stageStyle: string = ''
   export let stages: Array<CheckStage> = []

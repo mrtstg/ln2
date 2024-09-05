@@ -1,8 +1,9 @@
 <script lang="ts">
   import { ApiClient } from "../../api/client"
-  import type { UserDetails } from "../../api/types";
+  import type { UserDetails } from "../../api/types/user";
   import UserQueryForm from "../../components/UserQueryForm.svelte"
 
+  //@ts-ignore
   const url = API_URL
   let courseID: string | null = null
   const parsedURL = new URL(document.URL)
