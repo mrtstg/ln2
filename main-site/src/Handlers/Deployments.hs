@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
 module Handlers.Deployments
   ( getDeploymentsR
@@ -23,7 +24,14 @@ import           Yesod.Persist
 getDeploymentsR :: Handler Html
 getDeploymentsR = do
   _ <- requireAuth
-  undefined
+  defaultLayout $ do
+    setTitle "Развертывания"
+    [whamlet|
+<div .container.pt-2.py-3>
+  <h1 .title.is-3> Активные развертывания
+  <div #app>
+<script src=/static/js/deployments.js>
+|]
 
 linkDeployments :: [Deployment] -> Handler [Deployment]
 linkDeployments = helper [] where
