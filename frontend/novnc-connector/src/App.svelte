@@ -1,9 +1,9 @@
 <script lang="ts">
   import NoVnc from "../../components/vnc/NoVNC.svelte";
-  import { generateVNCLink } from "../../api/utils/vnc"
+  import { generateVNCLink, suggestWSProto } from "../../api/utils/vnc"
 
   //@ts-ignore
-  const proto = WS_PROTO;
+  const proto = suggestWSProto(window, WS_PROTO);
 
   //@ts-ignore
   let url: string = API_URL;

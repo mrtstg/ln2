@@ -1,5 +1,14 @@
 import type { DeploymentStatus } from "../types/deployment"
 
+// suggests replace on ws when site is using http
+export const suggestWSProto = (window: Window, oldProto: string): string => {
+  if (window.location.protocol == "http:") {
+    return "ws"
+  } else {
+    return oldProto
+  }
+}
+
 // note: generates relative link by default
 export const generateVNCLink = (vmid: string): string => {
   return "/vm/" + vmid + "/vnc"
