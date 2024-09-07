@@ -14,8 +14,7 @@ getVMConsoleR _ = do
   pc <- widgetToPageContent $ do
     setTitle "VM"
     [whamlet|
-<div .container.pt-2.py-3>
-  <div .h-max.w-max #app>
+<div .h-max.w-max #app>
 <script src="/static/js/vmPage.js">
 |]
   withUrlRenderer [hamlet|
