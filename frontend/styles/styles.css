@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.vmbody {
+    @apply dark:bg-[#282828];
+}
+
 .icon {
     @apply w-[25px] h-[25px] shrink-0;
 }
