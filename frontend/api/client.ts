@@ -10,10 +10,10 @@ import type {
   CourseTaskDetails,
   TaskCreateResponse,
   CourseTaskPatch,
-  UserQuery,
-  UserPatch,
-  UserCreate
 } from "./types";
+import type { UserQuery, UserPatch, UserCreate } from "./types/user"
+import type { PageWrapper } from "./types/pageWrapper"
+import type { DeploymentRead } from "./types/deployment"
 
 export class ApiClient {
   base_url = "";
@@ -363,6 +363,17 @@ export class ApiClient {
         getMembers: getMembers ? '1' : '0',
         getAdmins: getAdmins ? '1' : '0',
         query: query,
+        page: page
+      }})
+      return data
+    } catch (error) {
+      return null
+    }
+  }
+  
+  async getMyDeployments(page: number): Promise<PageWrapper<Array<DeploymentRead>> | null> {
+    try {
+      const { data } = await this.client.get("/api/deployments", {params: {
         page: page
       }})
       return data
