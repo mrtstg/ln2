@@ -3,7 +3,9 @@ export type DeploymentRead = {
   userId: number,
   courseId: string,
   taskId: number,
-  status: DeploymentStatus
+  status: DeploymentStatus,
+  courseName: string | null,
+  taskName: string | null
 }
 
 export type DeploymentStatus = 
