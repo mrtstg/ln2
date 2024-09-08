@@ -50,7 +50,7 @@
 <article class="message {getMessageColor()} is-fullwidth">
   {#if deploymentData.courseName != null && deploymentData.taskName != null }
     <div class="message-header">
-      <div class="flex flex-row justify-between items-center">
+      <div class="flex flex-row justify-between items-center w-full">
         <p>
           <a href="/course/{deploymentData.courseId}"> { deploymentData.courseName} </a> -
           <a href="/task/{deploymentData.taskId}"> { deploymentData.taskName } </a>
