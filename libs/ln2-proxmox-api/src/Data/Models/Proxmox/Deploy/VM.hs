@@ -39,7 +39,12 @@ deployVMToCloneParams (TemplateDeployVM' { getDeployVMTemplateData' = TemplateDe
 
 deployVMToConfigPayload :: NetworkNameReplaceMap -> DeployVM' -> Value
 deployVMToConfigPayload networkMap (TemplateDeployVM' { getDeployVMTemplateData' = TemplateDeployVM { .. },.. }) = object $
-  coresField <> socketsField <> memoryField <> networkConnectionsToPayload networkMap getDeployVMNetworkInterfaces where
+  coresField <>
+  socketsField <>
+  memoryField <>
+  networkConnectionsToPayload networkMap getDeployVMNetworkInterfaces <>
+  -- TODO: variate autostart on proxmox launch
+  ["onboot" .= String "1"]  where
     coresField = case getDeployVMCores of
       Nothing      -> []
       (Just cores) -> ["cores" .= cores]
@@ -58,8 +63,6 @@ instance ToJSON DeployVM' where
     , "node" .= getDeployVMNode'
     , "data" .= getDeployVMTemplateData'
     , "type" .= String "template"
-    -- TODO: variate autostart on proxmox launch
-    , "onboot" .= String "1"
     ]
 
 instance FromJSON DeployVM' where
