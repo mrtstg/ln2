@@ -27,9 +27,7 @@
     rfb = new RFB(parent, url)
     rfb.compressionLevel = 3
     rfb.qualityLevel = quality
-    rfb.showDotCursor = true
     rfb.viewOnly = false
-    rfb.focusOnClick = false
     rfb.dragViewport = false
     rfb.clipViewport = false
     rfb.scaleViewport = true
