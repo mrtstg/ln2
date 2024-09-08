@@ -53,7 +53,7 @@
       <div class="flex flex-row justify-between items-center">
         <p>
           <a href="/course/{deploymentData.courseId}"> { deploymentData.courseName} </a> -
-          <a href="/task/{deploymentData.taskId}"> { deploymentData.taskId } </a>
+          <a href="/task/{deploymentData.taskId}"> { deploymentData.taskName } </a>
         </p>
         <p> { vncStatusToString(deploymentData.status) } </p>
       </div>
