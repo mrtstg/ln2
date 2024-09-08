@@ -22,6 +22,10 @@
     @apply w-[25px] h-[25px] shrink-0;
 }
 
+.icon svg {
+    @apply shrink-0 w-[25px] h-[25px];
+}
+
 .icon.medium {
     @apply w-[35px] h-[35px];
 }
