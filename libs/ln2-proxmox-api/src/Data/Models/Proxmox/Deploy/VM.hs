@@ -58,6 +58,8 @@ instance ToJSON DeployVM' where
     , "node" .= getDeployVMNode'
     , "data" .= getDeployVMTemplateData'
     , "type" .= String "template"
+    -- TODO: variate autostart on proxmox launch
+    , "onboot" .= String "1"
     ]
 
 instance FromJSON DeployVM' where
