@@ -3,6 +3,7 @@
   import { generateVNCConsoleLink, vncStatusToString, generateVNCLink } from "../../api/utils/vnc"
   import NoVnc from "./NoVNC.svelte"
 
+  export let showDesktopName: boolean = true
   export let deploymentData: DeploymentRead
   export let wsHost: string
   export let wsProto: string
@@ -69,7 +70,7 @@
         </div>
       </div>
       {#if connectedVMs.includes(value) }
-        <NoVnc url={getVNCLink(value)}/>
+        <NoVnc url={getVNCLink(value)} {showDesktopName}/>
       {/if}
     {/each}
   </div>
