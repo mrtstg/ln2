@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+.vnc-container__wrapper {
+    @apply flex flex-row w-full justify-center items-center;
+}
+
+.vnc-container {
+    @apply max-h-[100vh] max-w-[100vw] !important;
+}
+
+.vnc-container canvas {
+    @apply h-[100%] w-[100%] !important;
+}
+
 .vmbody {
     @apply dark:bg-[#282828];
 }
