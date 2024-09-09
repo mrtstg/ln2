@@ -4,6 +4,7 @@
 module Handlers.Deployment
   ( postDeploymentsR
   , deleteDeploymentR
+  , getDeploymentR
   ) where
 
 import           Control.Monad.Trans.Reader
@@ -28,6 +29,7 @@ import           Deploy.Proxmox
 import           Foundation
 import           Network.HTTP.Types
 import           Rabbit
+import           Utils                              (toMachineDeploymentRead)
 import           Yesod.Core
 import           Yesod.Persist
 
@@ -124,3 +126,12 @@ deleteDeploymentR deploymentId' = do
             , getDeploymentRequestAction = "destroy"
             })
           sendStatusJSON status204 ()
+
+getDeploymentR :: String -> Handler Value
+getDeploymentR deploymentId' = do
+  let deploymentId = MachineDeploymentKey deploymentId'
+  deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
+  case deployment' of
+    Nothing -> sendStatusJSON status404 $ object [ "error" .= T.pack "Deployment not found" ]
+    (Just (Entity _ e@(MachineDeployment {}))) -> do
+      sendStatusJSON status200 (toMachineDeploymentRead e)
