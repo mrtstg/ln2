@@ -134,4 +134,7 @@ getDeploymentR deploymentId' = do
   case deployment' of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= T.pack "Deployment not found" ]
     (Just e@(Entity _ (MachineDeployment {}))) -> do
-      sendStatusJSON status200 (toMachineDeploymentRead e)
+      case toMachineDeploymentRead e of
+        (Left e') -> sendStatusJSON status400 $ object [ "error" .= e']
+        (Right payload) -> do
+          sendStatusJSON status200 payload
