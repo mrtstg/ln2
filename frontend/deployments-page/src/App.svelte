@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import type { DeploymentRead } from "../../api/types/deployment"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
   import WarningMessage from "../../components/WarningMessage.svelte"
@@ -20,22 +21,53 @@
   //@ts-ignore
   const wsProto: string = suggestWSProto(window, WS_PROTO)
 
+  const deploymentsWrapper = async (pageN: number): Promise<PageWrapper<Array<DeploymentRead>> | null> => {
+    let res = await api.getMyDeployments(pageN)
+    if (res != null) {
+      deployments = res.objects
+    }
+
+    return res
+  }
+
+  onMount(() => {
+    var intervalId = setInterval(() => {
+      if (deployments != null) {
+        deploymentsPromise = deploymentsWrapper(1)
+      }
+    }, 2500)
+
+    return () => {
+      clearInterval(intervalId)
+    }
+  })
+
   let deploymentsPromise: Promise<PageWrapper<Array<DeploymentRead>> | null> | null
-  deploymentsPromise = api.getMyDeployments(1)
+  let deployments: Array<DeploymentRead> | null = null
+  deploymentsPromise = deploymentsWrapper(1)
 </script>
 
 {#if deploymentsPromise != null}
   {#await deploymentsPromise}
-    <SuccessMessage title="Ожидайте" description="Загружаем данные..." additionalStyle="is-fullwidth"/>
+    {#if deployments == null}
+      <SuccessMessage title="Ожидайте" description="Загружаем данные..." additionalStyle="is-fullwidth"/>
+    {/if}
   {:then response}
     {#if response == null}
-      <WarningMessage title="Ошибка загрузки!" description="На стороне сервера произошла ошибка. Повторите попытку позже." additionalStyle="is-fullwidth"/>
-    {:else}
-      {#each response.objects as item} 
-        <DeploymentView deploymentData={item} wsHost={wsUrl} wsProto={wsProto} showDesktopName={false}/>
-      {/each}
+      <WarningMessage title="Ошибка загрузки!" description="На стороне сервера произошла ошибка." additionalStyle="is-fullwidth"/>
     {/if}
   {:catch err}
-    <WarningMessage title="Ошибка загрузки!" description="Не удалось загрузить данные. Ошибка: {err}" additionalStyle="is-fullwidth"/>
+    {#if deployments == null}
+      <WarningMessage title="Ошибка загрузки!" description="Не удалось загрузить данные. Ошибка: {err}" additionalStyle="is-fullwidth"/>
+    {/if}
   {/await}
+  {#if deployments != null}
+    {#if deployments.length > 0}
+      {#each deployments as item (item.id)}
+        <DeploymentView deploymentData={item} wsHost={wsUrl} wsProto={wsProto} showDesktopName={false}/>
+      {/each}
+    {:else}
+      <SuccessMessage title="Пусто!" description="Похоже, что у вас нет активных развертываний. Начните прохождения задания с виртуальными машинами и он здесь появится!" additionalStyle="is-fullwidth"/>
+    {/if}
+  {/if}
 {/if}
