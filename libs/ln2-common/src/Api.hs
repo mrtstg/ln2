@@ -4,6 +4,7 @@ module Api
   ( commonHttpErrorHandler
   , errorTextFromStatus
   , ApiPageWrapper(..)
+  , ApiErrorWrapper(..)
   ) where
 
 import           Control.Exception
