@@ -76,6 +76,7 @@ mkYesodData
 /deployments/user/#Int UserDeploymentsR GET
 /deployment DeploymentsR POST
 /deployment/#String DeploymentR DELETE GET
+/api/deployment/#String DeploymentApiR DELETE
 |]
 
 instance Yesod App where

@@ -36,6 +36,7 @@ library
       Foundation
       Handlers.AuthR
       Handlers.Deployment
+      Handlers.DeploymentApi
       Handlers.MachineID
       Handlers.Templates
       Handlers.UserDeployments
