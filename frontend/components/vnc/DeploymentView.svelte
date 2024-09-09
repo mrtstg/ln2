@@ -22,17 +22,19 @@
 </script>
 
 <article class="message is-fullwidth">
-  {#if deploymentData.courseName != null && deploymentData.taskName != null }
-    <div class="message-header">
-      <div class="flex flex-row justify-between items-center w-full">
-        <p>
-          <a href="/course/{deploymentData.courseId}"> { deploymentData.courseName} </a> -
-          <a href="/task/{deploymentData.taskId}"> { deploymentData.taskName } </a>
-        </p>
-        <p> { vncStatusToString(deploymentData.status) } </p>
-      </div>
+  <div class="message-header">
+    <div class="flex flex-row justify-between items-center w-full">
+      <p>
+        {#if deploymentData.courseName != null && deploymentData.taskName != null }
+        <a href="/course/{deploymentData.courseId}"> { deploymentData.courseName} </a> -
+        <a href="/task/{deploymentData.taskId}"> { deploymentData.taskName } </a>
+        {:else}
+          Неизвестное задание
+        {/if}
+      </p>
+      <p> { vncStatusToString(deploymentData.status) } </p>
     </div>
-  {/if}
+  </div>
   {#if deploymentData.status == 'created'}
     <div class="message-body">
       <div class="font-semibold text-neutral-950 dark:text-neutral-200 flex flex-row flex-wrap items-center">
