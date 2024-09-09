@@ -1,4 +1,5 @@
 export type DeploymentRead = {
+  id: string,
   vmMap: object,
   userId: number,
   courseId: string,
