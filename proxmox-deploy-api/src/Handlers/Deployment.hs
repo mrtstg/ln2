@@ -133,5 +133,5 @@ getDeploymentR deploymentId' = do
   deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
   case deployment' of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= T.pack "Deployment not found" ]
-    (Just (Entity _ e@(MachineDeployment {}))) -> do
+    (Just e@(Entity _ (MachineDeployment {}))) -> do
       sendStatusJSON status200 (toMachineDeploymentRead e)

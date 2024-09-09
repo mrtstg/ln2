@@ -19,7 +19,7 @@ getUserDeploymentsR userId = do
   let params = [LimitTo pageSize, OffsetBy $ (pageN - 1) * pageSize]
   deploymentsAmount <- runDB $ count [ MachineDeploymentUserId ==. userId ]
   deployments <- runDB $ selectList [ MachineDeploymentUserId ==. userId ] params
-  let convertRes = traverse (\(Entity _ e) -> toMachineDeploymentRead e) deployments
+  let convertRes = traverse toMachineDeploymentRead deployments
   case convertRes of
     (Left e) -> sendStatusJSON status500 $ object [ "error" .= T.pack ("Parse error: " <> e)]
     (Right objects) -> do
