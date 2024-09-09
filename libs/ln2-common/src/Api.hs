@@ -9,9 +9,20 @@ module Api
 import           Control.Exception
 import           Control.Monad.Trans.Except
 import           Data.Aeson
+import           Data.Aeson.KeyMap          (KeyMap)
 import qualified Data.ByteString.Char8      as BS
 import           Network.HTTP.Conduit
 import           Network.HTTP.Types.Status  (Status (..))
+
+data ApiErrorWrapper t = ApiErrorWrapper
+  { getErrorMessage :: !t
+  , getErrorBody    :: !(KeyMap Value)
+  } deriving Show
+
+instance (FromJSON t) => FromJSON (ApiErrorWrapper t) where
+  parseJSON = withObject "ApiErrorWrapper" $ \v -> ApiErrorWrapper
+    <$> v .: "error"
+    <*> pure v
 
 data ApiPageWrapper t = ApiPageWrapper
   { getPageWrapperSize    :: !Int
