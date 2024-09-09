@@ -11,10 +11,11 @@ import           Data.Models.DeploymentStatus
 import           Data.Models.Proxmox.Deploy.VM
 import           Data.Text                     (Text)
 import qualified Data.Text                     as T
+import           Database.Persist
 import           Foundation
 
-toMachineDeploymentRead :: MachineDeployment -> Either String Deployment
-toMachineDeploymentRead (MachineDeployment { .. }) = let
+toMachineDeploymentRead :: Entity MachineDeployment -> Either String Deployment
+toMachineDeploymentRead (Entity (MachineDeploymentKey mId) MachineDeployment { .. }) = let
   f :: DeployVM' -> M.Map Text Int -> M.Map Text Int
   f (TemplateDeployVM' { getDeployVMTemplateData' = TemplateDeployVM { .. },.. }) = M.insert getDeployVMName (displayNumberToPort getDeployVMDisplay')
   in do
@@ -28,7 +29,8 @@ toMachineDeploymentRead (MachineDeployment { .. }) = let
         (Right (DeploymentData { .. })) -> do
           let vmMap = foldr f M.empty getDeploymentVMs
           Right $ Deployment
-            { getDeploymentVMMap = vmMap
+            { getDeploymentId = mId
+            , getDeploymentVMMap = vmMap
             , getDeploymentUserId = machineDeploymentUserId
             , getDeploymentTaskId = machineDeploymentTaskId
             , getDeploymentStatus = status
