@@ -11,7 +11,8 @@ import           Data.Models.DeploymentStatus
 import           Data.Text                      (Text)
 
 data Deployment = Deployment
-  { getDeploymentVMMap      :: !(M.Map Text Int)
+  { getDeploymentId         :: !String
+  , getDeploymentVMMap      :: !(M.Map Text Int)
   , getDeploymentUserId     :: !Int
   , getDeploymentCourseId   :: !Text
   , getDeploymentTaskId     :: !Int
@@ -22,7 +23,8 @@ data Deployment = Deployment
 
 instance FromJSON Deployment where
   parseJSON = withObject "Deployment" $ \v -> Deployment
-    <$> v .: "vmMap"
+    <$> v .: "id"
+    <*> v .: "vmMap"
     <*> v .: "userId"
     <*> v .: "courseId"
     <*> v .: "taskId"
@@ -32,7 +34,8 @@ instance FromJSON Deployment where
 
 instance ToJSON Deployment where
   toJSON (Deployment { .. }) = object
-    [ "vmMap" .= getDeploymentVMMap
+    [ "id" .= getDeploymentId
+    , "vmMap" .= getDeploymentVMMap
     , "userId" .= getDeploymentUserId
     , "courseId" .= getDeploymentCourseId
     , "taskId" .= getDeploymentTaskId
