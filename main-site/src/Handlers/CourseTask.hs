@@ -15,14 +15,15 @@ module Handlers.CourseTask
 import           Api.DBApi
 import           Api.Markdown
 import           Api.User
-import           Control.Monad          (unless, when)
+import           Control.Monad                 (unless, when)
 import           Crud.CourseTask
 import           Data.Aeson
-import           Data.ByteString        (toStrict)
+import           Data.ByteString               (toStrict)
 import           Data.Models.CourseTask
+import           Data.Models.CourseTaskPayload
 import           Data.Models.StandCheck
 import           Data.Models.User
-import qualified Data.Text              as T
+import qualified Data.Text                     as T
 import           Database.Persist
 import           Foundation
 import           Handlers.Auth
@@ -81,7 +82,14 @@ postApiCourseTaskR cId = do
   App { endpointsConfiguration = endpoints } <- getYesod
   (UserDetails { .. }) <- requireApiAuth endpoints
   (CourseTaskCreate { .. }) <- requireCheckJsonBody
-  () <- checkStages getCourseTaskCreateStandActions
+  _ <- case getCourseTaskCreatePayload of
+    (ContainerTaskPayload { .. }) -> do
+      checkStages getPayloadContainerActions
+      when (getCourseTaskCreateType /= ContainerTask) $ do
+        sendStatusJSON status400 $ object [ "error" .= String "Payload and task type is not matching" ]
+    _ -> -- TODO: vm validation
+      when (getCourseTaskCreateType /= VMTask) $ do
+        sendStatusJSON status400 $ object [ "error" .= String "Payload and task type is not matching" ]
   courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
   case courseRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ]
@@ -90,12 +98,13 @@ postApiCourseTaskR cId = do
       if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
         (cTaskId, cTaskRes) <- runDB $ do
           tId <- insert $ CourseTask
-            getCourseTaskCreateName
-            getCourseTaskCreateContent
-            getCourseTaskCreateOrder
-            cId
-            getCourseTaskCreateStandIdentifier
-            (toStrict $ encode getCourseTaskCreateStandActions)
+            { courseTaskType = show getCourseTaskCreateType
+            , courseTaskPayload = toStrict $ encode getCourseTaskCreatePayload
+            , courseTaskOrderNumber = getCourseTaskCreateOrder
+            , courseTaskName = getCourseTaskCreateName
+            , courseTaskCourse = cId
+            , courseTaskContent = getCourseTaskCreateContent
+            }
           v <- get tId
           return (tId, v)
         case cTaskRes of
@@ -188,9 +197,11 @@ patchApiTaskR ctId = do
       let isAdmin = isUserCourseAdmin courseUUID getUserRoles
       if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
         taskPatch@(CourseTaskPatch { .. }) <- requireCheckJsonBody
-        () <- case getCourseTaskPatchActions of
+        () <- case getCourseTaskPatchPayload of
           Nothing        -> return ()
-          (Just actions) -> checkStages actions
+          (Just (ContainerTaskPayload { .. })) -> checkStages getPayloadContainerActions
+          _ -> -- TODO: vm validate
+            return ()
         runDB $ updateWhere [CourseTaskId ==. ctId] (courseTaskPatchToQuery taskPatch)
         sendResponseStatus status204 ()
 

@@ -39,6 +39,7 @@ library
       Data.Models.Column
       Data.Models.Course
       Data.Models.CourseTask
+      Data.Models.CourseTaskPayload
       Data.Models.Database
       Data.Models.QueueTaskResponse
       Data.Models.StandCheck
