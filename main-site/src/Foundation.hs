@@ -54,8 +54,8 @@ CourseTask
   content Text
   orderNumber Int default=0
   course CourseId
-  standIdentifier Text
-  standActions ByteString
+  type String
+  payload ByteString
   deriving Show
 CourseSolves
   Id String
