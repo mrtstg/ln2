@@ -11,8 +11,10 @@ module Data.Models.CourseTask
   ) where
 
 import           Data.Aeson
-import           Data.ByteString.Lazy   (fromStrict)
+import           Data.ByteString.Lazy          (fromStrict)
+import           Data.Maybe                    (fromMaybe)
 import           Data.Models.Course
+import           Data.Models.CourseTaskPayload
 import           Data.Models.StandCheck
 import           Data.Models.User
 import           Data.Text
@@ -25,7 +27,7 @@ data CourseTaskPatch = CourseTaskPatch
   { getCourseTaskPatchName    :: !(Maybe Text)
   , getCourseTaskPatchContent :: !(Maybe Text)
   , getCourseTaskPatchOrder   :: !(Maybe Int)
-  , getCourseTaskPatchActions :: !(Maybe [StandCheckStage])
+  , getCourseTaskPatchPayload :: !(Maybe CourseTaskPayload)
   }
 
 instance FromJSON CourseTaskPatch where
@@ -33,14 +35,14 @@ instance FromJSON CourseTaskPatch where
     <$> v .:? "name"
     <*> v .:? "content"
     <*> v .:? "order"
-    <*> v .:? "standActions"
+    <*> v .:? "payload"
 
 data CourseTaskCreate = CourseTaskCreate
-  { getCourseTaskCreateName            :: !Text
-  , getCourseTaskCreateContent         :: !Text
-  , getCourseTaskCreateOrder           :: !Int
-  , getCourseTaskCreateStandIdentifier :: !Text
-  , getCourseTaskCreateStandActions    :: ![StandCheckStage]
+  { getCourseTaskCreateName    :: !Text
+  , getCourseTaskCreateContent :: !Text
+  , getCourseTaskCreateOrder   :: !Int
+  , getCourseTaskCreateType    :: !CourseTaskType
+  , getCourseTaskCreatePayload :: !CourseTaskPayload
   }
 
 instance FromJSON CourseTaskCreate where
@@ -48,18 +50,18 @@ instance FromJSON CourseTaskCreate where
     <$> v .: "name"
     <*> v .: "content"
     <*> v .:? "order" .!= 0
-    <*> v .: "standIdentifier"
-    <*> v .: "standActions"
+    <*> v .: "type"
+    <*> v .: "payload"
 
 data CourseTaskDetails = CourseTaskDetails
-  { getCourseTaskDId           :: !Int
-  , getCourseTaskDName         :: !Text
-  , getCourseTaskDContent      :: !Text
-  , getCourseTaskDOrder        :: !Int
-  , getCourseTaskDCourse       :: !CourseDetails
-  , getCourseTaskDStand        :: !Text
-  , getCourseTaskDStandActions :: ![StandCheckStage]
-  , getCourseTaskDAccepted     :: !Bool
+  { getCourseTaskDId       :: !Int
+  , getCourseTaskDName     :: !Text
+  , getCourseTaskDContent  :: !Text
+  , getCourseTaskDOrder    :: !Int
+  , getCourseTaskDCourse   :: !CourseDetails
+  , getCourseTaskDPayload  :: !CourseTaskPayload
+  , getCourseTaskDType     :: !CourseTaskType
+  , getCourseTaskDAccepted :: !Bool
   }
 
 data CourseTaskDetails' = CourseTaskDetails'
@@ -68,6 +70,7 @@ data CourseTaskDetails' = CourseTaskDetails'
   , getCourseTaskDContent'  :: !Text
   , getCourseTaskDOrder'    :: !Int
   , getCourseTaskDCourse'   :: !CourseDetails
+  , getCourseTaskDType'     :: !CourseTaskType
   , getCourseTaskDAccepted' :: !Bool
   }
 
@@ -104,8 +107,7 @@ instance ToJSON CourseTaskDetails where
     , "content" .= getCourseTaskDContent
     , "order" .= getCourseTaskDOrder
     , "course" .= getCourseTaskDCourse
-    , "standIdentifier" .= getCourseTaskDStand
-    , "standActions" .= getCourseTaskDStandActions
+    , "payload" .= getCourseTaskDPayload
     , "accepted" .= getCourseTaskDAccepted
     ]
 
@@ -113,15 +115,32 @@ courseTaskDetailFromModels' :: Entity CourseTask -> Entity Course -> Maybe UserD
 courseTaskDetailFromModels' (Entity ctId (CourseTask { .. })) e userDetails accepted = let
   taskId = fromSqlKey ctId
   courseDetails = courseDetailsFromModel e userDetails
-  in CourseTaskDetails' (fromIntegral taskId) courseTaskName courseTaskContent courseTaskOrderNumber courseDetails accepted
+  in CourseTaskDetails'
+    { getCourseTaskDId' = fromIntegral taskId
+    , getCourseTaskDName' = courseTaskName
+    , getCourseTaskDContent' = courseTaskContent
+    , getCourseTaskDOrder' = courseTaskOrderNumber
+    , getCourseTaskDCourse' = courseDetails
+    , getCourseTaskDType' = fromMaybe ContainerTask (courseTaskTypeFromString courseTaskType)
+    , getCourseTaskDAccepted' = accepted
+    }
 
 courseTaskDetailFromModels :: Entity CourseTask -> Entity Course -> Maybe UserDetails -> Bool -> Either String CourseTaskDetails
 courseTaskDetailFromModels (Entity ctId (CourseTask { .. })) e userDetails accepted = let
   taskId = fromSqlKey ctId
   courseDetails = courseDetailsFromModel e userDetails
-  standActions = case (eitherDecode . fromStrict) courseTaskStandActions :: Either String [StandCheckStage] of
+  standPayload = case (eitherDecode . fromStrict) courseTaskPayload :: Either String CourseTaskPayload of
                   (Left e') -> Left $ "standActions: " <> e'
                   (Right r) -> Right r
   in do
-    actions' <- standActions
-    return $  CourseTaskDetails (fromIntegral taskId) courseTaskName courseTaskContent courseTaskOrderNumber courseDetails courseTaskStandIdentifier actions' accepted
+    payload' <- standPayload
+    return $ CourseTaskDetails
+      { getCourseTaskDId = fromIntegral taskId
+      , getCourseTaskDName = courseTaskName
+      , getCourseTaskDContent = courseTaskContent
+      , getCourseTaskDOrder = courseTaskOrderNumber
+      , getCourseTaskDCourse = courseDetails
+      , getCourseTaskDPayload = payload'
+      , getCourseTaskDType = fromMaybe ContainerTask (courseTaskTypeFromString courseTaskType)
+      , getCourseTaskDAccepted = accepted
+      }

@@ -7,17 +7,17 @@ module Crud.CourseTask
   , courseTaskPatchToQuery
   ) where
 
-import           Data.Aeson             (encode)
-import           Data.ByteString.Char8  (toStrict)
+import           Data.Aeson                    (encode)
+import           Data.ByteString.Char8         (toStrict)
 import           Data.Models.CourseTask
+import           Data.Models.CourseTaskPayload
 import           Data.Models.StandCheck
 import           Data.Models.User
-import           Data.Text              (Text)
+import           Data.Text                     (Text)
 import           Database.Persist
 import           Foundation
-import           Handlers.Params        (defaultPageSize)
+import           Handlers.Params               (defaultPageSize)
 import           Yesod.Persist
-
 
 courseTaskPatchToQuery :: CourseTaskPatch -> [Update CourseTask]
 courseTaskPatchToQuery (CourseTaskPatch { .. }) = let
@@ -30,13 +30,13 @@ courseTaskPatchToQuery (CourseTaskPatch { .. }) = let
   orderQ :: Maybe Int -> [Update CourseTask]
   orderQ Nothing = []
   orderQ (Just courseTaskOrderNumber) = [CourseTaskOrderNumber =. courseTaskOrderNumber]
-  actionsQ :: Maybe [StandCheckStage] -> [Update CourseTask]
+  actionsQ :: Maybe CourseTaskPayload -> [Update CourseTask]
   actionsQ Nothing       = []
-  actionsQ (Just stages) = [CourseTaskStandActions =. (toStrict . encode) stages]
+  actionsQ (Just stages) = [CourseTaskPayload =. (toStrict . encode) stages]
   in nameQ getCourseTaskPatchName
     ++ contentQ getCourseTaskPatchContent
     ++ orderQ getCourseTaskPatchOrder
-    ++ actionsQ getCourseTaskPatchActions
+    ++ actionsQ getCourseTaskPatchPayload
 
 getCourseTasks :: CourseId -> Int -> Handler ([Entity CourseTask], Int)
 getCourseTasks cId pageV = do
