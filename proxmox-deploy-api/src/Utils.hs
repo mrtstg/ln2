@@ -1,5 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
-module Utils (toMachineDeploymentRead) where
+module Utils
+  ( toMachineDeploymentRead
+  , machineTemplateFromModel
+  , machineTemplateCreateToModel
+  ) where
 
 import           Crud.DisplayNumbers           (displayNumberToPort)
 import           Data.Aeson
@@ -13,6 +17,19 @@ import           Data.Text                     (Text)
 import qualified Data.Text                     as T
 import           Database.Persist
 import           Foundation
+
+machineTemplateCreateToModel :: MachineTemplateCreate -> MachineTemplate
+machineTemplateCreateToModel (MachineTemplateCreate { .. }) = MachineTemplate
+  { machineTemplateProxmoxId = getTemplateCreateId
+  , machineTemplateName = getTemplateCreateName
+  , machineTemplateComment = getTemplateCreateComment
+  }
+
+machineTemplateFromModel :: MachineTemplate -> MachineTemplate'
+machineTemplateFromModel (MachineTemplate { .. }) = MachineTemplate'
+  machineTemplateProxmoxId
+  machineTemplateName
+  machineTemplateComment
 
 toMachineDeploymentRead :: Entity MachineDeployment -> Either String Deployment
 toMachineDeploymentRead (Entity (MachineDeploymentKey mId) MachineDeployment { .. }) = let
