@@ -13,6 +13,7 @@ import           Data.Models.Deployment
 import           Data.Models.Deployment.Data
 import           Data.Models.DeploymentStatus
 import           Data.Models.Proxmox.Deploy.VM
+import           Data.Models.Proxmox.Template
 import           Data.Text                     (Text)
 import qualified Data.Text                     as T
 import           Database.Persist

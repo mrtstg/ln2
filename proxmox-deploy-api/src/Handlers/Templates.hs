@@ -17,6 +17,7 @@ import           Handlers.Params
 import           Handlers.Response
 import           Handlers.Utils
 import           Network.HTTP.Types
+import           Utils
 import           Yesod.Core
 import           Yesod.Persist
 
