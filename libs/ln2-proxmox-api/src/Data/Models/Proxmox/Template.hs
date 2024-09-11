@@ -2,15 +2,12 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Data.Models.Proxmox.Template
   ( MachineTemplate'(..)
-  , machineTemplateFromModel
   , MachineTemplatePatch(..)
   , MachineTemplateCreate(..)
-  , machineTemplateCreateToModel
   ) where
 
 import           Data.Aeson
 import           Data.Text  (Text)
-import           Foundation
 
 data MachineTemplate' = MachineTemplate'
   { getMachineTemplateId      :: !Int
@@ -25,12 +22,6 @@ instance ToJSON MachineTemplate' where
     , "comment" .= getMachineTemplateComment
     ]
 
-machineTemplateFromModel :: MachineTemplate -> MachineTemplate'
-machineTemplateFromModel (MachineTemplate { .. }) = MachineTemplate'
-  machineTemplateProxmoxId
-  machineTemplateName
-  machineTemplateComment
-
 data MachineTemplateCreate = MachineTemplateCreate
   { getTemplateCreateId      :: !Int
   , getTemplateCreateName    :: !Text
@@ -42,13 +33,6 @@ instance FromJSON MachineTemplateCreate where
     <$> v .: "id"
     <*> v .: "name"
     <*> v .: "comment"
-
-machineTemplateCreateToModel :: MachineTemplateCreate -> MachineTemplate
-machineTemplateCreateToModel (MachineTemplateCreate { .. }) = MachineTemplate
-  { machineTemplateProxmoxId = getTemplateCreateId
-  , machineTemplateName = getTemplateCreateName
-  , machineTemplateComment = getTemplateCreateComment
-  }
 
 data MachineTemplatePatch = MachineTemplatePatch
   { getTemplatePatchId      :: !(Maybe Int)
