@@ -85,11 +85,7 @@ postApiCourseTaskR cId = do
   _ <- case getCourseTaskCreatePayload of
     (ContainerTaskPayload { .. }) -> do
       checkStages getPayloadContainerActions
-      when (getCourseTaskCreateType /= ContainerTask) $ do
-        sendStatusJSON status400 $ object [ "error" .= String "Payload and task type is not matching" ]
-    _ -> -- TODO: vm validation
-      when (getCourseTaskCreateType /= VMTask) $ do
-        sendStatusJSON status400 $ object [ "error" .= String "Payload and task type is not matching" ]
+    _ -> pure ()-- TODO: vm validation
   courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
   case courseRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ]
@@ -98,7 +94,7 @@ postApiCourseTaskR cId = do
       if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
         (cTaskId, cTaskRes) <- runDB $ do
           tId <- insert $ CourseTask
-            { courseTaskType = show getCourseTaskCreateType
+            { courseTaskType = (show . suggestPayloadTaskType) getCourseTaskCreatePayload
             , courseTaskPayload = toStrict $ encode getCourseTaskCreatePayload
             , courseTaskOrderNumber = getCourseTaskCreateOrder
             , courseTaskName = getCourseTaskCreateName
