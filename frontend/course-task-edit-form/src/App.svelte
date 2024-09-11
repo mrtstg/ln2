@@ -2,7 +2,7 @@
   import { ApiClient } from "../../api/client"
   import { processStageData, countStages, StageType, stageDataToCheckStage, stageTypeList, defaultCheckStageData } from "../../api/checkStage"
   import type { CheckStage, StageData } from "../../api/checkStage";
-  import type { CommonCourseDetails, CourseTaskDetails, ContainerSummary } from "../../api/types";
+  import type { CommonCourseDetails, CourseTaskDetails, ContainerSummary, CourseTaskType } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
   import CheckStageWidget from "../../components/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
@@ -58,7 +58,11 @@
       name: taskTitle,
       content: taskContent,
       order: taskOrder,
-      standActions: stagesToSend
+      payload: {
+        standIdentifier: selectedStand,
+        actions: stagesToSend,
+        type: 'container'
+      }
     })
     if (res == 'ok') {
       taskPromise = getCourseTaskWrapper()
@@ -96,14 +100,14 @@
     taskContent = res.content
     taskOrder = res.order
     stages = []
-    if (res.standIdentifier != undefined && res.standActions != undefined) {
-      res.standActions.forEach(el => {
+    if (res.payload?.standIdentifier != undefined && res.payload?.actions != undefined) {
+      res.payload!.actions.forEach(el => {
         let res = stageDataToCheckStage(el)
         if (res != null) {
           stages = [...stages, res]
         }
       })
-      selectedStand = res.standIdentifier
+      selectedStand = res.payload!.standIdentifier
       containersPromise = api.getStandContainers(selectedStand)
     }
     return res

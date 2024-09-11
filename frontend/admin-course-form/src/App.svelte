@@ -1,7 +1,7 @@
 <script lang="ts">
   import PlusOutline from "../../components/icons/PlusOutline.svelte"
   import { ApiClient } from "../../api/client"
-  import type { ContainerSummary, CommonCourseDetails } from "../../api/types";
+  import type { ContainerSummary, CommonCourseDetails, CourseTaskCreate, CourseTaskType } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
   import CheckStageWidget from "../../components/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
@@ -9,6 +9,7 @@
   import { courseErrorsToString, courseTaskErrorToString, deleteCourseErrorToString } from "../../api/utils"
 
   // client declaration
+  //@ts-ignore
   const url = API_URL;
   const api = new ApiClient(url)
 
@@ -125,12 +126,15 @@
     }
 
     let stagesToSend = stages.map(v => v.data).map(processStageData)
-    const payload = {
+    const payload: CourseTaskCreate = {
       name: taskTitle,
       content: taskDesc,
       order: taskOrder,
-      standIdentifier: selectedStand,
-      standActions: stagesToSend
+      payload: {
+        actions: stagesToSend,
+        type: 'container',
+        standIdentifier: selectedStand
+      }
     }
     modalHideable = false
     modalMessage = 'Создаем задачу...'
