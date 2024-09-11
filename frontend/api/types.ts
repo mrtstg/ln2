@@ -58,9 +58,11 @@ export type CourseTaskSolve = {
   input: string
 }
 
+export type TaskStatus = 'queued' | 'taken' | 'error' | 'processing' | 'finished' | 'accepted' | 'cancelled' | 'timeout'
+
 export type TaskResultWrapper = {
   result: TaskResult | null,
-  status: string
+  status: TaskStatus
 }
 
 export type CheckMessageBlock = {
