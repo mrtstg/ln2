@@ -15,12 +15,19 @@ export type CommonCourseDetails = {
   description: string
 }
 
+export type CourseTaskType = 'vm' | 'container'
+
+export type TaskPayload = {
+  actions?: CheckStage.StageData[],
+  standIdentifier?: string,
+  type: CourseTaskType
+}
+
 export type CourseTaskCreate = {
   name: string,
   content: string,
   order: number,
-  standIdentifier: string,
-  standActions: CheckStage.StageData[]
+  payload: TaskPayload
 }
 
 export type CourseCreate = {
@@ -35,8 +42,8 @@ export type CourseTaskDetails = {
   content: string,
   order: number,
   accepted?: Boolean,
-  standIdentifier?: string,
-  standActions: CheckStage.StageData[]
+  payload?: TaskPayload,
+  type?: CourseTaskType
 }
 
 export type CourseSolvesResponse = {
@@ -82,5 +89,5 @@ export type CourseTaskPatch = {
   name?: string,
   content?: string,
   order?: number
-  standActions?: CheckStage.StageData[]
+  payload?: TaskPayload
 }
