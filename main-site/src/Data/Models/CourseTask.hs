@@ -41,7 +41,6 @@ data CourseTaskCreate = CourseTaskCreate
   { getCourseTaskCreateName    :: !Text
   , getCourseTaskCreateContent :: !Text
   , getCourseTaskCreateOrder   :: !Int
-  , getCourseTaskCreateType    :: !CourseTaskType
   , getCourseTaskCreatePayload :: !CourseTaskPayload
   }
 
@@ -50,7 +49,6 @@ instance FromJSON CourseTaskCreate where
     <$> v .: "name"
     <*> v .: "content"
     <*> v .:? "order" .!= 0
-    <*> v .: "type"
     <*> v .: "payload"
 
 data CourseTaskDetails = CourseTaskDetails

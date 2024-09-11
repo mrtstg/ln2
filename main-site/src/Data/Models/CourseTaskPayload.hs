@@ -5,6 +5,7 @@ module Data.Models.CourseTaskPayload
   ( CourseTaskPayload(..)
   , CourseTaskType(..)
   , courseTaskTypeFromString
+  , suggestPayloadTaskType
   ) where
 
 import           Data.Aeson
@@ -65,3 +66,7 @@ instance FromJSON CourseTaskPayload where
       <$> v .: "actions"
       <*> v .: "standIdentifier"
     _otherKey                 -> fail "Unknown payload type"
+
+suggestPayloadTaskType :: CourseTaskPayload -> CourseTaskType
+suggestPayloadTaskType (ContainerTaskPayload {}) = ContainerTask
+suggestPayloadTaskType (VMTaskPayload {})        = VMTask
