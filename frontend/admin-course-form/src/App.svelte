@@ -1,12 +1,15 @@
 <script lang="ts">
   import PlusOutline from "../../components/icons/PlusOutline.svelte"
   import { ApiClient } from "../../api/client"
+  import { allCourseTaskTypes } from "../../api/types"
   import type { ContainerSummary, CommonCourseDetails, CourseTaskCreate, CourseTaskType } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
   import CheckStageWidget from "../../components/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
   import { processStageData, countStages, type StageData, stageTypeList, StageType, type CheckStage, defaultCheckStageData } from "../../api/checkStage" 
   import { courseErrorsToString, courseTaskErrorToString, deleteCourseErrorToString } from "../../api/utils"
+  import { courseTaskTypeToString } from "../../api/utils/courseTask"
+  import * as VM from "../../api/types/vm"
 
   // client declaration
   //@ts-ignore
@@ -74,6 +77,15 @@
 
   // task form details
 
+  let taskType: CourseTaskType
+  $: taskType = 'container'
+
+  let standNetworks: Array<VM.VMNetwork>
+  $: standNetworks = []
+
+  let standVMs: Array<VM.VM>
+  $: standVMs = []
+
   let modalMessage: string;
   $: modalMessage = ''
 
@@ -104,6 +116,46 @@
     stages = [...stages]
   }
 
+  const generateRequestPayload = async (): Promise<CourseTaskCreate | null> => {
+    if (taskType == 'container') {
+      if (countStages(stages, (el => el.type == StageType.PSQLGenerateDatabase)).length > 1) {
+        modalMessage = "В задаче может быть только один этап генерации базы данных!"
+        return null
+      }
+
+      if (stages.length == 0) {
+        modalMessage = "Проверка задачи должна содержать как минимум один этап!"
+        return null
+      }
+    }
+
+    if (taskType == 'container') {
+      let stagesToSend = stages.map(v => v.data).map(processStageData)
+      return {
+        name: taskTitle,
+        content: taskDesc,
+        order: taskOrder,
+        payload: {
+          actions: stagesToSend,
+          type: taskType,
+          standIdentifier: selectedStand
+        }
+      }
+    } else if (taskType == 'vm') {
+      return {
+        name: taskTitle,
+        content: taskDesc,
+        order: taskOrder,
+        payload: {
+          type: taskType,
+          vms: [],
+          networks: []
+        }
+      }
+    }
+    return null
+  }
+
   const createTask = async (exit: Boolean) => {
     if (taskTitle.length == 0) {
       modalMessage = "Заполните название задачи!"
@@ -115,27 +167,11 @@
       return
     }
 
-    if (stages.length == 0) {
-      modalMessage = "Проверка задачи должна содержать как минимум один этап!"
+    let payload = await generateRequestPayload()
+    if (payload == null) {
       return
     }
-
-    if (countStages(stages, (el => el.type == StageType.PSQLGenerateDatabase)).length > 1) {
-      modalMessage = "В задаче может быть только один этап генерации базы данных!"
-      return
-    }
-
-    let stagesToSend = stages.map(v => v.data).map(processStageData)
-    const payload: CourseTaskCreate = {
-      name: taskTitle,
-      content: taskDesc,
-      order: taskOrder,
-      payload: {
-        actions: stagesToSend,
-        type: 'container',
-        standIdentifier: selectedStand
-      }
-    }
+    
     modalHideable = false
     modalMessage = 'Создаем задачу...'
     const res = await api.createCourseTask(courseID!, payload)
@@ -145,6 +181,8 @@
       taskDesc = ''
       taskOrder = 0
       stages = []
+      standVMs = []
+      standNetworks = []
       if (exit) {
         window.location.replace("/course/" + courseID)
         return
@@ -235,62 +273,79 @@
     </div>
     <p class="help"> Меньше - выше в списке задач </p>
   </div>
-  {#await standsPromise}
-    <SuccessMessage title="Ожидайте..." description="Загружаем данные..." additionalStyle="is-fullwidth"/>
-  {:then standsData}
-    <h2 class="title is-4"> Схема проверки </h2>
-    <h3 class="title is-5"> Выберите стенд для выполнения проверки </h3>
-    <div class="field">
-      <div class="control">
-        <div class="select">
-          <select bind:value={selectedStand} on:change={() => containersPromise = api.getStandContainers(selectedStand)}>
-            <option disabled> Выберите стенд </option>
-            {#each standsData as standName}
-              <option value={standName}> { standName } </option>
-            {/each}
-          </select>
-        </div>
+  <div class="field">
+    <label class="label"> Тип задания </label>
+    <div class="control">
+      <div class="select">
+        <select bind:value={taskType}>
+          {#each allCourseTaskTypes as item}
+            <option value={item}> { courseTaskTypeToString(item) } </option>
+          {/each}
+        </select>
       </div>
     </div>
+  </div>
+  {#if taskType == 'container'}
+    {#await standsPromise}
+      <SuccessMessage title="Ожидайте..." description="Загружаем данные..." additionalStyle="is-fullwidth"/>
+    {:then standsData}
+      <h2 class="title is-4"> Схема проверки </h2>
+      <h3 class="title is-5"> Выберите стенд для выполнения проверки </h3>
+      <div class="field">
+        <div class="control">
+          <div class="select">
+            <select bind:value={selectedStand} on:change={() => containersPromise = api.getStandContainers(selectedStand)}>
+              <option disabled> Выберите стенд </option>
+              {#each standsData as standName}
+                <option value={standName}> { standName } </option>
+              {/each}
+            </select>
+          </div>
+        </div>
+      </div>
 
-    {#if containersPromise != null}
-      {#await containersPromise}
-        <SuccessMessage title="Ожидайте..." description="Загружаем данные..."/>
-      {:then containersData}
-        <div class="is-flex is-align-items-center">
-          <h3 class="title is-4 pr-3"> Этапы проверки </h3>
-          <div class="mb-5">
-            <button class="button is-link" on:click={addStage}>
-              <span class="icon is-large">
-                <PlusOutline/>
-              </span>
-            </button>
+      {#if containersPromise != null}
+        {#await containersPromise}
+          <SuccessMessage title="Ожидайте..." description="Загружаем данные..."/>
+        {:then containersData}
+          <div class="is-flex is-align-items-center">
+            <h3 class="title is-4 pr-3"> Этапы проверки </h3>
+            <div class="mb-5">
+              <button class="button is-link" on:click={addStage}>
+                <span class="icon is-large">
+                  <PlusOutline/>
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
-        {#each stages as stage, stageIndex (stage)}
-          <CheckStageWidget 
-            data={stage} 
-            containers={containersData.map(v => v.name)} 
-            updateCallback={async (v) => { stages[stageIndex] = v }}
-            deleteCallback={() => deleteStage(stageIndex)}
-          />
-        {/each}
-        <div class="columns is-multiline">
-          <div class="column is-12">
-            <button on:click={addStage} class="is-link button is-fullwidth"> Добавить </button>
-          </div>
-          <div class="column">
-            <button class="is-success button is-fullwidth" on:click={async () => createTask(false)}> Создать задачу </button>
-          </div>
-          <div class="column">
-            <button class="is-success button is-fullwidth" on:click={async () => createTask(true) }> Создать задачу и выйти </button>
-          </div>
-        </div>
-      {:catch error}
-        <DangerMessage title="Ошибка!" description="Не удалось загрузить данные стенда."/>
-      {/await}
-    {/if}
-  {:catch error}
-    <DangerMessage title="Ошибка!" description="Не удалось получить данные о доступных стеднах."/>
-  {/await}
+          {#each stages as stage, stageIndex (stage)}
+            <CheckStageWidget 
+              data={stage} 
+              containers={containersData.map(v => v.name)} 
+              updateCallback={async (v) => { stages[stageIndex] = v }}
+              deleteCallback={() => deleteStage(stageIndex)}
+            />
+          {/each}
+        {:catch error}
+          <DangerMessage title="Ошибка!" description="Не удалось загрузить данные стенда."/>
+        {/await}
+      {/if}
+    {:catch error}
+      <DangerMessage title="Ошибка!" description="Не удалось получить данные о доступных стендах."/>
+    {/await}
+  {:else if taskType == 'vm'}
+    <p> { JSON.stringify(taskType) } </p>
+    <p> { typeof taskType } </p>
+  {/if}
+  <div class="columns is-multiline">
+    <div class="column is-12">
+      <button on:click={addStage} class="is-link button is-fullwidth"> Добавить </button>
+    </div>
+    <div class="column">
+      <button class="is-success button is-fullwidth" on:click={async () => createTask(false)}> Создать задачу </button>
+    </div>
+    <div class="column">
+      <button class="is-success button is-fullwidth" on:click={async () => createTask(true) }> Создать задачу и выйти </button>
+    </div>
+  </div>
 </div>
