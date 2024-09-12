@@ -1,5 +1,6 @@
 import * as CheckStage from "./checkStage.ts"
 import * as U from "./types/user.ts"
+import * as VM from "./types/vm.ts"
 
 export type ContainerSummary = {
   image: string,
@@ -15,11 +16,15 @@ export type CommonCourseDetails = {
   description: string
 }
 
-export type CourseTaskType = 'vm' | 'container'
+export const allCourseTaskTypes = ['vm', 'container'] as const
+
+export type CourseTaskType = typeof allCourseTaskTypes[number]
 
 export type TaskPayload = {
   actions?: CheckStage.StageData[],
   standIdentifier?: string,
+  vms?: Array<VM.VM>,
+  networks?: Array<VM.VMNetwork>,
   type: CourseTaskType
 }
 
