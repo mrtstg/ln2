@@ -2,11 +2,15 @@ module Utils.Environment
   ( getEnvRabbitConnectionData
   , isDevEnabled
   , constructPostgreStringFromEnv
+  , getJWTSecretFromEnv
   ) where
 
 import           Data.Models.Rabbit.ConnectionData
 import           System.Environment
 import           Text.Read
+
+getJWTSecretFromEnv :: IO (Maybe String)
+getJWTSecretFromEnv = lookupEnv "AUTH_JWT_SECRET"
 
 constructPostgreStringFromEnv :: IO (Maybe String)
 constructPostgreStringFromEnv = do
