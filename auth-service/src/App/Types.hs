@@ -8,4 +8,9 @@ data AppOpts = AppOpts
   , appCommand :: !AppCommand
   }
 
-data AppCommand = RunServer | CreateDatabase | CreateRoles deriving (Show, Eq)
+data AppCommand = RunServer
+  | CreateDatabase
+  | CreateRoles
+  | IssueToken { getTokenService :: !String }
+  | RevokeToken { getTokenService :: !String }
+  deriving (Show, Eq)

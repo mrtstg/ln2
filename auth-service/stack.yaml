@@ -11,6 +11,7 @@ resolver:
 #   - wai
 packages:
 - .
+- ../libs/ln2-common
 
 extra-deps:
   - crypto-rng-0.3.0.1

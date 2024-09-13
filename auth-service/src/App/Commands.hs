@@ -13,9 +13,13 @@ import           App.Types
 import           Control.Monad               (unless, when)
 import           Control.Monad.Logger        (runStdoutLoggingT)
 import qualified Data.ByteString.Char8       as BS
+import           Data.Functor                ((<&>))
 import qualified Data.Map                    as M
 import           Data.Maybe                  (fromMaybe)
 import           Data.Text
+import           Data.Text                   (Text)
+import qualified Data.Text                   as T
+import           Data.UUID.V4                (nextRandom)
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.Auth
@@ -30,6 +34,8 @@ import           System.Environment
 import           System.Exit
 import           Text.Read                   (readMaybe)
 import           Utils
+import           Utils.Environment
+import           Web.JWT
 import           Yesod.Core
 
 mkYesodDispatch "App" resourcesApp
@@ -40,9 +46,37 @@ defaultRoles = M.fromList
   , ("course-creator", "Управляющие курсами")
   ]
 
-runCreateRolesCommand :: IO ()
-runCreateRolesCommand = let
-  runDB v f = runStdoutLoggingT $ withPostgresqlPool (BS.pack v) 1 $ \pool -> liftIO $ do runSqlPersistMPool f pool
+runDB v f = runStdoutLoggingT $ withPostgresqlPool (BS.pack v) 1 $ \pool -> liftIO $ do runSqlPersistMPool f pool
+
+runIssueTokenCommand :: String -> String -> String -> IO ()
+runIssueTokenCommand postgresString jwtSecret serviceName = let
+  getUUID :: Bool -> IO String
+  getUUID True = do
+    Just (Entity _ (Token { .. })) <- runDB postgresString $ selectFirst [TokenService ==. serviceName] []
+    return tokenService
+  getUUID False = do
+    uuid <- nextRandom <&> show
+    tokenExists <- runDB postgresString $ exists [TokenService ==. serviceName]
+    if not tokenExists then return uuid else getUUID False
+  jwtKey = (hmacSecret . T.pack) jwtSecret
+  in do
+  tokenExists <- runDB postgresString $ do
+    exists [TokenService ==. serviceName]
+  tokenUUID <- getUUID tokenExists
+  let jwtClaims = mempty {
+    unregisteredClaims = ClaimsMap $ M.fromList [(T.pack "uuid", (String . T.pack) tokenUUID)]
+  }
+  let token = encodeSigned jwtKey mempty jwtClaims
+  unless tokenExists $ do
+    _ <- runDB postgresString $ insertKey (TokenKey tokenUUID) (Token serviceName)
+    pure ()
+  putStrLn (T.unpack token)
+
+runRevokeTokenCommand :: String -> String -> String -> IO ()
+runRevokeTokenCommand postgresString jwtSecret serviceName = undefined
+
+runCreateRolesCommand :: String -> IO ()
+runCreateRolesCommand postgresString = let
   helper :: String -> [(Text, Text)] -> IO ()
   helper _ []                         = return ()
   helper cS ((roleName, roleDesc):rs) = do
@@ -53,56 +87,52 @@ runCreateRolesCommand = let
       _ <- runDB cS $ do insert (Role roleName roleDesc)
       return ()
     helper cS rs
+  in helper postgresString (M.toList defaultRoles)
 
-  in do
-  postgresString <- constructPostgreStringFromEnv
-  case postgresString of
+runCreateDatabaseCommand :: String -> IO ()
+runCreateDatabaseCommand v = do
+  runStdoutLoggingT $ withPostgresqlPool (BS.pack v) 1 $ \pool -> liftIO $ do
+    flip runSqlPersistMPool pool $ do
+      runMigration migrateAll
+
+runServerCommand :: String -> Int -> IO ()
+runServerCommand postgresString port = do
+  redisConnection' <- createRedisConnectionFromEnv
+  case redisConnection' of
     Nothing -> do
-      putStrLn "No postgres connection info!"
+      putStrLn "No redis connection data!"
       exitWith $ ExitFailure 1
-    (Just v) -> do
-      helper v (M.toList defaultRoles)
+    Just redisConnection -> do
+      bypassValue <- lookupEnv "BYPASS_AUTH"
+      let bypassAuthStr = fromMaybe "0" bypassValue
+      let bypassAuth = fromMaybe 0 (readMaybe bypassAuthStr) == 1
+      postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
+      let app = App postgresPool redisConnection bypassAuth
+      when bypassAuth $ do
+        putStrLn "[DEBUG] Auth bypass enabled!"
+        rewriteAuthToken' Nothing redisConnection "admin" "admin"
+      unless bypassAuth $ do
+        deleteValue' redisConnection "admin"
+        deleteValue' redisConnection "token-admin"
+      warp port app
 
-runCreateDatabaseCommand :: IO ()
-runCreateDatabaseCommand = do
-  postgresString <- constructPostgreStringFromEnv
-  case postgresString of
-    Nothing -> do
-      putStrLn "No postgres connection info!"
-      exitWith $ ExitFailure 1
-    (Just v) -> do
-      runStdoutLoggingT $ withPostgresqlPool (BS.pack v) 1 $ \pool -> liftIO $ do
-        flip runSqlPersistMPool pool $ do
-          runMigration migrateAll
-
-runServerCommand :: Int -> IO ()
-runServerCommand port = do
+runCommand :: AppOpts -> IO ()
+runCommand (AppOpts port appCommand) = do
   postgresString' <- constructPostgreStringFromEnv
   case postgresString' of
     Nothing -> do
       putStrLn "No postgres connection info!"
       exitWith $ ExitFailure 1
     Just postgresString -> do
-      redisConnection' <- createRedisConnectionFromEnv
-      case redisConnection' of
+      jwtSecret' <- getJWTSecretFromEnv
+      case jwtSecret' of
         Nothing -> do
-          putStrLn "No redis connection data!"
+          putStrLn "JWT secret is not set!"
           exitWith $ ExitFailure 1
-        Just redisConnection -> do
-          bypassValue <- lookupEnv "BYPASS_AUTH"
-          let bypassAuthStr = fromMaybe "0" bypassValue
-          let bypassAuth = fromMaybe 0 (readMaybe bypassAuthStr) == 1
-          postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-          let app = App postgresPool redisConnection bypassAuth
-          when bypassAuth $ do
-            putStrLn "[DEBUG] Auth bypass enabled!"
-            rewriteAuthToken' Nothing redisConnection "admin" "admin"
-          unless bypassAuth $ do
-            deleteValue' redisConnection "admin"
-            deleteValue' redisConnection "token-admin"
-          warp port app
-
-runCommand :: AppOpts -> IO ()
-runCommand (AppOpts _ CreateDatabase) = runCreateDatabaseCommand
-runCommand (AppOpts port RunServer)   = runServerCommand port
-runCommand (AppOpts _ CreateRoles)    = runCreateRolesCommand
+        (Just jwtSecret) -> do
+          case appCommand of
+            CreateDatabase        -> runCreateDatabaseCommand postgresString
+            RunServer             -> runServerCommand postgresString port
+            CreateRoles           -> runCreateRolesCommand postgresString
+            (IssueToken service)  -> runIssueTokenCommand postgresString jwtSecret service
+            (RevokeToken service) -> runRevokeTokenCommand postgresString jwtSecret service
