@@ -16,6 +16,8 @@ export type VMNetworkInterface = {
   firewall: boolean
 }
 
+export const serviceVMNetworks = ["internet"]
+
 export type VMNetwork = {
   name: string
 }
