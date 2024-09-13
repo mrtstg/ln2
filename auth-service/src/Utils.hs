@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Utils
-  ( constructPostgreStringFromEnv
-  , createRedisConnectionFromEnv
+  ( createRedisConnectionFromEnv
   , sha256String
   , sha256Text
   ) where
@@ -29,27 +28,3 @@ createRedisConnectionFromEnv = do
       connection <- connect $ defaultConnectInfo { connectHost = redisHost', connectPort = (PortNumber . read) redisPort' }
       return $ Just connection
     _anyOther -> return Nothing
-
-constructPostgreStringFromEnv :: IO (Maybe String)
-constructPostgreStringFromEnv = do
-  dbUser'' <- lookupEnv "POSTGRES_USER"
-  dbPass'' <- lookupEnv "POSTGRES_PASSWORD"
-  dbName'' <- lookupEnv "POSTGRES_DB"
-  dbHost'' <- lookupEnv "POSTGRES_HOST"
-  dbPort'' <- lookupEnv "POSTGRES_PORT"
-  return $ do
-    dbUser' <- dbUser''
-    dbPass' <- dbPass''
-    dbName' <- dbName''
-    dbHost' <- dbHost''
-    dbPort' <- dbPort''
-    return $ "user=" <>
-      dbUser' <>
-      " password=" <>
-      dbPass' <>
-      " host=" <>
-      dbHost' <>
-      " port=" <>
-      dbPort' <>
-      " dbname=" <>
-      dbName'
