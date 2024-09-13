@@ -39,6 +39,11 @@ User
   passwordHash Text
   UniqueUser login
   deriving Show
+Token
+  Id String
+  service String
+  TokenUnique service
+  deriving Show
 Role
   name Text
   displayName Text
