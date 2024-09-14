@@ -5,7 +5,7 @@ cabal-version: 2.2
 -- see: https://github.com/sol/hpack
 
 name:           ln2-common
-version:        0.1.0.14
+version:        0.1.0.15
 description:    Please see the README on GitHub at <https://github.com/githubuser/ln2-common#readme>
 homepage:       https://github.com/githubuser/ln2-common#readme
 bug-reports:    https://github.com/githubuser/ln2-common/issues
@@ -29,6 +29,7 @@ library
       Api.Role
       Api.User
       Data.Models.Auth.Role
+      Data.Models.Auth.Token
       Data.Models.Auth.UserAuthRequest
       Data.Models.Endpoints
       Data.Models.Rabbit.ConnectionData
