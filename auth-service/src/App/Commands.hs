@@ -16,8 +16,7 @@ import qualified Data.ByteString.Char8       as BS
 import           Data.Functor                ((<&>))
 import qualified Data.Map                    as M
 import           Data.Maybe                  (fromMaybe)
-import           Data.Text
-import           Data.Text                   (Text)
+import           Data.Text                   (Text, unpack)
 import qualified Data.Text                   as T
 import           Data.UUID.V4                (nextRandom)
 import           Database.Persist.Postgresql
@@ -73,7 +72,16 @@ runIssueTokenCommand postgresString jwtSecret serviceName = let
   putStrLn (T.unpack token)
 
 runRevokeTokenCommand :: String -> String -> String -> IO ()
-runRevokeTokenCommand postgresString jwtSecret serviceName = undefined
+runRevokeTokenCommand postgresString jwtSecret serviceName = do
+  tokenExists <- runDB postgresString $ do
+    exists [TokenService ==. serviceName]
+  if not tokenExists then do
+    putStrLn "Token is not found!"
+    exitWith $ ExitFailure 1
+  else do
+    runDB postgresString $ deleteWhere [TokenService ==. serviceName]
+    putStrLn "Token revoked!"
+    exitSuccess
 
 runCreateRolesCommand :: String -> IO ()
 runCreateRolesCommand postgresString = let
