@@ -1,31 +1,56 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Handlers.Validate (postValidateTokenR) where
+module Handlers.Validate
+  ( postValidateUserTokenR
+  , postValidateServiceTokenR
+  ) where
 
-import           Crud                  (getUserAssignedRoles,
-                                        getUserDetailsByName)
+import           Crud                   (getUserAssignedRoles,
+                                         getUserDetailsByName)
 import           Data.Aeson
-import           Data.ByteString.Char8 (unpack)
-import           Data.Models.User      (UserDetails (..), userDetailsFromModel)
-import qualified Data.Text             as T
+import           Data.ByteString.Char8  (unpack)
+import qualified Data.Map               as M
+import           Data.Models.Auth.Token
+import           Data.Models.User       (UserDetails (..), userDetailsFromModel)
+import qualified Data.Text              as T
 import           Database.Persist
 import           Foundation
 import           Network.HTTP.Types
 import           Redis
+import           Web.JWT
 import           Yesod.Core
 import           Yesod.Persist
 
-newtype TokenRequest = TokenRequest { getTokenRequest :: String } deriving (Show)
+newtype TokenRequest t = TokenRequest { getTokenRequest :: t } deriving (Show)
 
-instance FromJSON TokenRequest where
+instance (FromJSON t) => FromJSON (TokenRequest t) where
   parseJSON = withObject "TokenRequest" $ \v -> TokenRequest <$>
     v .: "token"
 
 getUserDetailsWrapper :: T.Text -> Handler (Maybe UserDetails)
 getUserDetailsWrapper userName = runDB $ getUserDetailsByName userName
 
-postValidateTokenR :: Handler Value
-postValidateTokenR = do
+postValidateServiceTokenR :: Handler Value
+postValidateServiceTokenR = do
+  TokenRequest { getTokenRequest = token } <- requireCheckJsonBody
+  App { .. } <- getYesod
+  let jwtRes = decodeAndVerifySignature (toVerify . hmacSecret $ jwtSecret) token
+  case jwtRes of
+    Nothing -> sendStatusJSON status400 $ object [ "error" .= String "Invalid signature!" ]
+    (Just jwtToken) -> do
+      let unregClaims = (unClaimsMap . unregisteredClaims . claims) jwtToken
+      case M.lookup "uuid" unregClaims of
+        Nothing -> sendStatusJSON status400 $ object [ "error" .= String "Invalid token structure!" ]
+        (Just (String uuid)) -> do
+          tokenEntity' <- runDB $ selectFirst [ TokenId ==. (TokenKey . T.unpack) uuid ] []
+          case tokenEntity' of
+            Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Token not found" ]
+            (Just (Entity _ Token { .. })) -> do
+              sendStatusJSON status200 $ AuthTokenResponse { getTokenResponseService = T.pack tokenService }
+        _otherValue -> sendStatusJSON status400 $ object [ "error" .= String "Invalid token structure!" ]
+
+postValidateUserTokenR :: Handler Value
+postValidateUserTokenR = do
   TokenRequest { getTokenRequest = token } <- requireCheckJsonBody
   App { .. } <- getYesod
   userName' <- liftIO $ getValue' redisPool token
