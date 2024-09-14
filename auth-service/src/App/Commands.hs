@@ -51,8 +51,8 @@ runIssueTokenCommand :: String -> String -> String -> IO ()
 runIssueTokenCommand postgresString jwtSecret serviceName = let
   getUUID :: Bool -> IO String
   getUUID True = do
-    Just (Entity _ (Token { .. })) <- runDB postgresString $ selectFirst [TokenService ==. serviceName] []
-    return tokenService
+    Just (Entity (TokenKey tId) (Token { .. })) <- runDB postgresString $ selectFirst [TokenService ==. serviceName] []
+    return tId
   getUUID False = do
     uuid <- nextRandom <&> show
     tokenExists <- runDB postgresString $ exists [TokenService ==. serviceName]
@@ -103,8 +103,8 @@ runCreateDatabaseCommand v = do
     flip runSqlPersistMPool pool $ do
       runMigration migrateAll
 
-runServerCommand :: String -> Int -> IO ()
-runServerCommand postgresString port = do
+runServerCommand :: String -> String -> Int -> IO ()
+runServerCommand postgresString jwtSecret port = do
   redisConnection' <- createRedisConnectionFromEnv
   case redisConnection' of
     Nothing -> do
@@ -115,7 +115,7 @@ runServerCommand postgresString port = do
       let bypassAuthStr = fromMaybe "0" bypassValue
       let bypassAuth = fromMaybe 0 (readMaybe bypassAuthStr) == 1
       postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-      let app = App postgresPool redisConnection bypassAuth
+      let app = App postgresPool (T.pack jwtSecret) redisConnection bypassAuth
       when bypassAuth $ do
         putStrLn "[DEBUG] Auth bypass enabled!"
         rewriteAuthToken' Nothing redisConnection "admin" "admin"
@@ -140,7 +140,7 @@ runCommand (AppOpts port appCommand) = do
         (Just jwtSecret) -> do
           case appCommand of
             CreateDatabase        -> runCreateDatabaseCommand postgresString
-            RunServer             -> runServerCommand postgresString port
+            RunServer             -> runServerCommand postgresString jwtSecret port
             CreateRoles           -> runCreateRolesCommand postgresString
             (IssueToken service)  -> runIssueTokenCommand postgresString jwtSecret service
             (RevokeToken service) -> runRevokeTokenCommand postgresString jwtSecret service
