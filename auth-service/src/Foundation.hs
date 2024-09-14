@@ -28,6 +28,7 @@ import           Yesod.Persist
 
 data App = App
   { postgresqlPool :: !(Pool SqlBackend)
+  , jwtSecret      :: !Text
   , redisPool      :: !R.Connection
   , bypassAuth     :: !Bool
   }
@@ -67,7 +68,8 @@ mkYesodData
 /assign/#Text/#Text AssignRoleR GET POST
 /auth AuthRouteR POST
 /logout LogoutRouteR POST
-/validate ValidateTokenR POST
+/validate ValidateUserTokenR POST
+/validate/token ValidateServiceTokenR POST
 /query QueryR POST
 |]
 
