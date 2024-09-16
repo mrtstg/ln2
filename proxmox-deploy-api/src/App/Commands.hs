@@ -95,9 +95,10 @@ runServerCommand port = do
                     "/"
                     ((T.pack . getRConUser) rabbitCreds)
                     ((T.pack . getRConPass) rabbitCreds)
+                  bypassAuth <- isAuthBypassed
                   devEnabled <- isDevEnabled
                   postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-                  let app = App postgresPool endpoints rabbitConn proxmoxConf devEnabled
+                  let app = App postgresPool endpoints rabbitConn proxmoxConf devEnabled bypassAuth
                   () <- declareSDN proxmoxConf
                   _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
                   _ <- prepareRabbitQuery rabbitConn

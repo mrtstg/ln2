@@ -20,7 +20,7 @@ import           Yesod.Core
 requireAuth' :: (EndpointsConfiguration -> HandlerFor App AuthSource) -> (AuthSource -> Bool) -> Handler ()
 requireAuth' authF validationF = do
   App { .. } <- getYesod
-  if devEnabled then return () else do
+  if bypassAuth then return () else do
     userDetails <- authF endpointsConfiguration
     if validationF userDetails then return () else sendStatusJSON status403 api403Error
 

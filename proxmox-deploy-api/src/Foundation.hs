@@ -35,6 +35,7 @@ data App = App
   , rabbitConnection       :: !R.Connection
   , proxmoxConfiguration   :: !ProxmoxConfiguration
   , devEnabled             :: !Bool
+  , bypassAuth             :: !Bool
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
