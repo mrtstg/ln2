@@ -30,7 +30,11 @@ checkAuth :: EndpointsConfiguration -> HandlerFor a (Maybe UserDetails)
 checkAuth endpoints = do
   tokenValue' <- lookupCookie "session"
   case tokenValue' of
-    Nothing -> return Nothing
+    Nothing -> do
+      authHeader' <- lookupBearerAuth
+      case authHeader' of
+        Nothing            -> return Nothing
+        (Just bearerToken) -> undefined
     (Just tokenValue) -> do
       validRes <- liftIO $ validateToken' endpoints tokenValue
       case validRes of
