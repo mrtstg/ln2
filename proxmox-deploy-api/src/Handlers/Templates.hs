@@ -47,7 +47,7 @@ postTemplatesR = let
         Nothing -> return (status500, object [ "error" .= String "Something went wrong" ])
         (Just template) -> return (status200, toJSON $ machineTemplateFromModel template)
   in do
-  () <- requireAdminAuth' requireApiAuth
+  () <- requireAdminOrServiceAuth' requireApiAuth
   payload <- requireCheckJsonBody
   f payload >>= sendCurryJSON
 
@@ -72,7 +72,7 @@ patchTemplateR oldTemplateID = let
           Nothing -> return (status500, object [ "error" .= String "Something went wrong" ])
           (Just (Entity _ template)) -> return (status200, toJSON $ machineTemplateFromModel template)
   in do
-  () <- requireAdminAuth' requireApiAuth
+  () <- requireAdminOrServiceAuth' requireApiAuth
   payload <- requireCheckJsonBody
   f payload >>= sendCurryJSON
 
@@ -85,5 +85,5 @@ deleteTemplateR templateId = let
       runDB $ deleteWhere [ MachineTemplateProxmoxId ==. templateId ]
       return (status204, object [])
   in do
-  () <- requireAdminAuth' requireApiAuth
+  () <- requireAdminOrServiceAuth' requireApiAuth
   f >>= sendCurryJSON

@@ -42,7 +42,7 @@ getAuthR = do
         Nothing -> sendStatusJSON status401 ()
         (Just vmport) -> do
           App { endpointsConfiguration = endpoints } <- getYesod
-          userDetails' <- checkAuth endpoints
+          userDetails' <- checkUserAuth endpoints
           let displayNumber = portToDisplayNumber vmport
           case userDetails' of
             Nothing                     -> sendStatusJSON status401 ()

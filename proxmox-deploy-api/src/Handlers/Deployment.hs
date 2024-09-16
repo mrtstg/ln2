@@ -17,19 +17,24 @@ import           Crud.VMIds
 import           Data.Aeson
 import           Data.ByteString.Lazy               (toStrict)
 import           Data.Functor                       ((<&>))
+import           Data.Models.Auth
 import           Data.Models.Deployment.Data
 import           Data.Models.Deployment.Payload
 import           Data.Models.DeploymentRequest
 import qualified Data.Models.DeploymentStatus       as S
 import           Data.Models.Proxmox.Deploy.Request (DeployRequest (..))
+import           Data.Models.User
 import qualified Data.Text                          as T
 import           Data.UUID.V4
 import           Database.Persist
 import           Deploy.Proxmox
 import           Foundation
+import           Handlers.Auth
+import           Handlers.Utils
 import           Network.HTTP.Types
 import           Rabbit
 import           Utils                              (toMachineDeploymentRead)
+import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
 
@@ -41,6 +46,7 @@ generateDeploymentUUID = do
 
 postDeploymentsR :: Handler Value
 postDeploymentsR = do
+  _ <- requireServiceAuth' requireApiAuth
   (DeploymentCreateRequest courseId uid req@(DeployRequest { .. }) taskId) <- requireCheckJsonBody
   deploymentId <- generateDeploymentUUID
   templates' <- runDB $ selectList ([] :: [Filter MachineTemplate]) []
@@ -107,25 +113,37 @@ postDeploymentsR = do
                           sendStatusJSON status200 $ object ["id" .= deploymentId]
 
 deleteDeploymentR :: String -> Handler Value
-deleteDeploymentR deploymentId' = do
+deleteDeploymentR deploymentId' = let
+  isCourseAdmin' (TokenAuth {}) _                  = True
+  isCourseAdmin' (UserAuth (UserDetails { .. })) f = f getUserRoles
+  isDeploymentOwner' _ (TokenAuth {}) = False
+  isDeploymentOwner' ownerId (UserAuth (UserDetails { getUserDetailsId = uId })) = ownerId == uId
+  in do
+  App { endpointsConfiguration = endpoints } <- getYesod
+  authSrc <- requireApiAuth endpoints
   let deploymentId = MachineDeploymentKey deploymentId'
   deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
   case deployment' of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= T.pack "Deployment not found" ]
     (Just (Entity _ (MachineDeployment { .. }))) -> do
-      App { rabbitConnection = rCon } <- getYesod
-      deploymentData' <- decodeDeploymentData machineDeploymentData
-      case deploymentData' of
-        (Left e) -> sendStatusJSON status400 $ object [ "error" .= T.pack e]
-        (Right (DeploymentData { .. })) -> do
-          _ <- liftIO $ putDeploymentRequest rCon (DeploymentRequest
-            { getDeploymentRequestVMs = getDeploymentVMs
-            , getDeploymentRequestNetworks = getDeploymentNetworks
-            , getDeploymentRequestNetworkMap = getDeploymentNetworkMap
-            , getDeploymentRequestId = deploymentId'
-            , getDeploymentRequestAction = "destroy"
-            })
-          sendStatusJSON status204 ()
+      let isCourseAdmin = isCourseAdmin' authSrc (isUserCourseAdmin machineDeploymentCourseId)
+      let isDeploymentOwner = isDeploymentOwner' machineDeploymentUserId authSrc
+      if isCourseAdmin || isDeploymentOwner then do
+        App { rabbitConnection = rCon } <- getYesod
+        deploymentData' <- decodeDeploymentData machineDeploymentData
+        case deploymentData' of
+          (Left e) -> sendStatusJSON status400 $ object [ "error" .= T.pack e]
+          (Right (DeploymentData { .. })) -> do
+            _ <- liftIO $ putDeploymentRequest rCon (DeploymentRequest
+              { getDeploymentRequestVMs = getDeploymentVMs
+              , getDeploymentRequestNetworks = getDeploymentNetworks
+              , getDeploymentRequestNetworkMap = getDeploymentNetworkMap
+              , getDeploymentRequestId = deploymentId'
+              , getDeploymentRequestAction = "destroy"
+              })
+            sendStatusJSON status204 ()
+      else do
+        sendStatusJSON status403 $ object [ "error" .= String "Unauthorized" ]
 
 getDeploymentR :: String -> Handler Value
 getDeploymentR deploymentId' = do
