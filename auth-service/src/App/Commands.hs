@@ -112,6 +112,7 @@ runServerCommand postgresString jwtSecret port = do
       exitWith $ ExitFailure 1
     Just redisConnection -> do
       postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
+      bypassAuth <- isAuthBypassed
       let app = App postgresPool (T.pack jwtSecret) redisConnection bypassAuth
       when bypassAuth $ do
         putStrLn "[DEBUG] Auth bypass enabled!"
