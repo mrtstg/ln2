@@ -6,6 +6,8 @@ module Api.Auth
   , validateToken
   , validateToken'
   , AuthError(..)
+  , validateJWTToken
+  , validateJWTToken'
   ) where
 
 import           Api
@@ -13,6 +15,8 @@ import           Control.Exception                (catch, displayException, try)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.ByteString                  (ByteString)
+import           Data.Functor                     ((<&>))
+import           Data.Models.Auth.Token
 import           Data.Models.Auth.UserAuthRequest
 import           Data.Models.Endpoints
 import           Data.Models.User
@@ -37,6 +41,24 @@ commonHttpAuthErrorHandler exc = let
   r <- runExceptT exc `catch` handler
   case r of
     ~(Right v) -> return v
+
+validateJWTToken' :: EndpointsConfiguration -> Text -> IO (Either (AuthError String) AuthTokenResponse)
+validateJWTToken' endpoints token = commonHttpAuthErrorHandler $ validateJWTToken endpoints token
+
+validateJWTToken :: EndpointsConfiguration -> Text -> ExceptT HttpException IO (Either (AuthError String) AuthTokenResponse)
+validateJWTToken (EndpointsConfiguration { getAuthServiceUrl = httpApiUrl }) token = do
+  let payload = object [ "token" .= String token ]
+  let reqString = "POST " <> httpApiUrl <> "/validate/token"
+  request <- parseRequest reqString <&> setCommonRequestTimeout . setRequestBodyJSON payload
+  response <- httpJSONEither request
+  let statusCode = getResponseStatusCode response
+  case statusCode of
+    400 -> pure $ Left InvalidCredentials
+    404 -> pure $ Left InvalidCredentials
+    200 -> case getResponseBody response of
+      (Left e)     -> (pure . Left . OtherAuthError . show) e
+      (Right resp) -> (pure . Right) resp
+    _otherStatus -> (pure . Left . OtherAuthError . errorTextFromStatus . getResponseStatus) response
 
 validateToken' :: EndpointsConfiguration -> Text -> IO (Either (AuthError String) UserDetails)
 validateToken' endpoints token = commonHttpAuthErrorHandler $ validateToken endpoints token

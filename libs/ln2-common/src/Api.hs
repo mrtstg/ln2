@@ -5,15 +5,21 @@ module Api
   , errorTextFromStatus
   , ApiPageWrapper(..)
   , ApiErrorWrapper(..)
+  , prepareCommonRequest
+  , setCommonRequestTimeout
   ) where
 
 import           Control.Exception
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import           Data.Aeson.KeyMap          (KeyMap)
+import           Data.ByteString            (ByteString)
 import qualified Data.ByteString.Char8      as BS
 import           Network.HTTP.Conduit
+import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status  (Status (..))
+
+type AccessToken = ByteString
 
 data ApiErrorWrapper t = ApiErrorWrapper
   { getErrorMessage :: !t
@@ -43,6 +49,12 @@ instance (FromJSON t) => FromJSON (ApiPageWrapper t) where
     <$> v .: "pageSize"
     <*> v .: "objects"
     <*> v .: "total"
+
+setCommonRequestTimeout :: Request -> Request
+setCommonRequestTimeout = setRequestResponseTimeout (responseTimeoutMicro 10000000)
+
+prepareCommonRequest :: AccessToken -> Request -> Request
+prepareCommonRequest token = setCommonRequestTimeout  . setRequestBearerAuth token
 
 errorTextFromStatus :: Status -> String
 errorTextFromStatus status = show (statusCode status) <> BS.unpack (statusMessage status)
