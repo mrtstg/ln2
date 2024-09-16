@@ -1,22 +1,33 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Handlers.Auth
   ( requireApiAuth
   , api403Error
   , checkAuth
   , checkUserAuth
+  , requireApiAdminOrService
   ) where
 
 import           Api.Auth
 import           Data.Aeson
 import           Data.Models.Auth
-import           Data.Models.Auth.Token
-import           Data.Models.Endpoints  (EndpointsConfiguration)
+import           Data.Models.Endpoints (EndpointsConfiguration)
 import           Data.Models.User
 import           Network.HTTP.Types
+import           Utils.Auth
 import           Yesod.Core
 
 api403Error :: Value
 api403Error = object [ "error" .= String "Unauthorized!" ]
+
+requireApiAdminOrService :: EndpointsConfiguration -> HandlerFor a AuthSource
+requireApiAdminOrService endpoints = do
+  authRes <- checkAuth endpoints
+  case authRes of
+    Nothing -> sendStatusJSON status403 api403Error
+    (Just t@(TokenAuth {})) -> return t
+    (Just u@(UserAuth (UserDetails { .. }))) ->
+      if adminRoleGranted getUserRoles then return u else sendStatusJSON status403 api403Error
 
 requireApiAuth :: EndpointsConfiguration -> HandlerFor a AuthSource
 requireApiAuth endpoints = do
