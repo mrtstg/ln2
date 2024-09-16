@@ -23,7 +23,7 @@ import           Yesod.Persist
 
 getDeploymentsR :: Handler Html
 getDeploymentsR = do
-  _ <- requireAuth
+  _ <- requireUserAuth
   defaultLayout $ do
     setTitle "Развертывания"
     [whamlet|
@@ -54,7 +54,7 @@ getDeploymentsApiR :: Handler Value
 getDeploymentsApiR = do
   App { endpointsConfiguration = endpoints } <- getYesod
   pageN <- getPageNumber
-  (UserDetails { .. }) <- requireApiAuth endpoints
+  (UserDetails { .. }) <- requireApiUserAuth endpoints
   deployments' <- liftIO $ getUserDeployments' endpoints pageN getUserDetailsId
   case deployments' of
     (Left e) -> sendStatusJSON status500 $ object [ "error" .= e]

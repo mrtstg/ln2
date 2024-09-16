@@ -11,7 +11,7 @@ import           Yesod.Core
 
 getEditUsersR :: Handler Html
 getEditUsersR = do
-  (UserDetails { getUserRoles = roles }) <- requireAuth
+  (UserDetails { getUserRoles = roles }) <- requireUserAuth
   let isAdmin = adminRoleGranted roles
   if not isAdmin then redirect IndexR else do
     defaultLayout $ do

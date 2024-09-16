@@ -15,7 +15,7 @@ import           Yesod.Persist
 -- random courses?
 getIndexR :: Handler Html
 getIndexR = do
-  UserDetails { .. } <- requireAuth
+  UserDetails { .. } <- requireUserAuth
   (courses, _) <- getUserMembershipCourses getUserRoles 1
   let limitedCourses = take 4 courses
   courseAuthors <- liftIO $ retrieveCourseUsers courses

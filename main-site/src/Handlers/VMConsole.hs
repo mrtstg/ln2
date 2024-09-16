@@ -10,7 +10,7 @@ import           Yesod.Core
 
 getVMConsoleR :: Int -> Handler Html
 getVMConsoleR _ = do
-  _ <- requireAuth
+  _ <- requireUserAuth
   pc <- widgetToPageContent $ do
     setTitle "VM"
     [whamlet|

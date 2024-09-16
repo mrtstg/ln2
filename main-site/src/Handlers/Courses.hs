@@ -60,7 +60,7 @@ courseList (courses, cAmount) isAdmin pageN coursePageR coursesR = do
 
 getCoursesR :: Handler Html
 getCoursesR = do
-  (UserDetails { .. }) <- requireAuth
+  (UserDetails { .. }) <- requireUserAuth
   pageN <- getPageNumber
   (courses, amount) <- getUserMembershipCourses getUserRoles pageN
   authors <- liftIO $ U.retrieveCourseUsers courses
@@ -75,7 +75,7 @@ getCoursesR = do
 
 getAdminCoursesR :: Handler Html
 getAdminCoursesR = do
-  d <- requireAuth
+  d <- requireUserAuth
   pageN <- getPageNumber
   (courses, amount) <- getUserCourses pageN d
   authors <- liftIO $ U.retrieveCourseUsers courses
@@ -98,7 +98,7 @@ getApiCoursesR = let
   helper _                        = Nothing
   in do
   App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiAuth endpoints
+  (UserDetails { .. }) <- requireApiUserAuth endpoints
   pageN <- getPageNumber
   (courses, cAmount) <- getUserMembershipCourses getUserRoles pageN
   users <- liftIO $ U.retrieveCourseUsers courses
@@ -111,7 +111,7 @@ getApiCoursesR = let
 postApiCoursesR :: Handler Value
 postApiCoursesR = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  d@(UserDetails { getUserDetailsId = uId, getUserDetailsLogin = uLogin, getUserRoles = roles }) <- requireApiAuth endpoints
+  d@(UserDetails { getUserDetailsId = uId, getUserDetailsLogin = uLogin, getUserRoles = roles }) <- requireApiUserAuth endpoints
   c@(CourseCreate { .. }) <- requireCheckJsonBody
   if not $ isUserCourseManager roles then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
     courseExists <- runDB $ exists [CourseName ==. getCourseCreateName]

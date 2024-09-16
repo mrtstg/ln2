@@ -27,7 +27,7 @@ instance FromJSON TaskAnswer where
 getApiTaskSolvesR :: CourseTaskId -> Handler Value
 getApiTaskSolvesR ctId = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  UserDetails { .. } <- requireApiAuth endpoints
+  UserDetails { .. } <- requireApiUserAuth endpoints
   pageN <- getPageNumber
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
@@ -51,7 +51,7 @@ postApiTaskSolvesR :: CourseTaskId -> Handler Value
 postApiTaskSolvesR ctId = do
   reqTime <- liftIO getCurrentTime
   App { endpointsConfiguration = endpoints } <- getYesod
-  d <- requireApiAuth endpoints
+  d <- requireApiUserAuth endpoints
   (TaskAnswer ans) <- requireCheckJsonBody
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of

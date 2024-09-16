@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -12,6 +13,7 @@ module Handlers.CoursePage
 
 import           Crud.Course
 import           Crud.CourseTask
+import           Data.Models.Auth
 import           Data.Models.Auth.Role
 import           Data.Models.Course
 import           Data.Models.User
@@ -35,18 +37,22 @@ validateCourseId cId (UserDetails { .. }) controlF failureR = do
       let isPermited = controlF courseUUID getUserRoles
       if not isPermited then redirect failureR else return e
 
-validateApiCourseId :: CourseId -> UserDetails -> (String -> [RoleDetails] -> Bool) -> Handler (Entity Course)
-validateApiCourseId cId (UserDetails { .. }) controlF = do
+validateApiCourseId :: CourseId -> AuthSource -> (String -> [RoleDetails] -> Bool) -> Handler (Entity Course)
+validateApiCourseId cId authSrc controlF = let
+  hasAccess' courseUUID = \case
+    (TokenAuth {}) -> True
+    (UserAuth (UserDetails { .. })) -> controlF courseUUID getUserRoles
+  in do
   courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
   case courseRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ]
     (Just e@(Entity (CourseKey courseUUID) _)) -> do
-      let isPermited = controlF courseUUID getUserRoles
+      let isPermited = hasAccess' courseUUID authSrc
       if not isPermited then sendStatusJSON status403 $ object [ "error" .= String "Forbidden"] else return e
 
 getAdminCourseR :: CourseId -> Handler Html
 getAdminCourseR cId = do
-  userD <- requireAuth
+  userD <- requireUserAuth
   _ <- validateCourseId cId userD isUserCourseAdmin AdminCoursesR
   defaultLayout $ do
     [whamlet|
@@ -56,7 +62,7 @@ getAdminCourseR cId = do
 -- TODO: errors screens
 getCourseR :: CourseId -> Handler Html
 getCourseR cId@(CourseKey courseUUID) = do
-  userD@(UserDetails { .. }) <- requireAuth
+  userD@(UserDetails { .. }) <- requireUserAuth
   (Entity _ (Course { .. })) <- validateCourseId cId userD isUserCourseMember CoursesR
   pageV <- getPageNumber
   (tasks, taskA) <- getCourseTasks cId pageV
@@ -130,11 +136,18 @@ patchApiCourseIdR cId = do
       (Just e) -> sendStatusJSON status200 $ courseDetailsFromModel (Entity cId e) Nothing
 
 deleteApiCourseIdR :: CourseId -> Handler Value
-deleteApiCourseIdR (CourseKey courseUUID) = do
+deleteApiCourseIdR (CourseKey courseUUID) = let
+  hasManageAccess' = \case
+    (TokenAuth {}) -> True
+    (UserAuth (UserDetails { .. })) -> isUserCourseManager getUserRoles
+  hasCourseAccess' courseUUID = \case
+    (TokenAuth {}) -> True
+    (UserAuth (UserDetails { .. })) -> isUserCourseAdmin courseUUID getUserRoles
+  in do
   App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiAuth endpoints
-  if not $ isUserCourseManager getUserRoles then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
-    let isAdmin = isUserCourseAdmin courseUUID getUserRoles
+  authSrc <- requireApiAuth endpoints
+  if not $ hasManageAccess' authSrc then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
+    let isAdmin = hasCourseAccess' courseUUID authSrc
     if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You're not admin of this course!" ] else do
       res <- deleteCourse courseUUID
       if not res then sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ] else sendResponseStatus status204 ()

@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
 module Handlers.Utils
-  ( requireAuth
+  ( requireUserAuth
   , generateCheckMessage
   ) where
 
@@ -27,8 +27,8 @@ generateCheckMessage (CheckMessage { .. }) = [whamlet|
             #{getBlockContent}
 |]
 
-requireAuth :: Handler UserDetails
-requireAuth = do
+requireUserAuth :: Handler UserDetails
+requireUserAuth = do
   tokenValue' <- lookupCookie "session"
   case tokenValue' of
     Nothing -> redirect LoginR

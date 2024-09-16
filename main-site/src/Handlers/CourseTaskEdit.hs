@@ -11,7 +11,7 @@ import           Yesod.Persist
 
 getCourseTaskEditR :: CourseId -> CourseTaskId -> Handler Html
 getCourseTaskEditR cId ctId = do
-  (UserDetails { .. }) <- requireAuth
+  (UserDetails { .. }) <- requireUserAuth
   courseTaskRes <- runDB $ get ctId
   case courseTaskRes of
     Nothing -> redirect AdminCoursesR
