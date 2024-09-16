@@ -111,9 +111,6 @@ runServerCommand postgresString jwtSecret port = do
       putStrLn "No redis connection data!"
       exitWith $ ExitFailure 1
     Just redisConnection -> do
-      bypassValue <- lookupEnv "BYPASS_AUTH"
-      let bypassAuthStr = fromMaybe "0" bypassValue
-      let bypassAuth = fromMaybe 0 (readMaybe bypassAuthStr) == 1
       postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
       let app = App postgresPool (T.pack jwtSecret) redisConnection bypassAuth
       when bypassAuth $ do
