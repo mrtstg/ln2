@@ -6,6 +6,7 @@ module Handlers.Auth
   , checkAuth
   , checkUserAuth
   , requireApiAdminOrService
+  , requireApiUserAuth
   ) where
 
 import           Api.Auth
@@ -28,6 +29,13 @@ requireApiAdminOrService endpoints = do
     (Just t@(TokenAuth {})) -> return t
     (Just u@(UserAuth (UserDetails { .. }))) ->
       if adminRoleGranted getUserRoles then return u else sendStatusJSON status403 api403Error
+
+requireApiUserAuth :: EndpointsConfiguration -> HandlerFor a UserDetails
+requireApiUserAuth endpoints = do
+  authRes <- checkUserAuth endpoints
+  case authRes of
+    Nothing      -> sendStatusJSON status403 api403Error
+    (Just userD) -> return userD
 
 requireApiAuth :: EndpointsConfiguration -> HandlerFor a AuthSource
 requireApiAuth endpoints = do
