@@ -3,8 +3,10 @@ module Utils.Environment
   , isDevEnabled
   , constructPostgreStringFromEnv
   , getJWTSecretFromEnv
+  , isAuthBypassed
   ) where
 
+import           Data.Maybe
 import           Data.Models.Rabbit.ConnectionData
 import           System.Environment
 import           Text.Read
@@ -51,6 +53,12 @@ getEnvRabbitConnectionData = do
         pass' <- pass''
         host' <- host''
         RConData user' pass' host' <$> port''
+
+isAuthBypassed :: IO Bool
+isAuthBypassed = do
+  bypassValue <- lookupEnv "BYPASS_AUTH"
+  let bypassAuthStr = fromMaybe "0" bypassValue
+  pure $ fromMaybe 0 (readMaybe bypassAuthStr) == 1
 
 isDevEnabled :: IO Bool
 isDevEnabled = do
