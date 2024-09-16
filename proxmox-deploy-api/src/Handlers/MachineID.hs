@@ -13,7 +13,7 @@ import           Yesod.Core
 
 getMachineIDsR :: Handler Value
 getMachineIDsR = do
-  () <- requireAdminAuth' requireApiAuth
+  () <- requireAdminOrServiceAuth' requireApiAuth
   App { .. } <- getYesod
   response <- liftIO $ getNodeVMs' proxmoxConfiguration
   case response of

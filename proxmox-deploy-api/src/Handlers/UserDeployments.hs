@@ -6,7 +6,9 @@ module Handlers.UserDeployments
 import qualified Data.Text          as T
 import           Database.Persist
 import           Foundation
+import           Handlers.Auth
 import           Handlers.Params
+import           Handlers.Utils
 import           Network.HTTP.Types
 import           Utils              (toMachineDeploymentRead)
 import           Yesod.Core
@@ -14,6 +16,7 @@ import           Yesod.Persist
 
 getUserDeploymentsR :: Int -> Handler Value
 getUserDeploymentsR userId = do
+  _ <- requireServiceAuth' requireApiAuth
   let pageSize = 50
   pageN <- getPageNumber
   let params = [LimitTo pageSize, OffsetBy $ (pageN - 1) * pageSize]

@@ -27,7 +27,6 @@ import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.AuthR
 import           Handlers.Deployment
-import           Handlers.DeploymentApi
 import           Handlers.MachineID
 import           Handlers.Templates
 import           Handlers.UserDeployments
