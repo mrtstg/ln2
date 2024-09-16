@@ -30,7 +30,7 @@ import           Yesod.Persist
 
 getCourseSolvesR :: CourseId -> Handler Html
 getCourseSolvesR cId@(CourseKey cId') = do
-  (UserDetails { getUserRoles = roles }) <- requireAuth
+  (UserDetails { getUserRoles = roles }) <- requireUserAuth
   course' <- runDB $ get cId
   case course' of
     Nothing -> notFound
@@ -53,7 +53,7 @@ getCourseSolvesR cId@(CourseKey cId') = do
 
 getCourseUserTasksR :: CourseId -> Int -> Handler Html
 getCourseUserTasksR cId@(CourseKey cId') uId = do
-  (UserDetails { getUserRoles = roles }) <- requireAuth
+  (UserDetails { getUserRoles = roles }) <- requireUserAuth
   userData' <- liftIO $ getUserById' uId
   case userData' of
     (UserGetResult (UserDetails { .. })) -> do
@@ -92,7 +92,7 @@ getCourseUserTasksR cId@(CourseKey cId') uId = do
 
 getUserTaskSolvesR :: CourseTaskId -> Int -> Handler Html
 getUserTaskSolvesR ctId uId = do
-  (UserDetails { getUserRoles = roles }) <- requireAuth
+  (UserDetails { getUserRoles = roles }) <- requireUserAuth
   courseTask' <- runDB $ get ctId
   case courseTask' of
     Nothing -> notFound
@@ -181,7 +181,7 @@ getUserTaskSolvesR ctId uId = do
 
 getUserSolveR :: CourseSolvesId -> Handler Html
 getUserSolveR csId@(CourseSolvesKey csId') = do
-  (UserDetails { getUserRoles = roles }) <- requireAuth
+  (UserDetails { getUserRoles = roles }) <- requireUserAuth
   courseSolve' <- runDB $ get csId
   case courseSolve' of
     Nothing -> notFound

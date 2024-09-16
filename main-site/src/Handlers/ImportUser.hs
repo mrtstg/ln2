@@ -27,7 +27,7 @@ fileForm = renderDivs $ FileRes <$> fileAFormReq "Файл"
 
 getImportUserR :: Handler Html
 getImportUserR = do
-  (UserDetails { .. }) <- requireAuth
+  (UserDetails { .. }) <- requireUserAuth
   let isAdmin = adminRoleGranted getUserRoles
   if not isAdmin then redirect IndexR else do
     (_, enctype) <- generateFormPost fileForm
@@ -59,6 +59,7 @@ postImportUserR = let
     r <- liftIO $ createUser' endpoints createData
     return $ userCreateResToString createData r
   in do
+  (UserDetails { .. }) <- requireUserAuth
   ((result, _), _) <- runFormPost fileForm
   case result of
     FormSuccess (FileRes fileInfo) -> do

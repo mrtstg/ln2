@@ -128,7 +128,7 @@ instance Yesod App where
   errorHandler e = defaultErrorHandler e
   defaultLayout widget = do
     App { endpointsConfiguration = endpoints@(EndpointsConfiguration { getVMDeployAPIUrl = deployApi }) } <- getYesod
-    d' <- checkAuth endpoints
+    d' <- checkUserAuth endpoints
     pc <- widgetToPageContent widget
     withUrlRenderer [hamlet|
 $doctype 5

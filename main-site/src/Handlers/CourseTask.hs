@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -19,6 +20,7 @@ import           Control.Monad                 (unless, when)
 import           Crud.CourseTask
 import           Data.Aeson
 import           Data.ByteString               (toStrict)
+import           Data.Models.Auth
 import           Data.Models.CourseTask
 import           Data.Models.CourseTaskPayload
 import           Data.Models.StandCheck
@@ -51,7 +53,7 @@ getApiAcceptTaskR :: CourseTaskId -> Int -> Handler Value
 getApiAcceptTaskR ctId uId = do
   redirect' <- getBoolParameter "redirect"
   App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- if redirect' then requireAuth else requireApiAuth endpoints
+  (UserDetails { .. }) <- if redirect' then requireUserAuth else requireApiUserAuth endpoints
   courseTask' <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case (courseTask', redirect') of
     (Nothing, True) -> notFound
@@ -80,7 +82,7 @@ getApiAcceptTaskR ctId uId = do
 postApiCourseTaskR :: CourseId -> Handler Value
 postApiCourseTaskR cId = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiAuth endpoints
+  (UserDetails { .. }) <- requireApiUserAuth endpoints
   (CourseTaskCreate { .. }) <- requireCheckJsonBody
   _ <- case getCourseTaskCreatePayload of
     (ContainerTaskPayload { .. }) -> do
@@ -114,7 +116,7 @@ postApiCourseTaskR cId = do
 
 getCourseTaskR :: CourseTaskId -> Handler Html
 getCourseTaskR ctId = do
-  d@(UserDetails { .. }) <- requireAuth
+  d@(UserDetails { .. }) <- requireUserAuth
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> redirect CoursesR
@@ -166,7 +168,7 @@ getCourseTaskR ctId = do
 getApiCourseTaskR :: CourseId -> Handler Value
 getApiCourseTaskR cId = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  d@(UserDetails { .. }) <- requireApiAuth endpoints
+  d@(UserDetails { .. }) <- requireApiUserAuth endpoints
   courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
   case courseRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ]
@@ -185,7 +187,7 @@ getApiCourseTaskR cId = do
 patchApiTaskR :: CourseTaskId -> Handler Value
 patchApiTaskR ctId = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiAuth endpoints
+  (UserDetails { .. }) <- requireApiUserAuth endpoints
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
@@ -204,7 +206,7 @@ patchApiTaskR ctId = do
 deleteApiTaskR :: CourseTaskId -> Handler Value
 deleteApiTaskR ctId = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiAuth endpoints
+  (UserDetails { .. }) <- requireApiUserAuth endpoints
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
@@ -222,9 +224,19 @@ deleteApiTaskR ctId = do
             sendResponseStatus status204 ()
 
 getApiTaskR :: CourseTaskId -> Handler Value
-getApiTaskR ctId = do
+getApiTaskR ctId = let
+  isCourseAdmin courseUUID = \case
+    (TokenAuth {}) -> True
+    (UserAuth (UserDetails { .. })) -> isUserCourseAdmin courseUUID getUserRoles
+  hasCourseAccess courseUUID = \case
+    (TokenAuth {}) -> True
+    (UserAuth (UserDetails { .. })) -> isUserCourseMember courseUUID getUserRoles || isUserCourseAdmin courseUUID getUserRoles
+  taskAcceptedWrapper cT = \case
+    (TokenAuth {}) -> pure False
+    (UserAuth d) -> getCourseTaskAccepted d cT
+  in do
   App { endpointsConfiguration = endpoints } <- getYesod
-  d@(UserDetails { .. }) <- requireApiAuth endpoints
+  authSrc <- requireApiAuth endpoints
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
@@ -233,11 +245,9 @@ getApiTaskR ctId = do
       case courseRes of
         Nothing -> error "Unreachable pattern!"
         (Just cE@(Entity (CourseKey courseUUID) _)) -> do
-          let isMember = isUserCourseMember courseUUID getUserRoles
-          let isAdmin = isUserCourseAdmin courseUUID getUserRoles
-          if not isMember && not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
-            taskAccepted <- getCourseTaskAccepted d cT
-            if not isAdmin then
+          if hasCourseAccess courseUUID authSrc then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
+            taskAccepted <- taskAcceptedWrapper cT authSrc
+            if not (isCourseAdmin courseUUID authSrc) then
               sendStatusJSON status200 $ courseTaskDetailFromModels' cT cE Nothing taskAccepted
             else
               case courseTaskDetailFromModels cT cE Nothing taskAccepted of

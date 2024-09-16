@@ -7,7 +7,7 @@ import           Data.Aeson
 import           Data.Models.User
 import           Database.Persist
 import           Foundation
-import           Handlers.Utils     (requireAuth)
+import           Handlers.Utils     (requireUserAuth)
 import           Network.HTTP.Types
 import           Utils.Auth
 import           Yesod.Core
@@ -15,7 +15,7 @@ import           Yesod.Persist
 
 getCourseMembersR :: CourseId -> Handler Html
 getCourseMembersR cId@(CourseKey courseUUID) = do
-  (UserDetails { .. }) <- requireAuth
+  (UserDetails { .. }) <- requireUserAuth
   courseRes <- runDB $ selectFirst [CourseId ==. cId] []
   case courseRes of
     Nothing -> redirect AdminCoursesR
