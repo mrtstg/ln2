@@ -14,6 +14,7 @@ import type {
 import type { UserQuery, UserPatch, UserCreate } from "./types/user"
 import type { PageWrapper } from "./types/pageWrapper"
 import type { DeploymentRead } from "./types/deployment"
+import { VMTemplate } from "./types/template";
 
 export class ApiClient {
   base_url = "";
@@ -35,8 +36,17 @@ export class ApiClient {
     return data;
   }
 
+  async getVMTemplates(page: number): Promise<PageWrapper<Array<VMTemplate>> | null> {
+    const { data, status } = await this.client.get("/api/templates", { params: { page: page} })
+    if (status === 200) {
+      return data
+    } else {
+      return null
+    }
+  }
+
   async getStandContainers(standName: string): Promise<Array<ContainerSummary>> {
-    const { data, status }= await this.client.get<Array<ContainerSummary>>("/api/stands/containers/" + standName)
+    const { data, status } = await this.client.get<Array<ContainerSummary>>("/api/stands/containers/" + standName)
     if (status === 200) {
       return data
     } else {
