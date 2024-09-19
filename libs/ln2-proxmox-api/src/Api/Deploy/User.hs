@@ -19,10 +19,11 @@ getUserDeployments' :: EndpointsConfiguration -> Page -> UserId -> IO (Either St
 getUserDeployments' endpoints pageN userId = commonHttpErrorHandler $ getUserDeployments endpoints pageN userId
 
 getUserDeployments :: EndpointsConfiguration -> Page -> UserId -> ExceptT HttpException IO (Either String (ApiPageWrapper [Deployment]))
-getUserDeployments (EndpointsConfiguration { getVMDeployAPIUrl = Just apiUrl }) pageN userId = do
+getUserDeployments (EndpointsConfiguration { getVMDeployAPIUrl = Just apiUrl, getEndpointsAccessToken = token }) pageN userId = do
   let reqString = "GET " <> apiUrl <> "/deployments/user/" <> show userId
   request <- parseRequest reqString
-    <&> setRequestQueryString [(BS.pack "page", (Just . BS.pack) (show pageN))]
+    <&> prepareCommonRequest token
+    . setRequestQueryString [(BS.pack "page", (Just . BS.pack) (show pageN))]
   response <- httpJSONEither request
   let status = getResponseStatus response
   if statusIsSuccessful status then do
