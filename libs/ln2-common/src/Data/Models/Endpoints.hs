@@ -3,6 +3,7 @@ module Data.Models.Endpoints
   , getEndpointsFromEnv
   ) where
 
+import           Data.ByteString.Char8
 import           System.Environment
 
 data EndpointsConfiguration = EndpointsConfiguration
@@ -11,7 +12,7 @@ data EndpointsConfiguration = EndpointsConfiguration
   , getMarkdownServiceUrl   :: !String
   , getDatabaseAPIUrl       :: !String
   , getVMDeployAPIUrl       :: !(Maybe String)
-  , getEndpointsAccessToken :: !String
+  , getEndpointsAccessToken :: !ByteString
   } deriving Show
 
 getEndpointsFromEnv :: IO (Maybe EndpointsConfiguration)
@@ -28,4 +29,4 @@ getEndpointsFromEnv = do
     mdUrl <- mdUrl'
     dbApiUrl <- dbApiUrl'
     token <- token'
-    return $ EndpointsConfiguration masterUrl authUrl mdUrl dbApiUrl vmUrl' token
+    return $ EndpointsConfiguration masterUrl authUrl mdUrl dbApiUrl vmUrl' (pack token)
