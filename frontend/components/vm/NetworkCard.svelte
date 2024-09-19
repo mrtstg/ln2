@@ -3,6 +3,7 @@
   export let readOnly: boolean = false;
   export let note: string = '';
   export let deleteCallback: () => Promise<void> = async () => {}
+  export let onChange: (value: string) => Promise<void> = async (_) => {}
 </script>
 
 <div class="card">
@@ -10,7 +11,7 @@
     <div class="field">
       <label class="label"> Название сети </label>
       <div class="control">
-        <input bind:value={value} class="input" type="text" maxlength="15" readonly={readOnly}>
+        <input bind:value={value} class="input" type="text" maxlength="15" readonly={readOnly} on:change={() => onChange(value)}>
       </div>
       {#if note.length > 0}
         <p class="help"> { note } </p>
