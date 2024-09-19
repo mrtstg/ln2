@@ -93,6 +93,9 @@
   let taskType: CourseTaskType
   $: taskType = 'container'
 
+  let availableNetworks: Array<string>
+  $: availableNetworks = [...VM.serviceVMNetworks]
+
   let standNetworks: Array<VM.VMNetwork>
   $: standNetworks = []
 
@@ -120,13 +123,24 @@
   let stages: CheckStage[]
   $: stages = []
 
+  const updateAvailableNetworks = () => {
+    availableNetworks = [...VM.serviceVMNetworks]
+    standNetworks.forEach(el => {
+      availableNetworks.push(el.name)
+    })
+
+    for (let i = 0; i < standVMs.length; i++) {
+      standVMs[i].networks = standVMs[i].networks.filter(el => availableNetworks.includes(el.bridge))
+    }
+  }
+
   const addStage = () => {
     stages = [...stages, {type: stageTypeList[0], data: defaultCheckStageData(stageTypeList[0])}]
   }
 
   const addVM = () => {
     standVMs = [...standVMs, {
-      name: "",
+      name: "VM #" + (standVMs.length + 1),
       template: "",
       sockets: 1,
       cores: 1,
@@ -142,11 +156,13 @@
 
   const addVMNetwork = () => {
     standNetworks = [...standNetworks, {name: ""}]
+    updateAvailableNetworks()
   }
 
   const deleteVmNetwork = (index: number) => {
     standNetworks.splice(index, 1)
     standNetworks = [...standNetworks]
+    updateAvailableNetworks()
   }
 
   const deleteStage = (index: number) => {
@@ -389,12 +405,13 @@
             </button>
           </div>
         </div>
-        <div class="columns is-multiline">
-          {#each standVMs as item, itemIndex }
-            <div class="column is-3">
-              <VMCard bind:data={item} availableTemplates={templates} deleteCallback={async () => deleteVM(itemIndex)}/>
+        <div class="columns is-multiline p-3">
+          {#each standVMs as item, itemIndex (item.name) }
+            <div class="column is-5">
+              <VMCard bind:data={item} availableNetworks={availableNetworks} availableTemplates={templates} deleteCallback={async () => deleteVM(itemIndex)}/>
             </div>
           {/each}
+          <br>
           { JSON.stringify(standVMs) }
         </div>
         <div class="is-flex is-align-items-center">
@@ -424,6 +441,7 @@
                 readOnly={false}
                 note=""
                 deleteCallback={async () => deleteVmNetwork(netIndex)}
+                onChange={async () => updateAvailableNetworks()}
               />
             </div>
           {/each}
