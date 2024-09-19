@@ -14,9 +14,9 @@ import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
 
 getDeploymentById :: EndpointsConfiguration -> String -> ExceptT HttpException IO (Either String Deployment)
-getDeploymentById (EndpointsConfiguration { getVMDeployAPIUrl = Just apiUrl }) deploymentId = do
+getDeploymentById (EndpointsConfiguration { getVMDeployAPIUrl = Just apiUrl, getEndpointsAccessToken = token }) deploymentId = do
   let reqString = "GET " <> apiUrl <> "/deployment/" <> deploymentId
-  request <- parseRequest reqString
+  request <- parseRequest reqString <&> prepareCommonRequest token
   response <- httpBS request
   let status = getResponseStatus response
   let body = fromStrict $ getResponseBody response
