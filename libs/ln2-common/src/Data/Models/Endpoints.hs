@@ -6,11 +6,12 @@ module Data.Models.Endpoints
 import           System.Environment
 
 data EndpointsConfiguration = EndpointsConfiguration
-  { getDockerMasterUrl    :: !String
-  , getAuthServiceUrl     :: !String
-  , getMarkdownServiceUrl :: !String
-  , getDatabaseAPIUrl     :: !String
-  , getVMDeployAPIUrl     :: !(Maybe String)
+  { getDockerMasterUrl      :: !String
+  , getAuthServiceUrl       :: !String
+  , getMarkdownServiceUrl   :: !String
+  , getDatabaseAPIUrl       :: !String
+  , getVMDeployAPIUrl       :: !(Maybe String)
+  , getEndpointsAccessToken :: !String
   } deriving Show
 
 getEndpointsFromEnv :: IO (Maybe EndpointsConfiguration)
@@ -20,9 +21,11 @@ getEndpointsFromEnv = do
   mdUrl' <- lookupEnv "MD_SERVICE_URL"
   dbApiUrl' <- lookupEnv "DB_API_URL"
   vmUrl' <- lookupEnv "VM_DEPLOY_API_URL"
+  token' <- lookupEnv "SERVICE_ACCESS_TOKEN"
   return $ do
     masterUrl <- masterUrl'
     authUrl <- authUrl'
     mdUrl <- mdUrl'
     dbApiUrl <- dbApiUrl'
-    return $ EndpointsConfiguration masterUrl authUrl mdUrl dbApiUrl vmUrl'
+    token <- token'
+    return $ EndpointsConfiguration masterUrl authUrl mdUrl dbApiUrl vmUrl' token
