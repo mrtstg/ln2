@@ -406,7 +406,7 @@
           </div>
         </div>
         <div class="columns is-multiline p-3">
-          {#each standVMs as item, itemIndex (item.name) }
+          {#each standVMs as item, itemIndex }
             <div class="column is-5">
               <VMCard bind:data={item} availableNetworks={availableNetworks} availableTemplates={templates} deleteCallback={async () => deleteVM(itemIndex)}/>
             </div>
