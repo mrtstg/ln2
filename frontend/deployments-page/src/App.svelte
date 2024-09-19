@@ -67,7 +67,7 @@
         <DeploymentView deploymentData={item} wsHost={wsUrl} wsProto={wsProto} showDesktopName={false}/>
       {/each}
     {:else}
-      <SuccessMessage title="Пусто!" description="Похоже, что у вас нет активных развертываний. Начните прохождения задания с виртуальными машинами и он здесь появится!" additionalStyle="is-fullwidth"/>
+      <SuccessMessage title="Пусто!" description="Похоже, что у вас нет активных развертываний. Начните прохождения задания с виртуальными машинами и они здесь появятся!" additionalStyle="is-fullwidth"/>
     {/if}
   {/if}
 {/if}
