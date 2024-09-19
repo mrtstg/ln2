@@ -68,9 +68,26 @@ httpCheckDeployment :: [Entity MachineTemplate] -> DeployRequest -> Handler ()
 httpCheckDeployment templates payload = do
   let templateNames = map (\(Entity _ e) -> machineTemplateName e) templates
   case validateDeployRequest templateNames payload of
-    (Left (UndefinedTemplate tmplName)) -> sendStatusJSON status400 $ object [ "error" .= ("Unknown template: " <> tmplName) ]
-    (Left (UndefinedNetwork networkName)) -> sendStatusJSON status400 $ object [ "error" .= ("Unknown network: " <> networkName) ]
-    (Left (ForbiddenNetwork networkName)) -> sendStatusJSON status400 $ object [ "error" .= ("Bad network name: " <> networkName) ]
+    (Left (UndefinedTemplate tmplName)) -> sendStatusJSON status400 $ object
+      [ "error" .= ("Unknown template: " <> tmplName), "type" .= String "template", "value" .= tmplName ]
+    (Left (UndefinedNetwork networkName)) -> sendStatusJSON status400 $ object
+      [ "error" .= ("Unknown network: " <> networkName), "type" .= String "missingNetwork", "value" .= networkName ]
+    (Left (ForbiddenNetwork networkName)) -> sendStatusJSON status400 $ object
+      [ "error" .= ("Bad network name: " <> networkName), "type" .= String "forbiddenNetwork", "value" .= networkName ]
+    (Left EmptyVMName) -> sendStatusJSON status400 $ object
+      [ "error" .= String "Empty VM name", "type" .= String "emptyVMName"]
+    (Left EmptyNetworkName) -> sendStatusJSON status400 $ object
+      [ "error" .= String "Empty network name", "type" .= String "emptyNetworkName" ]
+    (Left LongVMName) -> sendStatusJSON status400 $ object
+      [ "error" .= String "Long VM name", "type" .= String "longVMName"]
+    (Left LongNetworkName) -> sendStatusJSON status400 $ object
+      [ "error" .= String "Long network name", "type" .= String "longNetworkName" ]
+    (Left (InvalidCPU v)) -> sendStatusJSON status400 $ object
+      [ "error" .= ("Invalid CPU value: " <> show v), "type" .= String "invalidCPU", "value" .= v ]
+    (Left (InvalidSockets v)) -> sendStatusJSON status400 $ object
+      [ "error" .= ("Invalid sockets value: " <> show v), "type" .= String "invalidSockets", "value" .= v]
+    (Left (InvalidMemory v)) -> sendStatusJSON status400 $ object
+      [ "error" .= ("Invalid memory value: " <> show v), "type" .= String "invalidMemory", "value" .= v]
     (Right ()) -> pure ()
 
 decodeDeploymentData :: BS.ByteString -> Handler (Either String DeploymentData)

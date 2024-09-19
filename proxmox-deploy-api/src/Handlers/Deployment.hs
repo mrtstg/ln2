@@ -5,6 +5,7 @@ module Handlers.Deployment
   ( postDeploymentsR
   , deleteDeploymentR
   , getDeploymentR
+  , postValidateDeploymentR
   ) where
 
 import           Control.Monad.Trans.Reader
@@ -43,6 +44,14 @@ generateDeploymentUUID = do
   uuid <- liftIO nextRandom <&> show
   uuidTaken <- runDB $ exists [ MachineDeploymentId ==. MachineDeploymentKey uuid ]
   if uuidTaken then generateDeploymentUUID else return uuid
+
+postValidateDeploymentR :: Handler Value
+postValidateDeploymentR = do
+  _ <- requireServiceAuth' requireApiAuth
+  req@(DeployRequest {}) <- requireCheckJsonBody
+  templates' <- runDB $ selectList ([] :: [Filter MachineTemplate]) []
+  () <- httpCheckDeployment templates' req
+  sendStatusJSON status204 ()
 
 postDeploymentsR :: Handler Value
 postDeploymentsR = do
