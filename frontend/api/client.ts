@@ -13,8 +13,9 @@ import type {
 } from "./types";
 import type { UserQuery, UserPatch, UserCreate } from "./types/user"
 import type { PageWrapper } from "./types/pageWrapper"
-import type { DeploymentRead } from "./types/deployment"
+import { allDeploymentErrorKinds, type DeploymentErrorKind, type DeploymentRead } from "./types/deployment"
 import { VMTemplate } from "./types/template";
+import { VM, VMNetwork } from "./types/vm";
 
 export class ApiClient {
   base_url = "";
@@ -389,6 +390,22 @@ export class ApiClient {
       return data
     } catch (error) {
       return null
+    }
+  }
+
+  async validateDeployment(vms: Array<VM>, networks: Array<VMNetwork>): Promise<[DeploymentErrorKind, object] | null> {
+    try {
+      const _ = await this.client.post('/api/deployment/validate', {vms: vms, networks: networks})
+      return null
+    } catch (error) {
+      if (error.response) {
+        if (error.response.data.error != undefined && error.response.data.type != undefined) {
+          if (allDeploymentErrorKinds.includes(error.response.data.type)) {
+            return [<DeploymentErrorKind>(error.response.data.type), error.response.data]
+          }
+        }
+      }
+      return ['unknown', {}]
     }
   }
 }
