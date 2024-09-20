@@ -13,6 +13,7 @@
   import NetworkCard from "../../components/vm/NetworkCard.svelte"
   import VMCard from "../../components/vm/VMCard.svelte"
   import type { VMTemplate } from "../../api/types/template";
+  import { deploymentErrorToString } from "../../api/utils/deployment"
 
   // client declaration
   //@ts-ignore
@@ -140,6 +141,7 @@
 
   const addVM = () => {
     standVMs = [...standVMs, {
+      type: 'template',
       name: "VM #" + (standVMs.length + 1),
       template: "",
       sockets: 1,
@@ -196,6 +198,14 @@
         }
       }
     } else if (taskType == 'vm') {
+      const resp = await api.validateDeployment(standVMs, standNetworks)
+      if (resp != null) {
+        modalMessage = deploymentErrorToString(resp)
+        return null
+      }
+      alert('ok')
+      return null
+
       return {
         name: taskTitle,
         content: taskDesc,
