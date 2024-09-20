@@ -47,7 +47,7 @@ generateDeploymentUUID = do
 
 postValidateDeploymentR :: Handler Value
 postValidateDeploymentR = do
-  _ <- requireServiceAuth' requireApiAuth
+  _ <- requireAnyAuth' requireApiAuth
   req@(DeployRequest {}) <- requireCheckJsonBody
   templates' <- runDB $ selectList ([] :: [Filter MachineTemplate]) []
   () <- httpCheckDeployment templates' req
