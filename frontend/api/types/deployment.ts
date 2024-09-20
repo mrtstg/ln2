@@ -17,3 +17,19 @@ export type DeploymentStatus =
   "deleting" |
   "deleteError" |
   "deleted"
+
+export const allDeploymentErrorKinds = [
+  'template',
+  'missingNetwork',
+  'forbiddenNetwork',
+  'emptyVMName',
+  'emptyNetworkName',
+  'longVMName',
+  'longNetworkName',
+  'invalidCPU',
+  'invalidSockets',
+  'invalidMemory',
+  'unknown'
+  ]
+
+export type DeploymentErrorKind = typeof allDeploymentErrorKinds[number]
