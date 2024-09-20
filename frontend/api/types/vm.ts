@@ -2,6 +2,7 @@ export type VM = TemplateVM
 
 // TODO: add omitted fields
 export type TemplateVM = {
+  type: string,
   template: string,
   name: string,
   sockets: number | null,
