@@ -5,6 +5,7 @@ module Api
   , errorTextFromStatus
   , ApiPageWrapper(..)
   , ApiErrorWrapper(..)
+  , ApiIDWrapper(..)
   , prepareCommonRequest
   , setCommonRequestTimeout
   ) where
@@ -18,6 +19,14 @@ import qualified Data.ByteString.Char8      as BS
 import           Network.HTTP.Conduit
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status  (Status (..))
+
+newtype ApiIDWrapper m = ApiIDWrapper m
+
+instance (FromJSON t) => FromJSON (ApiIDWrapper t) where
+  parseJSON = withObject "ApiIDWrapper" $ \v -> ApiIDWrapper <$> v .: "id"
+
+instance (ToJSON t) => ToJSON (ApiIDWrapper t) where
+  toJSON (ApiIDWrapper idValue) = object [ "id" .= idValue ]
 
 type AccessToken = ByteString
 
