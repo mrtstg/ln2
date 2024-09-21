@@ -27,6 +27,7 @@ import           Data.Pool                   (Pool)
 import           Data.Text
 import           Data.Time.Clock
 import           Database.Persist.Postgresql
+import qualified Database.Redis              as Redis
 import           Handlers.Auth
 import qualified Network.AMQP                as R
 import           Utils.Auth
@@ -37,6 +38,7 @@ import           Yesod.Persist
 data App = App
   { postgresqlPool         :: !(Pool SqlBackend)
   , rabbitConnection       :: !R.Connection
+  , redisConnection        :: !Redis.Connection
   , endpointsConfiguration :: !EndpointsConfiguration
   }
 
