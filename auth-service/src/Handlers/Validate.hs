@@ -16,7 +16,7 @@ import qualified Data.Text              as T
 import           Database.Persist
 import           Foundation
 import           Network.HTTP.Types
-import           Redis
+import           Redis.Common
 import           Web.JWT
 import           Yesod.Core
 import           Yesod.Persist

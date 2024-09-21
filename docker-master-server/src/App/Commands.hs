@@ -10,25 +10,26 @@ module App.Commands (
   ) where
 
 import           App.Types
-import           Control.Monad               (unless)
-import           Control.Monad.Logger        (runStdoutLoggingT)
-import qualified Data.ByteString.Char8       as BS
-import qualified Data.Text                   as T
+import           Control.Monad                     (unless)
+import           Control.Monad.Logger              (runStdoutLoggingT)
+import qualified Data.ByteString.Char8             as BS
+import           Data.Models.Rabbit.ConnectionData
+import qualified Data.Text                         as T
 import           Database.Persist.Postgresql
 import           Foundation
 import           Handlers.Stands
 import           Handlers.Task
-import           Network.AMQP                (openConnection')
-import           Network.Socket              (PortNumber)
+import           Network.AMQP                      (openConnection')
+import           Network.Socket                    (PortNumber)
 import           Network.Wai.Handler.Warp
 import           Network.Wai.Middleware.Cors
 import           Rabbit
-import           System.Directory            (createDirectory,
-                                              doesDirectoryExist)
+import           Redis.Environment
+import           System.Directory                  (createDirectory,
+                                                    doesDirectoryExist)
 import           System.Environment
 import           System.Exit
-import           Utils                       (constructPostgreStringFromEnv,
-                                              createRedisConnectionFromEnv)
+import           Utils.Environment
 import           Yesod.Core
 
 mkYesodDispatch "App" resourcesApp
@@ -44,13 +45,6 @@ runCreateDatabaseCommand = do
       runStdoutLoggingT $ withPostgresqlPool (BS.pack v) 1 $ \pool -> liftIO $ do
         flip runSqlPersistMPool pool $ do
           runMigration migrateAll
-
-isDevEnabled :: IO Bool
-isDevEnabled = do
-  devV <- lookupEnv "DEV"
-  case devV of
-    Nothing  -> return False
-    (Just v) -> return $ v == "1"
 
 runServerCommand :: Int -> IO ()
 runServerCommand port = do
@@ -78,7 +72,7 @@ runServerCommand port = do
           putStrLn "No postgreSQL connection parameters!"
           exitWith $ ExitFailure 1
         Just postgresString -> do
-          redisConnection' <- createRedisConnectionFromEnv
+          redisConnection' <- redisConnectionFromEnv
           case redisConnection' of
             Nothing -> do
               putStrLn "No redis connection data!"

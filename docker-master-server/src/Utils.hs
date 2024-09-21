@@ -5,28 +5,14 @@ module Utils
   , findYMLByName
   , findYMLByName'
   , createYMLPath
-  , constructPostgreStringFromEnv
-  , createRedisConnectionFromEnv
   , validateStandCheck
 ) where
 import           Data.Models.Stand
 import           Data.Models.StandCheck
 import qualified Data.Text              as T
-import           Database.Redis
 import           System.Directory
-import           System.Environment     (lookupEnv)
 import           System.FilePath        (addExtension, combine, dropExtension,
                                          takeExtension, takeFileName)
-
-createRedisConnectionFromEnv :: IO (Maybe Connection)
-createRedisConnectionFromEnv = do
-  redisHost'' <- lookupEnv "REDIS_HOST"
-  redisPort'' <- lookupEnv "REDIS_PORT"
-  case (redisHost'', redisPort'') of
-    (Just redisHost', Just redisPort') -> do
-      connection <- connect $ defaultConnectInfo { connectHost = redisHost', connectPort = (PortNumber . read) redisPort' }
-      return $ Just connection
-    _anyOther -> return Nothing
 
 standContainerExists :: StandData -> String -> Either String ()
 standContainerExists (StandData { getStandContainers = containers }) containerName =
@@ -85,31 +71,6 @@ validateStandCheck d = helper where
     () <- if T.null getStageMessage then Left "Empty message for display!" else Right ()
     () <- stackVariableDeclared getStageVariableName stack
     helper stack ls
-
-
-constructPostgreStringFromEnv :: IO (Maybe String)
-constructPostgreStringFromEnv = do
-  dbUser'' <- lookupEnv "POSTGRES_USER"
-  dbPass'' <- lookupEnv "POSTGRES_PASSWORD"
-  dbName'' <- lookupEnv "POSTGRES_DB"
-  dbHost'' <- lookupEnv "POSTGRES_HOST"
-  dbPort'' <- lookupEnv "POSTGRES_PORT"
-  return $ do
-    dbUser' <- dbUser''
-    dbPass' <- dbPass''
-    dbName' <- dbName''
-    dbHost' <- dbHost''
-    dbPort' <- dbPort''
-    return $ "user=" <>
-      dbUser' <>
-      " password=" <>
-      dbPass' <>
-      " host=" <>
-      dbHost' <>
-      " port=" <>
-      dbPort' <>
-      " dbname=" <>
-      dbName'
 
 listYMLFiles :: FilePath -> IO [FilePath]
 listYMLFiles f = do
