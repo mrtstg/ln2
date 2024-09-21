@@ -210,8 +210,8 @@
         order: taskOrder,
         payload: {
           type: taskType,
-          vms: [],
-          networks: []
+          vms: standVMs,
+          networks: standNetworks
         }
       }
     }
