@@ -1,6 +1,7 @@
 module Redis
   ( hasPendingDeployment
   , setPendingDeployment
+  , dropPendingDeployment
   ) where
 
 import           Control.Monad.IO.Class (liftIO)
@@ -24,4 +25,11 @@ setPendingDeployment uid = do
   App { redisConnection = connection } <- getYesod
   let key = generatePendingKey uid
   liftIO $ cacheValue' connection key "1" (Just 20)
+  return ()
+
+dropPendingDeployment :: Int -> Handler ()
+dropPendingDeployment uid = do
+  App { redisConnection = connection } <- getYesod
+  let key = generatePendingKey uid
+  liftIO $ deleteValue' connection key
   return ()
