@@ -96,6 +96,7 @@ instance ToJSON CourseTaskDetails' where
     , "order" .= getCourseTaskDOrder'
     , "course" .= getCourseTaskDCourse'
     , "accepted" .= getCourseTaskDAccepted'
+    , "type" .= getCourseTaskDType'
     ]
 
 instance ToJSON CourseTaskDetails where
@@ -107,6 +108,7 @@ instance ToJSON CourseTaskDetails where
     , "course" .= getCourseTaskDCourse
     , "payload" .= getCourseTaskDPayload
     , "accepted" .= getCourseTaskDAccepted
+    , "type" .= getCourseTaskDType
     ]
 
 courseTaskDetailFromModels' :: Entity CourseTask -> Entity Course -> Maybe UserDetails -> Bool -> CourseTaskDetails'
