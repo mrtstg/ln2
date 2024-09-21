@@ -33,6 +33,7 @@ packages:
 - .
 - ../libs/ln2-common
 - ../libs/ln2-proxmox-api
+- ../libs/ln2-redis
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:

@@ -49,8 +49,10 @@ dependencies:
 - warp == 3.3.25
 - cassava == 0.5.3.0
 - vector == 0.13.1.0
+- hedis == 0.15.2
 - ln2-common
 - ln2-proxmox-api
+- ln2-redis
 
 ghc-options:
 - -Wall
