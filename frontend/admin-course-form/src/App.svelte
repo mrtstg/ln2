@@ -203,8 +203,6 @@
         modalMessage = deploymentErrorToString(resp)
         return null
       }
-      alert('ok')
-      return null
 
       return {
         name: taskTitle,
