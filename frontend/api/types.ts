@@ -48,7 +48,7 @@ export type CourseTaskDetails = {
   order: number,
   accepted?: Boolean,
   payload?: TaskPayload,
-  type?: CourseTaskType
+  type: CourseTaskType
 }
 
 export type CourseSolvesResponse = {
