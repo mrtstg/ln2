@@ -20,7 +20,7 @@ import           Foundation
 import           GHC.Generics
 import           Network.HTTP.Types
 import           Rabbit                       (putQueueTask)
-import           Redis
+import           Redis.Common
 import           Utils
 import           Yesod.Core
 import           Yesod.Persist

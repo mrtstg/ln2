@@ -41,6 +41,7 @@ dependencies:
 - containers == 0.6.7
 - jwt == 0.11.0
 - ln2-common
+- ln2-redis
 
 ghc-options:
 - -Wall

@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -37,7 +37,6 @@ library
       Handlers.Stands
       Handlers.Task
       Rabbit
-      Redis
       Utils
   other-modules:
       Paths_docker_master_server
@@ -56,6 +55,8 @@ library
     , filepath ==1.4.2.2
     , hedis ==0.15.2
     , http-types ==0.12.3
+    , ln2-common
+    , ln2-redis
     , load-env ==0.2.1.0
     , monad-logger ==0.3.40
     , network ==3.1.4.0
@@ -94,6 +95,8 @@ executable docker-master-server-exe
     , filepath ==1.4.2.2
     , hedis ==0.15.2
     , http-types ==0.12.3
+    , ln2-common
+    , ln2-redis
     , load-env ==0.2.1.0
     , monad-logger ==0.3.40
     , network ==3.1.4.0
@@ -136,6 +139,8 @@ test-suite docker-master-server-test
     , hspec >=2.0.0
     , hspec-discover
     , http-types ==0.12.3
+    , ln2-common
+    , ln2-redis
     , load-env ==0.2.1.0
     , monad-logger ==0.3.40
     , network ==3.1.4.0

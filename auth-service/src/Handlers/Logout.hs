@@ -6,7 +6,7 @@ import           Data.Aeson
 import qualified Data.ByteString.Char8 as BS
 import           Foundation
 import           Network.HTTP.Types
-import           Redis
+import           Redis.Common
 import           Yesod.Core
 
 newtype TokenRequest = TokenRequest { getTokenRequest :: String } deriving (Show)

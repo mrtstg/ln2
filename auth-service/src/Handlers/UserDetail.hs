@@ -19,6 +19,7 @@ import           Database.Persist.Postgresql
 import           Foundation
 import           Network.HTTP.Types
 import           Redis
+import           Redis.Common
 import           Yesod.Core
 import           Yesod.Persist
 

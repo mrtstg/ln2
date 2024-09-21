@@ -28,7 +28,9 @@ import           Handlers.Role
 import           Handlers.User
 import           Handlers.UserDetail
 import           Handlers.Validate
-import           Redis                       (deleteValue', rewriteAuthToken')
+import           Redis                       (rewriteAuthToken')
+import           Redis.Common
+import           Redis.Environment
 import           System.Environment
 import           System.Exit
 import           Text.Read                   (readMaybe)
@@ -105,7 +107,7 @@ runCreateDatabaseCommand v = do
 
 runServerCommand :: String -> String -> Int -> IO ()
 runServerCommand postgresString jwtSecret port = do
-  redisConnection' <- createRedisConnectionFromEnv
+  redisConnection' <- redisConnectionFromEnv
   case redisConnection' of
     Nothing -> do
       putStrLn "No redis connection data!"

@@ -44,6 +44,8 @@ dependencies:
 - wai-cors == 0.2.7
 - warp == 3.3.25
 - hedis == 0.15.2
+- ln2-redis
+- ln2-common
 
 ghc-options:
 - -Wall

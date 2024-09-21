@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Redis
+module Redis.Common
   ( cacheValue
   , cacheValue'
   , deleteValue
@@ -11,13 +11,13 @@ module Redis
   , defaultShortCacheTime
   ) where
 
+import           Control.Monad.IO.Class (liftIO)
 import           Data.Aeson
-import qualified Data.ByteString.Char8 as BS
-import qualified Data.Text             as T
-import           Data.Text.Encoding    (encodeUtf8)
+import qualified Data.ByteString.Char8  as BS
+import qualified Data.Text              as T
+import           Data.Text.Encoding
 import           Database.Redis
-import           Foundation
-import           Yesod.Core
+import           Yesod.Core             (HandlerFor)
 
 defaultShortCacheTime :: Integer
 defaultShortCacheTime = 5
@@ -58,9 +58,9 @@ getJsonValue' conn key = do
     (Just v) -> do
       return $ eitherDecode (BS.fromStrict v)
 
-getOrCacheJsonValue :: (FromJSON v, ToJSON v) => Connection -> Maybe Integer -> String -> Handler (Maybe v) -> Handler (Either String v)
+getOrCacheJsonValue :: (FromJSON v, ToJSON v) => Connection -> Maybe Integer -> String -> HandlerFor app (Maybe v) -> HandlerFor app (Either String v)
 getOrCacheJsonValue conn timeout key valueF = let
-  cacheF :: (ToJSON v) => Handler (Maybe v) -> Handler (Either String v)
+  cacheF :: (ToJSON v) => HandlerFor app (Maybe v) -> HandlerFor app (Either String v)
   cacheF valueF' = do
     v' <- valueF'
     case v' of
