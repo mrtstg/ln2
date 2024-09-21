@@ -245,6 +245,7 @@
       stages = []
       standVMs = []
       standNetworks = []
+      updateAvailableNetworks()
       if (exit) {
         window.location.replace("/course/" + courseID)
         return
