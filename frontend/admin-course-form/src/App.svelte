@@ -421,7 +421,6 @@
             </div>
           {/each}
           <br>
-          { JSON.stringify(standVMs) }
         </div>
         <div class="is-flex is-align-items-center">
           <h3 class="title is-5 pr-3"> Сети </h3>
