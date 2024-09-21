@@ -245,7 +245,7 @@ getApiTaskR ctId = let
       case courseRes of
         Nothing -> error "Unreachable pattern!"
         (Just cE@(Entity (CourseKey courseUUID) _)) -> do
-          if hasCourseAccess courseUUID authSrc then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
+          if not $ hasCourseAccess courseUUID authSrc then sendStatusJSON status403 $ object [ "error" .= String "You have no access to course!" ] else do
             taskAccepted <- taskAcceptedWrapper cT authSrc
             if not (isCourseAdmin courseUUID authSrc) then
               sendStatusJSON status200 $ courseTaskDetailFromModels' cT cE Nothing taskAccepted
