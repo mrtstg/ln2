@@ -16,3 +16,9 @@ instance FromJSON DeployRequest where
   parseJSON = withObject "DeployRequest" $ \v -> DeployRequest
     <$> v .: "vms"
     <*> v .: "networks"
+
+instance ToJSON DeployRequest where
+  toJSON (DeployRequest vms networks) = object
+    [ "vms" .= vms
+    , "networks" .= networks
+    ]

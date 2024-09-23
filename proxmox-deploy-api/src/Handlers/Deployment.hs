@@ -19,6 +19,7 @@ import           Data.Aeson
 import           Data.ByteString.Lazy               (toStrict)
 import           Data.Functor                       ((<&>))
 import           Data.Models.Auth
+import           Data.Models.Deployment.Api
 import           Data.Models.Deployment.Data
 import           Data.Models.Deployment.Payload
 import           Data.Models.DeploymentRequest
@@ -56,7 +57,7 @@ postValidateDeploymentR = do
 postDeploymentsR :: Handler Value
 postDeploymentsR = do
   _ <- requireServiceAuth' requireApiAuth
-  (DeploymentCreateRequest courseId uid req@(DeployRequest { .. }) taskId) <- requireCheckJsonBody
+  (DeploymentCreate courseId uid req@(DeployRequest { .. }) taskId) <- requireCheckJsonBody
   deploymentId <- generateDeploymentUUID
   templates' <- runDB $ selectList ([] :: [Filter MachineTemplate]) []
   () <- httpCheckDeployment templates' req
