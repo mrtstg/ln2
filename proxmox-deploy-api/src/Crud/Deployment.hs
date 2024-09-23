@@ -6,7 +6,6 @@ module Crud.Deployment
   , decodeDeploymentData
   , decodeDeploymentPayload
   , httpCheckDeployment
-  , DeploymentCreateRequest(..)
   , deploymentErrorLog
   , generateTemplatesMap
   ) where
@@ -33,13 +32,6 @@ import           Yesod.Core
 import           Yesod.Persist
 
 data DeploymentCreateRequest = DeploymentCreateRequest String Int DeployRequest Int
-
-instance FromJSON DeploymentCreateRequest where
-  parseJSON = withObject "DeploymentCreateRequest" $ \v -> DeploymentCreateRequest
-    <$> v .: "courseId"
-    <*> v .: "userId"
-    <*> v .: "data"
-    <*> v .: "taskId"
 
 deploymentErrorLog :: (MonadIO m, MonadLogger m) => Text -> [Either String a] -> DeployM m [String]
 deploymentErrorLog comment errors' = do
