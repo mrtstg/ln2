@@ -13,8 +13,8 @@ import           Data.Models.Endpoints
 import           Network.HTTP.Simple
 import           Network.HTTP.Types
 
-createDeployment' :: EndpointsConfiguration -> DeploymentCreate -> ExceptT HttpException IO (Either String (ApiIDWrapper String))
-createDeployment' (EndpointsConfiguration { getVMDeployAPIUrl = Just apiUrl, getEndpointsAccessToken = token }) payload = do
+createDeployment :: EndpointsConfiguration -> DeploymentCreate -> ExceptT HttpException IO (Either String (ApiIDWrapper String))
+createDeployment (EndpointsConfiguration { getVMDeployAPIUrl = Just apiUrl, getEndpointsAccessToken = token }) payload = do
   let reqString = "POST " <> apiUrl <> "/deployment"
   request <- parseRequest reqString <&> prepareCommonRequest token . setRequestBodyJSON payload
   response <- httpBS request
@@ -28,7 +28,7 @@ createDeployment' (EndpointsConfiguration { getVMDeployAPIUrl = Just apiUrl, get
     case eitherDecode body of
       (Left _) -> (return . Left . errorTextFromStatus) status
       (Right (ApiErrorWrapper { getErrorMessage = msg })) -> (return . Left) msg
-createDeployment' _ _ = error "Deploy API URL is not set!"
+createDeployment _ _ = error "Deploy API URL is not set!"
 
-createDeployment :: EndpointsConfiguration -> DeploymentCreate -> IO (Either String (ApiIDWrapper String))
-createDeployment endpoints payload = commonHttpErrorHandler $ createDeployment' endpoints payload
+createDeployment' :: EndpointsConfiguration -> DeploymentCreate -> IO (Either String (ApiIDWrapper String))
+createDeployment' endpoints payload = commonHttpErrorHandler $ createDeployment endpoints payload
