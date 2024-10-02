@@ -1,23 +1,43 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Crud.CourseTask
   ( getCourseTasks
   , getCourseTaskDetails
   , getCourseTaskAccepted
   , getCourseAcceptedTasks
   , courseTaskPatchToQuery
+  , requireCourseTaskMember
+  , isUserCourseTaskMember
   ) where
 
-import           Data.Aeson                    (encode)
+import           Data.Aeson
 import           Data.ByteString.Char8         (toStrict)
+import           Data.Models.Auth.Role         (RoleDetails)
 import           Data.Models.CourseTask
 import           Data.Models.CourseTaskPayload
-import           Data.Models.StandCheck
 import           Data.Models.User
 import           Data.Text                     (Text)
 import           Database.Persist
 import           Foundation
 import           Handlers.Params               (defaultPageSize)
+import           Network.HTTP.Types
+import           Utils.Auth                    (isUserCourseMember)
+import           Yesod.Core
 import           Yesod.Persist
+
+requireCourseTaskMember :: [RoleDetails] -> CourseTaskId -> Handler (Entity CourseTask)
+requireCourseTaskMember roles ctId = do
+  (task, isMember) <- isUserCourseTaskMember roles ctId
+  if not isMember then sendStatusJSON status403 $ object ["error" .= String "Unauthorized" ] else do
+    return task
+
+isUserCourseTaskMember :: [RoleDetails] -> CourseTaskId -> Handler (Entity CourseTask, Bool)
+isUserCourseTaskMember roles ctId = do
+  courseTask' <- runDB $ selectFirst [CourseTaskId ==. ctId] []
+  case courseTask' of
+    Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course task not found!" ]
+    (Just e@(Entity _ (CourseTask { courseTaskCourse = (CourseKey courseId) }))) -> do
+      return (e, isUserCourseMember courseId roles)
 
 courseTaskPatchToQuery :: CourseTaskPatch -> [Update CourseTask]
 courseTaskPatchToQuery (CourseTaskPatch { .. }) = let

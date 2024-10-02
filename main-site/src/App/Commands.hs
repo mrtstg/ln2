@@ -25,6 +25,7 @@ import           Handlers.CourseSolves
 import           Handlers.CourseTask
 import           Handlers.CourseTaskEdit
 import           Handlers.Deployments
+import           Handlers.DeployTask
 import           Handlers.ImportUser
 import           Handlers.Index
 import           Handlers.Login
