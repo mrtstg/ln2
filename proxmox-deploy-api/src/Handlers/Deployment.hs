@@ -149,6 +149,7 @@ deleteDeploymentR deploymentId' = let
                 case deploymentData' of
                   (Left e) -> sendStatusJSON status400 $ object [ "error" .= T.pack e]
                   (Right (DeploymentData { .. })) -> do
+                    runDB $ updateWhere [ MachineDeploymentId ==. deploymentId ] [ MachineDeploymentStatus =. show S.Queued ]
                     _ <- liftIO $ putDeploymentRequest rCon (DeploymentRequest
                       { getDeploymentRequestVMs = getDeploymentVMs
                       , getDeploymentRequestNetworks = getDeploymentNetworks
