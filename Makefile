@@ -62,6 +62,9 @@ procfile: $(PROCFILE_DIR)/main
 procfile-docker: $(PROCFILE_DIR)/docker
 	foreman start -f $(PROCFILE_DIR)/docker -d .
 
+procfile-agentless: $(PROCFILE_DIR)/agentless
+	foreman start -f $(PROCFILE_DIR)/agentless -d .
+
 build-lib-image: deployment/Dockerfile
 	docker build -t ln2-haskell -f deployment/Dockerfile .
 
