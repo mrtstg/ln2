@@ -27,12 +27,11 @@
 
   onMount(() => {
     taskDeploymentPromise = taskDeploymentWrapper()
-    
-    intervalId = setInterval(() => {
-      taskDeploymentPromise?.finally(() => {
+    taskDeploymentPromise.then(_ => {
+      intervalId = setInterval(() => {
         taskDeploymentPromise = taskDeploymentWrapper()
-      })
-    }, 1000)
+      }, 2500)
+    })
 
     return () => {
       if (intervalId != null) {
