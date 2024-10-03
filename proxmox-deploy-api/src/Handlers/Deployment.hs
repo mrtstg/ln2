@@ -135,25 +135,31 @@ deleteDeploymentR deploymentId' = let
   deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
   case deployment' of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= T.pack "Deployment not found" ]
-    (Just (Entity _ (MachineDeployment { .. }))) -> do
-      let isCourseAdmin = isCourseAdmin' authSrc (isUserCourseAdmin machineDeploymentCourseId)
-      let isDeploymentOwner = isDeploymentOwner' machineDeploymentUserId authSrc
-      if isCourseAdmin || isDeploymentOwner then do
-        App { rabbitConnection = rCon } <- getYesod
-        deploymentData' <- decodeDeploymentData machineDeploymentData
-        case deploymentData' of
-          (Left e) -> sendStatusJSON status400 $ object [ "error" .= T.pack e]
-          (Right (DeploymentData { .. })) -> do
-            _ <- liftIO $ putDeploymentRequest rCon (DeploymentRequest
-              { getDeploymentRequestVMs = getDeploymentVMs
-              , getDeploymentRequestNetworks = getDeploymentNetworks
-              , getDeploymentRequestNetworkMap = getDeploymentNetworkMap
-              , getDeploymentRequestId = deploymentId'
-              , getDeploymentRequestAction = "destroy"
-              })
-            sendStatusJSON status204 ()
-      else do
-        sendStatusJSON status403 $ object [ "error" .= String "Unauthorized" ]
+    (Just (Entity _ (MachineDeployment { machineDeploymentStatus = status',.. }))) -> do
+      case S.deploymentStatusFromString status' of
+        Nothing -> sendStatusJSON status400 $ object [ "error" .= T.pack "Bad deployment status" ]
+        (Just status) -> do
+          case status of
+            v | v `elem` [S.CreateError, S.Created] -> do
+              let isCourseAdmin = isCourseAdmin' authSrc (isUserCourseAdmin machineDeploymentCourseId)
+              let isDeploymentOwner = isDeploymentOwner' machineDeploymentUserId authSrc
+              if isCourseAdmin || isDeploymentOwner then do
+                App { rabbitConnection = rCon } <- getYesod
+                deploymentData' <- decodeDeploymentData machineDeploymentData
+                case deploymentData' of
+                  (Left e) -> sendStatusJSON status400 $ object [ "error" .= T.pack e]
+                  (Right (DeploymentData { .. })) -> do
+                    _ <- liftIO $ putDeploymentRequest rCon (DeploymentRequest
+                      { getDeploymentRequestVMs = getDeploymentVMs
+                      , getDeploymentRequestNetworks = getDeploymentNetworks
+                      , getDeploymentRequestNetworkMap = getDeploymentNetworkMap
+                      , getDeploymentRequestId = deploymentId'
+                      , getDeploymentRequestAction = "destroy"
+                      })
+                    sendStatusJSON status204 ()
+              else do
+                sendStatusJSON status403 $ object [ "error" .= String "Unauthorized" ]
+            _anyOtherStatus -> sendStatusJSON status400 $ object [ "error" .= T.pack "Inappropriate deployment status" ]
 
 getDeploymentR :: String -> Handler Value
 getDeploymentR deploymentId' = do
