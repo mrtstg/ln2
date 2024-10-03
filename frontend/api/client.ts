@@ -13,9 +13,10 @@ import type {
 } from "./types";
 import type { UserQuery, UserPatch, UserCreate } from "./types/user"
 import type { PageWrapper } from "./types/pageWrapper"
-import { allDeploymentErrorKinds, type DeploymentErrorKind, type DeploymentRead } from "./types/deployment"
+import { allDeploymentErrorKinds, type DeploymentErrorKind, type DeploymentRead, type TaskDeploymentWrapper } from "./types/deployment"
 import { VMTemplate } from "./types/template";
 import { VM, VMNetwork } from "./types/vm";
+import type { ApiIDWrapper } from "./types/common"
 
 export class ApiClient {
   base_url = "";
@@ -345,6 +346,36 @@ export class ApiClient {
         }
       }
       return "Unknown"
+    }
+  }
+
+  async getCourseTaskDeployment(taskId: number): Promise<TaskDeploymentWrapper | string> {
+    try {
+      const { data } = await this.client.get<TaskDeploymentWrapper>("/api/task/" + taskId + "/deploy")
+      return data
+    } catch (error) {
+      if (error.response) {
+        if (error.response.data.error) {
+          return error.response.data.error
+        }
+      }
+
+      return 'unknown'
+    }
+  }
+
+  async deployTaskDeployment(taskId: number): Promise<ApiIDWrapper<string> | string> {
+    try {
+      const { data } = await this.client.post<ApiIDWrapper<string>>("/api/task/" + taskId + "/deploy")
+      return data
+    } catch (error) {
+      if (error.response) {
+        if (error.response.data.error) {
+          return error.response.data.error
+        }
+      }
+
+      return 'unknown'
     }
   }
 
