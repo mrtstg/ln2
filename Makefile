@@ -6,6 +6,7 @@ ENV_FILE=.env
 DOCKER_ENV_FILE=docker.env
 BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(DOCKER_ENV_FILE) --project-name ln2
 COMPOSE_FILE=deployment/docker-compose.yml
+PROCFILE_DIR=procfiles
 
 build-websockify: ./deployment/websockify/Dockerfile
 	docker build -t ln2-websockify -f ./deployment/websockify/Dockerfile .
@@ -55,11 +56,11 @@ restore-images: ./images
 ./static/css:
 	mkdir ./static/css -p
 
-procfile-full: Procfile
-	foreman start -f Procfile
+procfile: $(PROCFILE_DIR)/main
+	foreman start -f $(PROCFILE_DIR)/main -d .
 
-procfile-docker: Procfile-Docker
-	foreman start -f Procfile-Docker
+procfile-docker: $(PROCFILE_DIR)/docker
+	foreman start -f $(PROCFILE_DIR)/docker -d .
 
 build-lib-image: deployment/Dockerfile
 	docker build -t ln2-haskell -f deployment/Dockerfile .
