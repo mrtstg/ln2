@@ -1,3 +1,8 @@
+export type TaskDeploymentWrapper = {
+  data: DeploymentRead | null,
+  pending: boolean
+}
+
 export type DeploymentRead = {
   id: string,
   vmMap: object,
