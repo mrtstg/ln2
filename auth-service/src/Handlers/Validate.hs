@@ -27,6 +27,14 @@ instance (FromJSON t) => FromJSON (TokenRequest t) where
   parseJSON = withObject "TokenRequest" $ \v -> TokenRequest <$>
     v .: "token"
 
+getServiceWrapper :: TokenId -> Handler (Maybe AuthTokenResponse)
+getServiceWrapper tokenId = do
+  tokenEntity' <- runDB $ get tokenId
+  case tokenEntity' of
+    Nothing -> return Nothing
+    (Just (Token { .. })) -> do
+      (return . return) $ AuthTokenResponse { getTokenResponseService = T.pack tokenService }
+
 getUserDetailsWrapper :: T.Text -> Handler (Maybe UserDetails)
 getUserDetailsWrapper userName = runDB $ getUserDetailsByName userName
 
@@ -42,11 +50,10 @@ postValidateServiceTokenR = do
       case M.lookup "uuid" unregClaims of
         Nothing -> sendStatusJSON status400 $ object [ "error" .= String "Invalid token structure!" ]
         (Just (String uuid)) -> do
-          tokenEntity' <- runDB $ selectFirst [ TokenId ==. (TokenKey . T.unpack) uuid ] []
-          case tokenEntity' of
-            Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Token not found" ]
-            (Just (Entity _ Token { .. })) -> do
-              sendStatusJSON status200 $ AuthTokenResponse { getTokenResponseService = T.pack tokenService }
+          cacheRes <- getOrCacheJsonValue redisPool (Just defaultShortCacheTime) ("sDetails-" <> T.unpack uuid) (getServiceWrapper $ (TokenKey . T.unpack) uuid)
+          case cacheRes of
+            (Left _) -> sendStatusJSON status404 $ object [ "error" .= String "Token not found" ]
+            (Right resp) -> sendStatusJSON status200 resp
         _otherValue -> sendStatusJSON status400 $ object [ "error" .= String "Invalid token structure!" ]
 
 postValidateUserTokenR :: Handler Value
