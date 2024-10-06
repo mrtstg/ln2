@@ -75,7 +75,7 @@
         </div>
       </article>
     {:else}
-      <DeploymentView showDesktopName={true} wsHost={wsUrl} wsProto={wsProto} deploymentData={currentState.data}/>
+      <DeploymentView showDesktopName={true} wsHost={wsUrl} wsProto={wsProto} deploymentData={currentState.data} apiUrl={apiUrl} showTaskName={false}/>
     {/if}
   {/if}
 {/if}

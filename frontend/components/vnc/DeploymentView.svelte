@@ -9,6 +9,7 @@
   let waitForDelete: boolean = false
 
   export let showDesktopName: boolean = true
+  export let showTaskName: boolean = true
   export let showDestroyButton: boolean = true
   export let deploymentData: DeploymentRead
   export let wsHost: string
@@ -48,11 +49,15 @@
   <div class="message-header">
     <div class="flex flex-row justify-between items-center w-full">
       <p>
-        {#if deploymentData.courseName != null && deploymentData.taskName != null }
-        <a href="/course/{deploymentData.courseId}"> { deploymentData.courseName} </a> -
-        <a href="/task/{deploymentData.taskId}"> { deploymentData.taskName } </a>
+        {#if showTaskName}
+          {#if deploymentData.courseName != null && deploymentData.taskName != null }
+          <a href="/course/{deploymentData.courseId}"> { deploymentData.courseName} </a> -
+          <a href="/task/{deploymentData.taskId}"> { deploymentData.taskName } </a>
+          {:else}
+            Неизвестное задание
+          {/if}
         {:else}
-          Неизвестное задание
+          Стенд для выполнения задания
         {/if}
       </p>
       <p> { vncStatusToString(deploymentData.status) } </p>
@@ -81,7 +86,7 @@
           {#if callDelete}
             Удалить стенд
           {:else if waitForDelete}
-            Данное действие сотрет все действия! Ожидайте 15 секунд для подтверждения
+            Данное действие сотрет весь прогресс! Ожидайте 15 секунд для подтверждения
           {:else}
             Удалить стенд (окончательно!)
           {/if}
