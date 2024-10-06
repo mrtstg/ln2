@@ -112,7 +112,7 @@ postDeploymentsR = do
                           let deploymentPayload = (toStrict . encode) $ (DeploymentPayload . map (\(Entity _ e) -> takenDisplayNumber e)) displayPorts
                           _ <- runDB $ insertKey
                             (MachineDeploymentKey deploymentId) $
-                            MachineDeployment uid courseId taskId (show S.Created) deploymentPayload encodedDeploymentData
+                            MachineDeployment uid courseId taskId (show S.Queued) deploymentPayload encodedDeploymentData
                           _ <- liftIO $ putDeploymentRequest rCon (DeploymentRequest
                             { getDeploymentRequestVMs = vmData
                             , getDeploymentRequestNetworks = getDeployRequestNetworks
