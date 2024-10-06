@@ -64,7 +64,7 @@
   {#if deployments != null}
     {#if deployments.length > 0}
       {#each deployments as item (item.id)}
-        <DeploymentView deploymentData={item} wsHost={wsUrl} wsProto={wsProto} showDesktopName={false}/>
+        <DeploymentView deploymentData={item} wsHost={wsUrl} wsProto={wsProto} showDesktopName={false} apiUrl={apiUrl}/>
       {/each}
     {:else}
       <SuccessMessage title="Пусто!" description="Похоже, что у вас нет активных развертываний. Начните прохождения задания с виртуальными машинами и они здесь появятся!" additionalStyle="is-fullwidth"/>
