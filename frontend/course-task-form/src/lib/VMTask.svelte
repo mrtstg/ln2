@@ -14,6 +14,15 @@
   $: currentState = null
   let intervalId: number | null = null
 
+  // just took these two from some gist, ngl - idk how it works
+  const delayF = (msec: number, value: any) => {
+    return new Promise(done => window.setTimeout((() => done(value)), msec));
+  }
+
+  const isFinished = (promise: any): Promise<boolean> => {
+    return Promise.race([delayF(0, false), promise.then(() => true, () => true)]);
+  }
+
   const taskDeploymentWrapper = async (): Promise<TaskDeploymentWrapper | string> => {
     const res = await api.getCourseTaskDeployment(taskID)
 
@@ -25,13 +34,20 @@
     return res
   }
 
+  const sendDeployRequest = async () => {
+    await api.deployTaskDeployment(taskID)
+    taskDeploymentPromise = taskDeploymentWrapper()
+  }
+
   onMount(() => {
     taskDeploymentPromise = taskDeploymentWrapper()
-    taskDeploymentPromise.then(_ => {
-      intervalId = setInterval(() => {
-        taskDeploymentPromise = taskDeploymentWrapper()
-      }, 2500)
-    })
+    intervalId = setInterval(() => {
+      isFinished(taskDeploymentPromise).then(finished => {
+        if (finished) {
+          taskDeploymentPromise = taskDeploymentWrapper()
+        }
+      })
+    }, 2500)
 
     return () => {
       if (intervalId != null) {
@@ -51,7 +67,8 @@
         <div class="message-body">
           {#if !currentState.pending}
             Для данного задания не развернут стенд. Нажмите на кнопку ниже, что запустить развертывание стенда
-            <button class="button"> Развернуть стенд </button>
+            <br>
+            <button class="button" on:click={sendDeployRequest}> Развернуть стенд </button>
           {:else}
             У вас уже запущено одно развертывание стенда. Дождитесь его окончания!
           {/if}
