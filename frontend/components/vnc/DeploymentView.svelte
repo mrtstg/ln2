@@ -70,9 +70,14 @@
           </div>
         {/each}
       </div>
+      {#each Object.entries(deploymentData.vmMap) as [key, value]}
+        {#if activeVM == key }
+          <NoVnc url={getVNCLink(value)} {showDesktopName}/>
+        {/if}
+      {/each}
       <br>
       {#if showDestroyButton}
-        <button disabled={waitForDelete} class="button is-danger">
+        <button disabled={waitForDelete} class="button is-danger" on:click={deleteDeploymentWrapper}>
           {#if callDelete}
             Удалить стенд
           {:else if waitForDelete}
@@ -82,11 +87,6 @@
           {/if}
         </button>
       {/if}
-      {#each Object.entries(deploymentData.vmMap) as [key, value]}
-        {#if activeVM == key }
-          <NoVnc url={getVNCLink(value)} {showDesktopName}/>
-        {/if}
-      {/each}
     </div>
   {/if}
 </article>
