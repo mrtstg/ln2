@@ -179,6 +179,16 @@ export class ApiClient {
       return "Unknown"
     }
   }
+
+  async deleteDeployment(deploymentId: string): Promise<null> {
+    try {
+      // TODO: error handle
+      const _ = await this.client.delete("/api/deployment/" + deploymentId)
+      return null
+    } catch (error) {
+      return null
+    }
+  }
   
   async patchUser(userId: number, data: UserPatch): Promise<string> {
     try {
