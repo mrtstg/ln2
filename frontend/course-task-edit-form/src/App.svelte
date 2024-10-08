@@ -2,17 +2,26 @@
   import { ApiClient } from "../../api/client"
   import { processStageData, countStages, StageType, stageDataToCheckStage, stageTypeList, defaultCheckStageData } from "../../api/checkStage"
   import type { CheckStage, StageData } from "../../api/checkStage";
-  import type { CommonCourseDetails, CourseTaskDetails, ContainerSummary, CourseTaskType } from "../../api/types";
+  import type { CommonCourseDetails, CourseTaskDetails, ContainerSummary, CourseTaskType, CourseTaskPatch } from "../../api/types";
   import DangerMessage from "../../components/DangerMessage.svelte"
   import CheckStageWidget from "../../components/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
   import { taskPatchErrorToString } from "../../api/utils"
+  import StandForm from "../../components/vm/StandForm.svelte"
+  import * as VM from "../../api/types/vm"
+  import { deploymentErrorToString } from "../../api/utils/deployment"
 
   // client declaration
   //@ts-ignore
   const url = API_URL;
   const api = new ApiClient(url)
 
+  let standVMs: Array<VM.TemplateVM>
+  $: standVMs = []
+  let standNetworks: Array<VM.VMNetwork>
+  $: standNetworks = []
+  let taskType: CourseTaskType
+  taskType = 'container'
   let taskTitle: string
   $: taskTitle = ''
   let taskContent: string
@@ -36,6 +45,59 @@
   const parsedURL = new URL(document.URL)
   const taskIDMatch = parsedURL.pathname.match("\/task\/(.*?)\/([0-9]*?)\/edit")
 
+  const generateRequestPayload = async (): Promise<CourseTaskPatch | null> => {
+    if (taskType == 'container') {
+      if (countStages(stages, (el => el.type == StageType.PSQLGenerateDatabase)).length > 1) {
+        modalMessage = "В задаче может быть только один этап генерации базы данных!"
+        return null
+      }
+
+      if (stages.length == 0) {
+        modalMessage = "Проверка задачи должна содержать как минимум один этап!"
+        return null
+      }
+    }
+
+    if (taskType == 'container') {
+      let stagesToSend = stages.map(v => v.data).map(processStageData)
+      return {
+        name: taskTitle,
+        content: taskContent,
+        order: taskOrder,
+        payload: {
+          actions: stagesToSend,
+          type: taskType,
+          standIdentifier: selectedStand
+        }
+      }
+    } else if (taskType == 'vm') {
+      for (let i = 0; i < standVMs.length; i++) {
+        if (standVMs[i].name.length == 0 || !standVMs[i].name.match(/^[0-9a-z\-]*$/i)) {
+          modalMessage = 'Недоступимое имя ВМ - ' + standVMs[i].name + '. Используйте только латиницу, тире и цифры.'
+          return null
+        }
+      }
+
+      const resp = await api.validateDeployment(standVMs, standNetworks)
+      if (resp != null) {
+        modalMessage = deploymentErrorToString(resp)
+        return null
+      }
+
+      return {
+        name: taskTitle,
+        content: taskContent,
+        order: taskOrder,
+        payload: {
+          type: taskType,
+          vms: standVMs,
+          networks: standNetworks
+        }
+      }
+    }
+    return null
+  }
+
   const updateTaskWrapper = async (): Promise<string> => {
     if (taskTitle.length == 0) {
       return "Заполните название задачи!"
@@ -45,25 +107,12 @@
       return "Заполните условие задачи!"
     }
 
-    if (stages.length == 0) {
-      return "Проверка задачи должна содержать как минимум один этап!"
+    let payload = await generateRequestPayload()
+    if (payload == null) {
+      return 'Ошибка валидации'
     }
 
-    if (countStages(stages, (el => el.type == StageType.PSQLGenerateDatabase)).length > 1) {
-      return "В задаче может быть только один этап генерации базы данных!"
-    }
-
-    let stagesToSend = stages.map(v => v.data).map(processStageData)
-    const res = await api.patchTask(taskID!, {
-      name: taskTitle,
-      content: taskContent,
-      order: taskOrder,
-      payload: {
-        standIdentifier: selectedStand,
-        actions: stagesToSend,
-        type: 'container'
-      }
-    })
+    const res = await api.patchTask(taskID!, payload)
     if (res == 'ok') {
       taskPromise = getCourseTaskWrapper()
       taskUpdatePromise = null
@@ -99,16 +148,26 @@
     taskTitle = res.name
     taskContent = res.content
     taskOrder = res.order
+    taskType = res.type
     stages = []
-    if (res.payload?.standIdentifier != undefined && res.payload?.actions != undefined) {
-      res.payload!.actions.forEach(el => {
-        let res = stageDataToCheckStage(el)
-        if (res != null) {
-          stages = [...stages, res]
-        }
-      })
-      selectedStand = res.payload!.standIdentifier
-      containersPromise = api.getStandContainers(selectedStand)
+    if (res.type == 'container') {
+      if (res.payload?.standIdentifier != undefined && res.payload?.actions != undefined) {
+        res.payload!.actions.forEach(el => {
+          let res = stageDataToCheckStage(el)
+          if (res != null) {
+            stages = [...stages, res]
+          }
+        })
+        selectedStand = res.payload!.standIdentifier
+        containersPromise = api.getStandContainers(selectedStand)
+      }
+    } else {
+      if (res.payload?.vms) {
+        standVMs = res.payload.vms
+      }
+      if (res.payload?.networks) {
+        standNetworks = res.payload.networks
+      }
     }
     return res
   }
@@ -167,23 +226,27 @@
       </div>
       <p class="help"> Меньше - выше в списке задач </p>
     </div>
-    <h2 class="title is-4"> Схема проверки </h2>
-    {#if containersPromise != null}
-      {#await containersPromise}
-        <SuccessMessage title="Ожидайте..." description="Загружаем данные..."/>
-      {:then containersData}
-        {#each stages as stage, stageIndex (stage)}
-          <CheckStageWidget 
-            data={stage} 
-            containers={containersData.map(v => v.name)} 
-            updateCallback={async (v) => { stages[stageIndex] = v }}
-            deleteCallback={() => deleteStage(stageIndex)}
-          />
-        {/each}
-        <button on:click={addStage} class="is-link button is-fullwidth"> Добавить </button>
-      {:catch error}
-        <DangerMessage title="Ошибка!" description="Не удалось загрузить данные стенда."/>
-      {/await}
+    {#if taskType == 'container'}
+      <h2 class="title is-4"> Схема проверки </h2>
+      {#if containersPromise != null}
+        {#await containersPromise}
+          <SuccessMessage title="Ожидайте..." description="Загружаем данные..."/>
+        {:then containersData}
+          {#each stages as stage, stageIndex (stage)}
+            <CheckStageWidget 
+              data={stage} 
+              containers={containersData.map(v => v.name)} 
+              updateCallback={async (v) => { stages[stageIndex] = v }}
+              deleteCallback={() => deleteStage(stageIndex)}
+            />
+          {/each}
+          <button on:click={addStage} class="is-link button is-fullwidth"> Добавить </button>
+        {:catch error}
+          <DangerMessage title="Ошибка!" description="Не удалось загрузить данные стенда."/>
+        {/await}
+      {/if}
+    {:else}
+      <StandForm apiUrl={url} bind:standVMs={standVMs} bind:standNetworks={standNetworks}/>
     {/if}
 
     {#if taskUpdatePromise != null}
