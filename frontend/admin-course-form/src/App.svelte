@@ -148,6 +148,13 @@
         }
       }
     } else if (taskType == 'vm') {
+      for (let i = 0; i < standVMs.length; i++) {
+        if (standVMs[i].name.length == 0 || !standVMs[i].name.match(/^[0-9a-z\-]*$/i)) {
+          modalMessage = 'Недоступимое имя ВМ - ' + standVMs[i].name + '. Используйте только латиницу, тире и цифры.'
+          return null
+        }
+      }
+
       const resp = await api.validateDeployment(standVMs, standNetworks)
       if (resp != null) {
         modalMessage = deploymentErrorToString(resp)
