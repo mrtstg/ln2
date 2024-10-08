@@ -8,22 +8,28 @@ module Handlers.CourseSolves
   , getUserSolveR
   ) where
 
+import           Api                           (ApiPageWrapper (..))
+import           Api.Deploy.Query
 import           Api.Task
 import           Api.User
-import           Crud.CourseTask              (getCourseTasks)
+import           Crud.CourseTask               (getCourseTasks)
 import           Crud.Task
-import           Crud.TaskSolves              (getAvailableCourseSolveUserIds,
-                                               getTaskSolves)
-import qualified Data.Map                     as M
-import           Data.Maybe                   (isJust)
+import           Crud.TaskSolves               (getAvailableCourseSolveUserIds,
+                                                getTaskSolves)
+import qualified Data.Map                      as M
+import           Data.Maybe                    (isJust)
+import           Data.Models.CourseTaskPayload
+import           Data.Models.Deployment
+import           Data.Models.Deployment.Api
 import           Data.Models.StandCheckResult
 import           Data.Models.User
-import           Data.Text.Encoding           (decodeUtf8)
+import           Data.Text.Encoding            (decodeUtf8)
 import           Database.Persist
+import           Database.Persist.Postgresql   (fromSqlKey)
 import           Foundation
 import           Handlers.Params
 import           Handlers.Utils
-import           Utils                        (taskStatusToText)
+import           Utils                         (taskStatusToText)
 import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
@@ -91,29 +97,49 @@ getCourseUserTasksR cId@(CourseKey cId') uId = do
     _anyError -> redirect $ CourseSolvesR cId
 
 getUserTaskSolvesR :: CourseTaskId -> Int -> Handler Html
-getUserTaskSolvesR ctId uId = do
+getUserTaskSolvesR ctId uId = let
+  getTaskDeployment :: CourseTaskType -> Handler (Maybe Deployment)
+  getTaskDeployment ContainerTask = return Nothing
+  getTaskDeployment VMTask = do
+    App { endpointsConfiguration = endpoints } <- getYesod
+    queryRes <- liftIO $ queryDeployments' endpoints (DeploymentQuery
+      { getDeploymentQueryUserId = Just uId
+      , getDeploymentQueryTaskId = (Just . fromIntegral . fromSqlKey) ctId
+      , getDeploymentQueryPageSize = Just 1
+      , getDeploymentQueryPageNumber = 1
+      , getDeploymentQueryCourseId = Nothing
+      })
+    case queryRes of
+      (Right (ApiPageWrapper { getPageWrapperObjects = (deployment:_) })) -> return (Just deployment)
+      _anyOther -> return Nothing
+  in do
   (UserDetails { getUserRoles = roles }) <- requireUserAuth
   courseTask' <- runDB $ get ctId
   case courseTask' of
     Nothing -> notFound
-    (Just (CourseTask { courseTaskCourse = cId@(CourseKey cId') , .. })) -> do
-      userData' <- liftIO $ getUserById' uId
-      case userData' of
-        (UserGetResult (UserDetails { .. })) -> do
-          if not $ isUserCourseAdmin cId' roles then permissionDenied "У вас нет доступа к курсу!" else do
-            pageN <- getPageNumber
-            (solves, solvesTotal) <- getTaskSolves pageN uId ctId
-            taskAccepted <- runDB $ exists [ CourseSolveAcceptionTaskId ==. ctId, CourseSolveAcceptionUserId ==. uId ]
+    (Just (CourseTask { courseTaskCourse = cId@(CourseKey cId'), courseTaskType = taskType', .. })) -> do
+      case courseTaskTypeFromString taskType' of
+        Nothing -> redirect $ CourseSolvesR cId
+        (Just taskType) -> do
+          userData' <- liftIO $ getUserById' uId
+          case userData' of
+            (UserGetResult (UserDetails { .. })) -> do
+              if not $ isUserCourseAdmin cId' roles then permissionDenied "У вас нет доступа к курсу!" else do
+                pageN <- getPageNumber
+                -- TODO: rework this shi
+                (solves, solvesTotal) <- if taskType == ContainerTask then getTaskSolves pageN uId ctId else return ([], 0)
 
-            App { endpointsConfiguration = endpoints } <- getYesod
-            let solvesIds = map ((\(CourseSolvesKey tId) -> tId) . entityKey) solves
-            rawTasks <- liftIO $ retrieveTasks endpoints solvesIds
-            let tasksMap = unwrapTaskMap rawTasks
-            let tasksFullyLoaded = length solvesIds == M.size tasksMap && all (isJust . getWrapperResult . snd) (M.toList tasksMap)
+                App { endpointsConfiguration = endpoints } <- getYesod
+                let solvesIds = map ((\(CourseSolvesKey tId) -> tId) . entityKey) solves
+                rawTasks <- liftIO $ if taskType == ContainerTask then retrieveTasks endpoints solvesIds else return M.empty
+                let tasksMap = unwrapTaskMap rawTasks
+                let tasksFullyLoaded = length solvesIds == M.size tasksMap && all (isJust . getWrapperResult . snd) (M.toList tasksMap)
+                taskAccepted <- runDB $ exists [ CourseSolveAcceptionTaskId ==. ctId, CourseSolveAcceptionUserId ==. uId ]
 
-            defaultLayout $ do
-              setTitle (toHtml $ courseTaskName <> ": " <> getUserDetailsName)
-              [whamlet|
+                taskDeployment <- getTaskDeployment taskType
+                defaultLayout $ do
+                  setTitle (toHtml $ courseTaskName <> ": " <> getUserDetailsName)
+                  [whamlet|
 <div .container.pt-2.py-3>
   <nav .breadcrumb>
     <ul>
@@ -126,12 +152,6 @@ getUserTaskSolvesR ctId uId = do
       <li .is-active>
         <a href=#> #{courseTaskName}
   <h1 .title.pb-3> #{getUserDetailsName}: решения задачи #{courseTaskName}
-  $if not tasksFullyLoaded
-    <article .message.is-warning>
-      <div .message-header>
-        <p> Внимание!
-      <div .message-body>
-        Часть заданий уже не сохранена в базе или не была загружена. Баллы для таких заданий не отображаются
   $if taskAccepted
     <article .message.is-success>
       <div .message-body>
@@ -143,41 +163,62 @@ getUserTaskSolvesR ctId uId = do
         Снять зачет задания
       $else
         Зачесть задание
-  <table .table.is-fullwidth>
-    <thead>
-      <tr>
-        <th> Решение
-        <th> Количество баллов
-        <th> Статус проверки
-        <th> Принято
-    <tbody>
-      $forall (Entity (CourseSolvesKey csId) (CourseSolves { .. })) <- solves
-        <tr>
-          $case M.lookup csId tasksMap
-            $of Nothing
-              <td> #{ csId }
-              <td> -/-
-              <td> Неизвестно
-            $of (Just (StandCheckResultWrapper { .. }))
-              $case getWrapperResult
+  $case taskType
+    $of ContainerTask
+      $if not tasksFullyLoaded
+        <article .message.is-warning>
+          <div .message-header>
+            <p> Внимание!
+          <div .message-body>
+            Часть заданий уже не сохранена в базе или не была загружена. Баллы для таких заданий не отображаются
+      <table .table.is-fullwidth>
+        <thead>
+          <tr>
+            <th> Решение
+            <th> Количество баллов
+            <th> Статус проверки
+            <th> Принято
+        <tbody>
+          $forall (Entity (CourseSolvesKey csId) (CourseSolves { .. })) <- solves
+            <tr>
+              $case M.lookup csId tasksMap
                 $of Nothing
                   <td> #{ csId }
-                  <td> -
-                $of (Just (StandCheckResult { .. }))
-                  <td><a href=@{UserSolveR (CourseSolvesKey csId)}> #{csId}
-                  <td> #{getCheckScore} / #{getCheckScoreGate}
-              <td> #{ taskStatusToText getWrapperStatus }
-          $if courseSolvesCorrect
-            <td .has-text-success> Да
-          $else
-            <td> Нет
-  <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
-    <a href=@{UserTaskSolvesR ctId uId}?page=#{pageN - 1}>
-      <button .button.is-primary.mx-3 :pageN == 1:disabled> Назад
-    <a href=@{UserTaskSolvesR ctId uId}?page=#{pageN + 1}>
-      <button .button.is-primary.mx-3 :solvesTotal <= (pageN * defaultPageSize):disabled> Вперед
+                  <td> -/-
+                  <td> Неизвестно
+                $of (Just (StandCheckResultWrapper { .. }))
+                  $case getWrapperResult
+                    $of Nothing
+                      <td> #{ csId }
+                      <td> -
+                    $of (Just (StandCheckResult { .. }))
+                      <td><a href=@{UserSolveR (CourseSolvesKey csId)}> #{csId}
+                      <td> #{getCheckScore} / #{getCheckScoreGate}
+                  <td> #{ taskStatusToText getWrapperStatus }
+              $if courseSolvesCorrect
+                <td .has-text-success> Да
+              $else
+                <td> Нет
+      <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
+        <a href=@{UserTaskSolvesR ctId uId}?page=#{pageN - 1}>
+          <button .button.is-primary.mx-3 :pageN == 1:disabled> Назад
+        <a href=@{UserTaskSolvesR ctId uId}?page=#{pageN + 1}>
+          <button .button.is-primary.mx-3 :solvesTotal <= (pageN * defaultPageSize):disabled> Вперед
+    $of VMTask
+      $case taskDeployment
+        $of Nothing
+          <article .message.is-warning>
+            <div .message-body>
+              Пользователь не развернул стенд для выполнения данного задания. Страница будет автоматически перезагружена через 5 секунд
+          <script>
+            setTimeout(() => window.location.reload(), 5000)
+        $of (Just (Deployment { .. }))
+          <h2 .subtitle> Доступные для подключения VM
+          <div .buttons>
+            $forall (k, v) <- M.toList getDeploymentVMMap
+              <a href=@{VMConsoleR v} target=_blank .button.is-link> #{k}
 |]
-        _anyError -> redirect $ CourseSolvesR cId
+            _anyError -> redirect $ CourseSolvesR cId
 
 getUserSolveR :: CourseSolvesId -> Handler Html
 getUserSolveR csId@(CourseSolvesKey csId') = do
