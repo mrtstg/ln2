@@ -351,9 +351,11 @@
     <!-- TODO: stand form -->
   {/if}
   <div class="columns is-multiline">
-    <div class="column is-12">
-      <button on:click={addStage} class="is-link button is-fullwidth"> Добавить </button>
-    </div>
+    {#if taskType == 'container'}
+      <div class="column is-12">
+        <button on:click={addStage} class="is-link button is-fullwidth"> Добавить </button>
+      </div>
+    {/if}
     <div class="column">
       <button class="is-success button is-fullwidth" on:click={async () => createTask(false)}> Создать задачу </button>
     </div>
