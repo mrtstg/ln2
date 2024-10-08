@@ -6,8 +6,10 @@ module Handlers.Deployment
   , deleteDeploymentR
   , getDeploymentR
   , postValidateDeploymentR
+  , postQueryDeploymentsR
   ) where
 
+import           Api                                (ApiPageWrapper (..))
 import           Control.Monad.Trans.Reader
 import           Crud.Deployment
 import           Crud.DisplayNumbers
@@ -18,6 +20,7 @@ import           Crud.VMIds
 import           Data.Aeson
 import           Data.ByteString.Lazy               (toStrict)
 import           Data.Functor                       ((<&>))
+import           Data.Maybe                         (fromMaybe)
 import           Data.Models.Auth
 import           Data.Models.Deployment.Api
 import           Data.Models.Deployment.Data
@@ -173,3 +176,38 @@ getDeploymentR deploymentId' = do
         (Left e') -> sendStatusJSON status400 $ object [ "error" .= e']
         (Right payload) -> do
           sendStatusJSON status200 payload
+
+postQueryDeploymentsR :: Handler Value
+postQueryDeploymentsR = let
+  queryToLimits :: DeploymentQuery -> [SelectOpt MachineDeployment]
+  queryToLimits (DeploymentQuery { getDeploymentQueryPageSize = Nothing }) = []
+  queryToLimits (DeploymentQuery { getDeploymentQueryPageSize = Just size, getDeploymentQueryPageNumber = pageN }) =
+    [LimitTo size, OffsetBy $ (pageN - 1) * size]
+  queryToFilters :: DeploymentQuery -> [Filter MachineDeployment]
+  queryToFilters (DeploymentQuery
+    { getDeploymentQueryUserId=uid
+    , getDeploymentQueryTaskId=tid
+    , getDeploymentQueryCourseId=cid
+    }) = uidFilter uid ++ tidFilter tid ++ cidFilter cid
+  uidFilter Nothing     = []
+  uidFilter (Just uid') = [MachineDeploymentUserId ==. uid']
+  tidFilter Nothing     = []
+  tidFilter (Just tid') = [MachineDeploymentTaskId ==. tid']
+  cidFilter Nothing     = []
+  cidFilter (Just cid') = [MachineDeploymentCourseId ==. cid']
+  in do
+  _ <- requireServiceAuth' requireApiAuth
+  query@(DeploymentQuery { getDeploymentQueryPageSize = pageSize' }) <- requireCheckJsonBody
+  let filters = queryToFilters query
+  let limits = queryToLimits query
+  results <- runDB $ selectList filters limits
+  resultsAmount <- runDB $ count filters
+  let objects' = traverse toMachineDeploymentRead results
+  case objects' of
+    (Left e) -> sendStatusJSON status500 $ object [ "error" .= e ]
+    (Right objects) ->
+      sendStatusJSON status200 (ApiPageWrapper
+        { getPageWrapperTotal = resultsAmount
+        , getPageWrapperSize = fromMaybe 0 pageSize'
+        , getPageWrapperObjects = objects
+        })
