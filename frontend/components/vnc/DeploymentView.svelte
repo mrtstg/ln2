@@ -63,23 +63,25 @@
       <p> { vncStatusToString(deploymentData.status) } </p>
     </div>
   </div>
-  {#if deploymentData.status == 'created'}
+  {#if deploymentData.status == 'created' || deploymentData.status == 'createError'}
     <div class="message-body">
-      <div class="font-semibold text-neutral-950 dark:text-neutral-200 flex flex-row flex-wrap items-center">
+      {#if deploymentData.status == 'created'}
+        <div class="font-semibold text-neutral-950 dark:text-neutral-200 flex flex-row flex-wrap items-center">
+          {#each Object.entries(deploymentData.vmMap) as [key, value]}
+            <div class="pl-2 flex items-center flex-row border-b-2 cursor-pointer {getTabStyle(key == activeVM)}">
+              <span on:click={() => { activeVM = (activeVM == key) ? "" : key }}> { key } </span>
+              <a class="icon my-1" target="_blank" href={generateVNCConsoleLink(value)}>
+                <NewTabIcon/>
+              </a>
+            </div>
+          {/each}
+        </div>
         {#each Object.entries(deploymentData.vmMap) as [key, value]}
-          <div class="pl-2 flex items-center flex-row border-b-2 cursor-pointer {getTabStyle(key == activeVM)}">
-            <span on:click={() => { activeVM = (activeVM == key) ? "" : key }}> { key } </span>
-            <a class="icon my-1" target="_blank" href={generateVNCConsoleLink(value)}>
-              <NewTabIcon/>
-            </a>
-          </div>
+          {#if activeVM == key }
+            <NoVnc url={getVNCLink(value)} {showDesktopName}/>
+          {/if}
         {/each}
-      </div>
-      {#each Object.entries(deploymentData.vmMap) as [key, value]}
-        {#if activeVM == key }
-          <NoVnc url={getVNCLink(value)} {showDesktopName}/>
-        {/if}
-      {/each}
+      {/if}
       <br>
       {#if showDestroyButton}
         <button disabled={waitForDelete} class="button is-danger" on:click={deleteDeploymentWrapper}>
