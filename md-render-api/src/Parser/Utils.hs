@@ -12,7 +12,7 @@ module Parser.Utils
 
 import           Data.Attoparsec.Combinator (lookAhead, many1)
 import           Data.Attoparsec.Text
-import           Data.Char                  (isLetter)
+import           Data.Char                  (isLetter, isNumber)
 
 transliterateCharacter :: Char -> String
 transliterateCharacter 'а' = "a"
@@ -49,7 +49,7 @@ transliterateCharacter 'э' = "e"
 transliterateCharacter 'ю' = "yu"
 transliterateCharacter 'я' = "ya"
 transliterateCharacter ' '   = " "
-transliterateCharacter s | isLetter s = [s]
+transliterateCharacter s | isLetter s || isNumber s = [s]
                          | otherwise = []
 
 between' :: Parser a -> Parser b -> Parser c -> Parser [c]
