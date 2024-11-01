@@ -40,6 +40,7 @@ data App = App
   , rabbitConnection       :: !R.Connection
   , redisConnection        :: !Redis.Connection
   , endpointsConfiguration :: !EndpointsConfiguration
+  , userDeploymentLimit    :: !Int
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|

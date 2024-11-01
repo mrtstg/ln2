@@ -12,6 +12,8 @@ module App.Commands (
 import           App.Types
 import           Control.Monad.Logger              (runStdoutLoggingT)
 import qualified Data.ByteString.Char8             as BS
+import           Data.Functor                      ((<&>))
+import           Data.Maybe                        (fromMaybe)
 import           Data.Models.Endpoints
 import           Data.Models.Rabbit.ConnectionData
 import qualified Data.Text                         as T
@@ -92,7 +94,8 @@ runServerCommand port = do
                     ((T.pack . getRConUser) rabbitCreds)
                     ((T.pack . getRConPass) rabbitCreds)
                   postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-                  let app = App postgresPool rabbitConn redisConnection endpoints
+                  userDeploymentLimit <- lookupEnvInt "USER_DEPLOYMENT_LIMIT" <&> fromMaybe 1
+                  let app = App postgresPool rabbitConn redisConnection endpoints userDeploymentLimit
                   _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
                   devMode <- isDevEnabled
                   let corsOrigins = ["http://localhost:5173", "http://localhost"]
