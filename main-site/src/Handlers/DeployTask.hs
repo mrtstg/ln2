@@ -9,6 +9,7 @@ module Handlers.DeployTask
 import           Api                                (ApiIDWrapper (..),
                                                      ApiPageWrapper (..))
 import           Api.Deploy.Create
+import           Api.Deploy.Query                   (queryDeploymentsCount')
 import           Api.Deploy.User
 import           Crud.CourseTask
 import           Data.Aeson
@@ -51,36 +52,40 @@ postDeployTaskApiR ctId = do
   d@(UserDetails { .. }) <- requireApiUserAuth endpoints
   (Entity _ (CourseTask { courseTaskCourse = (CourseKey courseId), courseTaskPayload = payload' })) <- requireCourseTaskMember getUserRoles ctId
   hasPending <- hasPendingDeployment getUserDetailsId
-  if hasPending then sendStatusJSON status429 $ object [ "error" .= String "Already pending deployment" ] else do
+  if hasPending then sendStatusJSON status429 $ object [ "error" .= String "Already pending deployment", "type" .= String "deploymentPending" ] else do
     _ <- setPendingDeployment getUserDetailsId
     deployments' <- liftIO $ getUserDeployments' endpoints 1 getUserDetailsId
     case deployments' of
       (Left e) -> sendStatusJSON status500 $ object [ "error" .= e ]
-      (Right (ApiPageWrapper { getPageWrapperObjects = deployments })) -> do
-        case filter (f ctId (T.pack courseId) d) deployments of
-          [] -> do
-            case (eitherDecode . fromStrict) payload' of
-              (Left _) -> do
-                _ <- dropPendingDeployment getUserDetailsId
-                sendStatusJSON status500 $ object [ "error" .= String "Failed to decode task payload" ]
-              (Right (ContainerTaskPayload {})) -> do
-                _ <- dropPendingDeployment getUserDetailsId
-                sendStatusJSON status400 $ object [ "error" .= String "Wrong task type!" ]
-              (Right (VMTaskPayload { .. })) -> do
-                deployRes <- liftIO $ createDeployment' endpoints (DeploymentCreate
-                  { getDeploymentCreateUserId = getUserDetailsId
-                  , getDeploymentCreateTaskId = (fromIntegral . fromSqlKey) ctId
-                  , getDeploymentCreateRequest = DeployRequest
-                    { getDeployRequestVMs = getPayloadVMs
-                    , getDeployRequestNetworks = getPayloadNetworks
-                    }
-                  , getDeploymentCreateCourseId = courseId
-                  })
-                case deployRes of
-                  (Left e) -> do
-                    _ <- $logError (T.pack $ "Failed to create deployment: " <> e)
-                    sendStatusJSON status500 $ object [ "error" .= T.pack ("Failed to create deployment: " <> e)]
-                  (Right (ApiIDWrapper deploymentId)) -> do
-                    _ <- dropPendingDeployment getUserDetailsId
-                    sendStatusJSON status200 $ object [ "id" .= deploymentId ]
-          (_:_) -> sendStatusJSON status400 $ object [ "error" .= String "Deployment already created" ]
+      (Right (ApiPageWrapper { getPageWrapperObjects = deployments, getPageWrapperTotal = userDeploymentsAmount })) -> do
+        if userDeploymentsAmount == 0 then do
+          _ <- dropPendingDeployment getUserDetailsId
+          sendStatusJSON status429 $ object [ "error" .= String "Too many deployments", "type" .= String "deploymentLimit" ]
+        else do
+          case filter (f ctId (T.pack courseId) d) deployments of
+            [] -> do
+              case (eitherDecode . fromStrict) payload' of
+                (Left _) -> do
+                  _ <- dropPendingDeployment getUserDetailsId
+                  sendStatusJSON status500 $ object [ "error" .= String "Failed to decode task payload" ]
+                (Right (ContainerTaskPayload {})) -> do
+                  _ <- dropPendingDeployment getUserDetailsId
+                  sendStatusJSON status400 $ object [ "error" .= String "Wrong task type!" ]
+                (Right (VMTaskPayload { .. })) -> do
+                  deployRes <- liftIO $ createDeployment' endpoints (DeploymentCreate
+                    { getDeploymentCreateUserId = getUserDetailsId
+                    , getDeploymentCreateTaskId = (fromIntegral . fromSqlKey) ctId
+                    , getDeploymentCreateRequest = DeployRequest
+                      { getDeployRequestVMs = getPayloadVMs
+                      , getDeployRequestNetworks = getPayloadNetworks
+                      }
+                    , getDeploymentCreateCourseId = courseId
+                    })
+                  case deployRes of
+                    (Left e) -> do
+                      _ <- $logError (T.pack $ "Failed to create deployment: " <> e)
+                      sendStatusJSON status500 $ object [ "error" .= T.pack ("Failed to create deployment: " <> e)]
+                    (Right (ApiIDWrapper deploymentId)) -> do
+                      _ <- dropPendingDeployment getUserDetailsId
+                      sendStatusJSON status200 $ object [ "id" .= deploymentId ]
+            (_:_) -> sendStatusJSON status400 $ object [ "error" .= String "Deployment already created", "type" .= String "deploymentCreated" ]
