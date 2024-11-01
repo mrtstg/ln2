@@ -380,6 +380,20 @@ export class ApiClient {
       return data
     } catch (error) {
       if (error.response) {
+        if (error.response.data.type) {
+          // TODO: separate function?
+          const type = error.response.data.type
+          if (type == 'deploymentLimit') {
+            return 'Достигнут лимит одновременно созданных развертываний! Удалите ранее созданные среды для выполнения задания'
+          }
+          if (type == 'deploymentCreated') {
+            return 'Развертывание для задание уже создано!'
+          }
+          if (type == 'deploymentPending') {
+            return 'Ожидайте завершения процесса развертывания среды!'
+          }
+        }
+
         if (error.response.data.error) {
           return error.response.data.error
         }
