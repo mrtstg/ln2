@@ -10,6 +10,7 @@
   export let wsUrl: string;
   export let wsProto: string;
 
+  let deploymentMessage: string = ''
   let currentState: TaskDeploymentWrapper | string | null
   $: currentState = null
   let intervalId: number | null = null
@@ -31,11 +32,17 @@
     }
 
     currentState = res
+    if (typeof res != 'string') {
+      if (res.data != null) {
+        deploymentMessage = ''
+      }
+    }
     return res
   }
 
   const sendDeployRequest = async () => {
-    await api.deployTaskDeployment(taskID)
+    let response = await api.deployTaskDeployment(taskID)
+    deploymentMessage = typeof response == 'string' ? response : ''
     taskDeploymentPromise = taskDeploymentWrapper()
   }
 
@@ -60,6 +67,11 @@
   let taskDeploymentPromise: Promise<TaskDeploymentWrapper | string> | null = null
 </script>
 
+{#if deploymentMessage.length > 0}
+  <div class="notification is-warning">
+    { deploymentMessage }
+  </div>
+{/if}
 {#if taskDeploymentPromise != null}
   {#if currentState != null && typeof currentState != 'string'}
     {#if currentState.data == null}
