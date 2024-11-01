@@ -9,7 +9,6 @@ module Handlers.DeployTask
 import           Api                                (ApiIDWrapper (..),
                                                      ApiPageWrapper (..))
 import           Api.Deploy.Create
-import           Api.Deploy.Query                   (queryDeploymentsCount')
 import           Api.Deploy.User
 import           Crud.CourseTask
 import           Data.Aeson
@@ -48,7 +47,7 @@ getDeployTaskApiR ctId = do
 
 postDeployTaskApiR :: CourseTaskId -> Handler Value
 postDeployTaskApiR ctId = do
-  App { endpointsConfiguration = endpoints } <- getYesod
+  App { endpointsConfiguration = endpoints, userDeploymentLimit = userDeploymentLimit } <- getYesod
   d@(UserDetails { .. }) <- requireApiUserAuth endpoints
   (Entity _ (CourseTask { courseTaskCourse = (CourseKey courseId), courseTaskPayload = payload' })) <- requireCourseTaskMember getUserRoles ctId
   hasPending <- hasPendingDeployment getUserDetailsId
@@ -58,7 +57,7 @@ postDeployTaskApiR ctId = do
     case deployments' of
       (Left e) -> sendStatusJSON status500 $ object [ "error" .= e ]
       (Right (ApiPageWrapper { getPageWrapperObjects = deployments, getPageWrapperTotal = userDeploymentsAmount })) -> do
-        if userDeploymentsAmount == 0 then do
+        if userDeploymentsAmount >= userDeploymentLimit then do
           _ <- dropPendingDeployment getUserDetailsId
           sendStatusJSON status429 $ object [ "error" .= String "Too many deployments", "type" .= String "deploymentLimit" ]
         else do
