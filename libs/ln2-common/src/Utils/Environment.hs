@@ -4,12 +4,17 @@ module Utils.Environment
   , constructPostgreStringFromEnv
   , getJWTSecretFromEnv
   , isAuthBypassed
+  , lookupEnvInt
   ) where
 
+import           Data.Functor                      ((<&>))
 import           Data.Maybe
 import           Data.Models.Rabbit.ConnectionData
 import           System.Environment
 import           Text.Read
+
+lookupEnvInt :: String -> IO (Maybe Int)
+lookupEnvInt variableName = lookupEnv variableName <&> (readMaybe . fromMaybe "")
 
 getJWTSecretFromEnv :: IO (Maybe String)
 getJWTSecretFromEnv = lookupEnv "AUTH_JWT_SECRET"
