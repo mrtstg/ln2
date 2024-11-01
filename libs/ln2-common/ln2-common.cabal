@@ -5,7 +5,7 @@ cabal-version: 2.2
 -- see: https://github.com/sol/hpack
 
 name:           ln2-common
-version:        0.1.1.7
+version:        0.1.1.8
 description:    Please see the README on GitHub at <https://github.com/githubuser/ln2-common#readme>
 homepage:       https://github.com/githubuser/ln2-common#readme
 bug-reports:    https://github.com/githubuser/ln2-common/issues
