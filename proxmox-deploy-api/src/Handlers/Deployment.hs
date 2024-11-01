@@ -7,6 +7,7 @@ module Handlers.Deployment
   , getDeploymentR
   , postValidateDeploymentR
   , postQueryDeploymentsR
+  , postQueryDeploymentsCountR
   ) where
 
 import           Api                                (ApiPageWrapper (..))
@@ -177,8 +178,8 @@ getDeploymentR deploymentId' = do
         (Right payload) -> do
           sendStatusJSON status200 payload
 
-postQueryDeploymentsR :: Handler Value
-postQueryDeploymentsR = let
+deploymentQueryToOpts :: DeploymentQuery -> ([SelectOpt MachineDeployment], [Filter MachineDeployment])
+deploymentQueryToOpts q = let
   queryToLimits :: DeploymentQuery -> [SelectOpt MachineDeployment]
   queryToLimits (DeploymentQuery { getDeploymentQueryPageSize = Nothing }) = []
   queryToLimits (DeploymentQuery { getDeploymentQueryPageSize = Just size, getDeploymentQueryPageNumber = pageN }) =
@@ -195,11 +196,26 @@ postQueryDeploymentsR = let
   tidFilter (Just tid') = [MachineDeploymentTaskId ==. tid']
   cidFilter Nothing     = []
   cidFilter (Just cid') = [MachineDeploymentCourseId ==. cid']
-  in do
+  in (queryToLimits q, queryToFilters q)
+
+postQueryDeploymentsCountR :: Handler Value
+postQueryDeploymentsCountR = do
   _ <- requireServiceAuth' requireApiAuth
   query@(DeploymentQuery { getDeploymentQueryPageSize = pageSize' }) <- requireCheckJsonBody
-  let filters = queryToFilters query
-  let limits = queryToLimits query
+  let (_, filters) = deploymentQueryToOpts query
+  resultsAmount <- runDB $ count filters
+  sendStatusJSON status200
+    (ApiPageWrapper
+      { getPageWrapperObjects = [] :: [Value]
+      , getPageWrapperSize = 0
+      , getPageWrapperTotal = resultsAmount
+      })
+
+postQueryDeploymentsR :: Handler Value
+postQueryDeploymentsR = do
+  _ <- requireServiceAuth' requireApiAuth
+  query@(DeploymentQuery { getDeploymentQueryPageSize = pageSize' }) <- requireCheckJsonBody
+  let (limits, filters) = deploymentQueryToOpts query
   results <- runDB $ selectList filters limits
   resultsAmount <- runDB $ count filters
   let objects' = traverse toMachineDeploymentRead results
