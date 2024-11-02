@@ -80,6 +80,7 @@ mkYesodData
 /deployment DeploymentsR POST
 /deployment/validate ValidateDeploymentR POST
 !/deployment/#String DeploymentR DELETE GET
+/api/port/#Int/switch SwitchPortR GET
 |]
 
 instance Yesod App where

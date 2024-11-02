@@ -28,6 +28,7 @@ import           Foundation
 import           Handlers.AuthR
 import           Handlers.Deployment
 import           Handlers.MachineID
+import           Handlers.Port
 import           Handlers.Templates
 import           Handlers.UserDeployments
 import           Network.AMQP                       (openConnection')
