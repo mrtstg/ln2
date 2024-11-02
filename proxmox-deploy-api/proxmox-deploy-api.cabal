@@ -36,6 +36,7 @@ library
       Handlers.AuthR
       Handlers.Deployment
       Handlers.MachineID
+      Handlers.Port
       Handlers.Templates
       Handlers.UserDeployments
       Handlers.Utils
