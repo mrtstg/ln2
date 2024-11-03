@@ -7,14 +7,17 @@ module Data.Models.Deployment.Payload
 import           Data.Aeson
 
 data DeploymentPayload = DeploymentPayload
-  { getDeploymentVMDisplays :: ![Int]
+  { getDeploymentVMDisplays       :: ![Int]
+  , getDeploymentVMHiddenDisplays :: ![Int]
   } deriving Show
 
 instance ToJSON DeploymentPayload where
   toJSON (DeploymentPayload { .. }) = object
     [ "displays" .= getDeploymentVMDisplays
+    , "userHiddenDisplays" .= getDeploymentVMHiddenDisplays
     ]
 
 instance FromJSON DeploymentPayload where
   parseJSON = withObject "DeploymentPayload" $ \v -> DeploymentPayload
     <$> v .: "displays"
+    <*> v .: "userHiddenDisplays"

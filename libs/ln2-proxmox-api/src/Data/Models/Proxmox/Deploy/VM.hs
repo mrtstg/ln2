@@ -85,6 +85,7 @@ data DeployVM = TemplateDeployVM
   , getDeployVMMemory            :: !(Maybe Int)
   , getDeployVMAdditionalConfig  :: !(M.Map Text Text)
   , getDeployVMNetworkInterfaces :: ![NetworkConnection]
+  , getDeployVMUserAvailable     :: !Bool
   } deriving Show
 
 instance FromJSON DeployVM where
@@ -99,6 +100,7 @@ instance FromJSON DeployVM where
       <*> v .:? "memory"
       <*> v .:? "config" .!= M.empty
       <*> v .: "networks"
+      <*> v .:? "userAvailable" .!= True
     _unknownType -> fail "Unknown type!"
 
 instance ToJSON DeployVM where
@@ -112,4 +114,5 @@ instance ToJSON DeployVM where
     , "config" .= getDeployVMAdditionalConfig
     , "networks" .= getDeployVMNetworkInterfaces
     , "type" .= String "template"
+    , "userAvailable" .= getDeployVMUserAvailable
     ]
