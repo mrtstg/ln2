@@ -29,7 +29,9 @@ iterateDeployments d@(UserDetails { .. }) targetDisplay ((Entity deploymentId Ma
       () <- $logError $ "Failed to decode deployment " <> (T.pack . show) deploymentId <> " of user " <> (T.pack . show) getUserDetailsId
       iterateDeployments d targetDisplay deployments
     (Just (DeploymentPayload { .. })) -> do
-      if targetDisplay `notElem` getDeploymentVMDisplays then iterateDeployments d targetDisplay deployments else return True
+      if targetDisplay `elem` getDeploymentVMDisplays && targetDisplay `notElem` getDeploymentVMHiddenDisplays then
+        return True
+      else iterateDeployments d targetDisplay deployments
 
 getAuthR :: Handler Value
 getAuthR = do

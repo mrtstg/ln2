@@ -176,14 +176,22 @@ deleteDeploymentR deploymentId' = let
                 sendStatusJSON status403 $ object [ "error" .= String "Unauthorized" ]
             _anyOtherStatus -> sendStatusJSON status400 $ object [ "error" .= T.pack "Inappropriate deployment status" ]
 
+-- TODO: seems, users do not use this endpoint, but need to ensure that nothing is not hidden from admin, for example
 getDeploymentR :: String -> Handler Value
-getDeploymentR deploymentId' = do
+getDeploymentR deploymentId' = let
+  f :: AuthSource -> Bool
+  f (TokenAuth {}) = True
+  f (UserAuth {})  = False
+  in do
+  App { endpointsConfiguration = endpoints } <- getYesod
+  authSrc <- requireApiAuth endpoints
+  let showHiddenVM = f authSrc
   let deploymentId = MachineDeploymentKey deploymentId'
   deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
   case deployment' of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= T.pack "Deployment not found" ]
     (Just e@(Entity _ (MachineDeployment {}))) -> do
-      case toMachineDeploymentRead e of
+      case toMachineDeploymentRead showHiddenVM e of
         (Left e') -> sendStatusJSON status400 $ object [ "error" .= e']
         (Right payload) -> do
           sendStatusJSON status200 payload
@@ -228,7 +236,7 @@ postQueryDeploymentsR = do
   let (limits, filters) = deploymentQueryToOpts query
   results <- runDB $ selectList filters limits
   resultsAmount <- runDB $ count filters
-  let objects' = traverse toMachineDeploymentRead results
+  let objects' = traverse (toMachineDeploymentRead True) results
   case objects' of
     (Left e) -> sendStatusJSON status500 $ object [ "error" .= e ]
     (Right objects) ->
