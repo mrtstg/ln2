@@ -8,7 +8,8 @@ export type TemplateVM = {
   sockets: number | null,
   cores: number | null,
   memory: number | null,
-  networks: Array<VMNetworkInterface>
+  networks: Array<VMNetworkInterface>,
+  userAvailable: boolean
 }
 
 export type VMNetworkInterface = {
