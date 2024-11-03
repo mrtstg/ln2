@@ -32,10 +32,13 @@ machineTemplateFromModel (MachineTemplate { .. }) = MachineTemplate'
   machineTemplateName
   machineTemplateComment
 
-toMachineDeploymentRead :: Entity MachineDeployment -> Either String Deployment
-toMachineDeploymentRead (Entity (MachineDeploymentKey mId) MachineDeployment { .. }) = let
+toMachineDeploymentRead :: Bool -> Entity MachineDeployment -> Either String Deployment
+toMachineDeploymentRead showHidden (Entity (MachineDeploymentKey mId) MachineDeployment { .. }) = let
   f :: DeployVM' -> M.Map Text Int -> M.Map Text Int
-  f (TemplateDeployVM' { getDeployVMTemplateData' = TemplateDeployVM { .. },.. }) = M.insert getDeployVMName (displayNumberToPort getDeployVMDisplay')
+  f (TemplateDeployVM' { getDeployVMTemplateData' = TemplateDeployVM { .. },.. }) acc =
+    if getDeployVMUserAvailable || showHidden then
+      M.insert getDeployVMName (displayNumberToPort getDeployVMDisplay') acc
+    else acc
   in do
   let status' = deploymentStatusFromString machineDeploymentStatus
   case status' of
