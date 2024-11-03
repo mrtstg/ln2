@@ -65,6 +65,7 @@ library
       Handlers.Users
       Handlers.Utils
       Handlers.VMConsole
+      Icons.PlusOutline
       Rabbit
       Redis
       Utils
