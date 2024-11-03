@@ -24,6 +24,10 @@ export const deploymentErrorToString = (data: [DeploymentErrorKind, any]): strin
     return 'Некорректное значение сокета: ' + body.value
   case 'invalidMemory':
     return 'Некорректное значение памяти: ' + body.value
+  case 'duplicateVMName':
+    return 'Дубликат имени виртуальной машины: ' + body.value
+  case 'duplicateNetworkName':
+    return 'Дубликат имени сети: ' + body.value
   case 'unknown':
 		return 'Неизвестная ошибка'
   default:
