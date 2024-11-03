@@ -34,6 +34,8 @@ export const allDeploymentErrorKinds = [
   'invalidCPU',
   'invalidSockets',
   'invalidMemory',
+  'duplicateVMName',
+  'duplicateNetworkName',
   'unknown'
   ]
 
