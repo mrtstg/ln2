@@ -29,6 +29,7 @@ import           Data.Models.Deployment.Payload
 import           Data.Models.DeploymentRequest
 import qualified Data.Models.DeploymentStatus       as S
 import           Data.Models.Proxmox.Deploy.Request (DeployRequest (..))
+import           Data.Models.Proxmox.Deploy.VM
 import           Data.Models.User
 import qualified Data.Text                          as T
 import           Data.UUID.V4
@@ -111,9 +112,18 @@ postDeploymentsR = do
                           () <- freeVMIds reservedVMIDs
                           sendStatusJSON status500 $ object [ "error" .= T.pack e, "type" .= T.pack "link" ]
                         (Right vmData) -> do
+
                           let deploymentData = DeploymentData networkNamesMap vmData getDeployRequestNetworks
                           let encodedDeploymentData = toStrict $ encode deploymentData
-                          let deploymentPayload = (toStrict . encode) $ (DeploymentPayload . map (\(Entity _ e) -> takenDisplayNumber e)) displayPorts
+
+                          -- generating of displays payload
+                          let hiddenVMDisplays = map getDeployVMDisplay' . filter (not . getDeployVMUserAvailable . getDeployVMTemplateData') $ vmData
+                          let deploymentPayloadDisplays = map (\(Entity _ e) -> takenDisplayNumber e) displayPorts
+                          let deploymentPayload = (toStrict . encode) (DeploymentPayload
+                                { getDeploymentVMHiddenDisplays = hiddenVMDisplays
+                                , getDeploymentVMDisplays = deploymentPayloadDisplays
+                                })
+
                           _ <- runDB $ insertKey
                             (MachineDeploymentKey deploymentId) $
                             MachineDeployment uid courseId taskId (show S.Queued) deploymentPayload encodedDeploymentData
