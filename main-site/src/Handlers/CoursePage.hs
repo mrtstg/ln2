@@ -23,6 +23,7 @@ import           Foundation
 import           Handlers.Auth
 import           Handlers.Params       (defaultPageSize, getPageNumber)
 import           Handlers.Utils
+import           Icons.PlusOutline     (plusOutlineWidget)
 import           Network.HTTP.Types
 import           Utils.Auth
 import           Yesod.Core
@@ -84,7 +85,13 @@ getCourseR cId@(CourseKey courseUUID) = do
         <a href=@{CoursesR}> Курсы
       <li .is-active>
         <a href=#> #{courseName}
-  <h1 .title.pb-3> #{ courseName }
+  <div .is-flex.is-align-items.center>
+    <h1 .title.pb-3> #{ courseName }
+    $if isAdmin
+      <div .ml-3>
+        <a .button.is-link href=@{AdminCourseR cId}>
+          <span .icon.is-large>
+            ^{plusOutlineWidget}
   <div .box>
     $if taskRatio == 0
       <h2 .subtitle.is-3> У нас нет информации о вашем прогрессе. Самое время начать!
