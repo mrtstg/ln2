@@ -35,7 +35,7 @@ getDeployTaskApiR ctId = do
   App { endpointsConfiguration = endpoints } <- getYesod
   d@(UserDetails { .. }) <- requireApiUserAuth endpoints
   (Entity _ (CourseTask { courseTaskCourse = (CourseKey courseId) })) <- requireCourseTaskMember getUserRoles ctId
-  deployments' <- liftIO $ getUserDeployments' endpoints 1 getUserDetailsId
+  deployments' <- liftIO $ getUserDeployments' endpoints 1 getUserDetailsId False
   case deployments' of
     (Left e) -> sendStatusJSON status500 $ object [ "error" .= e ]
     (Right (ApiPageWrapper { getPageWrapperObjects = deployments })) -> do
@@ -53,7 +53,7 @@ postDeployTaskApiR ctId = do
   hasPending <- hasPendingDeployment getUserDetailsId
   if hasPending then sendStatusJSON status429 $ object [ "error" .= String "Already pending deployment", "type" .= String "deploymentPending" ] else do
     _ <- setPendingDeployment getUserDetailsId
-    deployments' <- liftIO $ getUserDeployments' endpoints 1 getUserDetailsId
+    deployments' <- liftIO $ getUserDeployments' endpoints 1 getUserDetailsId True
     case deployments' of
       (Left e) -> sendStatusJSON status500 $ object [ "error" .= e ]
       (Right (ApiPageWrapper { getPageWrapperObjects = deployments, getPageWrapperTotal = userDeploymentsAmount })) -> do
