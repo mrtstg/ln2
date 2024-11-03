@@ -78,6 +78,10 @@ httpCheckDeployment templates payload = do
       [ "error" .= ("Invalid sockets value: " <> show v), "type" .= String "invalidSockets", "value" .= v]
     (Left (InvalidMemory v)) -> sendStatusJSON status400 $ object
       [ "error" .= ("Invalid memory value: " <> show v), "type" .= String "invalidMemory", "value" .= v]
+    (Left (DuplicateVMName v)) -> sendStatusJSON status400 $ object
+      [ "error" .= ("Duplicated VM name: " <> v), "type" .= String "duplicateVMName", "value" .= v]
+    (Left (DuplicateNetwork v)) -> sendStatusJSON status400 $ object
+      [ "error" .= ("Duplicated network name: " <> v), "type" .= String "duplicateNetworkName", "value" .= v]
     (Right ()) -> pure ()
 
 decodeDeploymentData :: BS.ByteString -> Handler (Either String DeploymentData)
