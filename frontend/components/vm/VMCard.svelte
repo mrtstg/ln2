@@ -76,6 +76,12 @@
       <p class="hint"> { templateHint } </p>
     </div>
     <div class="field">
+      <label class="checkbox">
+        <input type="checkbox" bind:checked={data.userAvailable}/>
+        Доступна для подключения пользователю
+      </label>
+    </div>
+    <div class="field">
       <label class="label"> Подключить сеть </label>
       <div class="control">
         <div class="is-flex is-flex-direction-row">

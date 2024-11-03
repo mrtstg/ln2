@@ -32,7 +32,8 @@
       sockets: 1,
       cores: 1,
       memory: 1024,
-      networks: []
+      networks: [],
+      userAvailable: true
     }]
   }
 
