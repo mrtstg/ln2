@@ -31,8 +31,6 @@ import           Utils.Validate
 import           Yesod.Core
 import           Yesod.Persist
 
-data DeploymentCreateRequest = DeploymentCreateRequest String Int DeployRequest Int
-
 deploymentErrorLog :: (MonadIO m, MonadLogger m) => Text -> [Either String a] -> DeployM m [String]
 deploymentErrorLog comment errors' = do
   DeployEnv { .. } <- ask
