@@ -5,6 +5,7 @@ module Utils.Validate
   , DeployValidaionError(..)
   ) where
 
+import           Control.Monad
 import           Data.Models.Proxmox.Configuration
 import           Data.Models.Proxmox.Deploy.Network
 import           Data.Models.Proxmox.Deploy.NetworkInterface
@@ -16,6 +17,8 @@ data DeployValidaionError =
   UndefinedNetwork String |
   UndefinedTemplate String |
   ForbiddenNetwork String |
+  DuplicateVMName String |
+  DuplicateNetwork String |
   EmptyVMName |
   EmptyNetworkName |
   LongVMName |
@@ -32,6 +35,18 @@ validateOptionalInt :: Maybe Int -> Int -> Int -> (Int -> a) -> Either a ()
 validateOptionalInt Nothing _ _ _ = Right ()
 validateOptionalInt (Just v) min' max' e = if v < min' || v > max' then Left (e v) else Right ()
 
+validateNamesUniqueness :: [T.Text] -> [T.Text] -> Either DeployValidaionError ()
+validateNamesUniqueness networkNames vmNames = let
+  validationF :: (String -> DeployValidaionError) -> [T.Text] -> [T.Text] -> Either DeployValidaionError ()
+  validationF _ _ [] = return ()
+  validationF errorF acc (item:items) = if item `elem` acc then
+    (Left . errorF . T.unpack) item
+    else validationF errorF (item:acc) items
+  in do
+    () <- validationF DuplicateNetwork [] networkNames
+    () <- validationF DuplicateVMName [] vmNames
+    return ()
+
 validateDeployVM :: [T.Text] -> [T.Text] -> DeployVM -> Either DeployValidaionError ()
 validateDeployVM existingTemplates existingNetworks (TemplateDeployVM { .. }) = let
   iterateVMNetworks :: [NetworkConnection] -> Either DeployValidaionError ()
@@ -42,15 +57,13 @@ validateDeployVM existingTemplates existingNetworks (TemplateDeployVM { .. }) = 
     else iterateVMNetworks connections
   in do
     () <- iterateVMNetworks getDeployVMNetworkInterfaces
-    () <- if getDeployVMTemplateName `notElem` existingTemplates then
-      (Left . UndefinedTemplate . T.unpack) getDeployVMTemplateName
-      else return ()
+    () <- unless (getDeployVMTemplateName `elem` existingTemplates) $ (Left . UndefinedTemplate . T.unpack) getDeployVMTemplateName
     () <- validateOptionalInt getDeployVMSockets 1 4 InvalidSockets
     () <- validateOptionalInt getDeployVMMemory 512 8096 InvalidMemory
     () <- validateOptionalInt getDeployVMCores 1 16 InvalidCPU
     let vmNameLength = T.length getDeployVMName
-    () <- if vmNameLength == 0 then Left EmptyVMName else return ()
-    () <- if vmNameLength > 15 then Left LongVMName else return ()
+    () <- when (vmNameLength == 0) $ Left EmptyVMName
+    () <- when (vmNameLength > 15) $ Left LongVMName
     pure ()
 
 validateDeployNetwork :: DeployNetwork -> Either DeployValidaionError ()
@@ -70,5 +83,7 @@ validateDeployRequest templatesList (DeployRequest { .. }) = do
       (Right _) -> do
         let existingNetworks = networkNames ++ serviceNetworks
         case traverse (validateDeployVM templatesList existingNetworks) getDeployRequestVMs of
-          (Left e)  -> Left e
-          (Right _) -> pure ()
+          (Left e) -> Left e
+          (Right _) -> do
+            () <- validateNamesUniqueness networkNames (map getDeployVMTemplateName getDeployRequestVMs)
+            return ()
