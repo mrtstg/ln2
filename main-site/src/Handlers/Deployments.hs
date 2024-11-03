@@ -55,7 +55,7 @@ getDeploymentsApiR = do
   App { endpointsConfiguration = endpoints } <- getYesod
   pageN <- getPageNumber
   (UserDetails { .. }) <- requireApiUserAuth endpoints
-  deployments' <- liftIO $ getUserDeployments' endpoints pageN getUserDetailsId
+  deployments' <- liftIO $ getUserDeployments' endpoints pageN getUserDetailsId False
   case deployments' of
     (Left e) -> sendStatusJSON status500 $ object [ "error" .= e]
     (Right (ApiPageWrapper { .. })) -> do
