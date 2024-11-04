@@ -5,7 +5,8 @@ COMPOSE_BIN=docker compose
 ENV_FILE=.env
 DOCKER_ENV_FILE=docker.env
 BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(DOCKER_ENV_FILE) --project-name ln2
-COMPOSE_FILE=deployment/docker-compose.yml
+DEV_COMPOSE_FILE=deployment/docker-compose.yml
+PROD_COMPOSE_FILE=deployment/prod.docker-compose.yml
 PROCFILE_DIR=procfiles
 
 build-websockify: ./deployment/websockify/Dockerfile
@@ -68,23 +69,23 @@ procfile-agentless: $(PROCFILE_DIR)/agentless
 build-lib-image: deployment/Dockerfile
 	docker build -t ln2-haskell -f deployment/Dockerfile .
 
-deploy-prod: $(COMPOSE_FILE)
-	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile prod up -d
+deploy-prod: $(PROD_COMPOSE_FILE)
+	$(BASE_COMPOSE_COMMAND) -f $(PROD_COMPOSE_FILE) up -d
 
-destroy-prod: $(COMPOSE_FILE)
-	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile prod down
+destroy-prod: $(PROD_COMPOSE_FILE)
+	$(BASE_COMPOSE_COMMAND) -f $(PROD_COMPOSE_FILE) down
 
-deploy-dev: $(COMPOSE_FILE)
-	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile dev up -d
+deploy-dev: $(DEV_COMPOSE_FILE)
+	$(BASE_COMPOSE_COMMAND) -f $(DEV_COMPOSE_FILE) up -d
 
-stop-dev: $(COMPOSE_FILE)
-	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile dev stop
+stop-dev: $(DEV_COMPOSE_FILE)
+	$(BASE_COMPOSE_COMMAND) -f $(DEV_COMPOSE_FILE) stop
 
-start-dev: $(COMPOSE_FILE)
-	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile dev start
+start-dev: $(DEV_COMPOSE_FILE)
+	$(BASE_COMPOSE_COMMAND) -f $(DEV_COMPOSE_FILE) start
 
-destroy-dev: $(COMPOSE_FILE)
-	$(BASE_COMPOSE_COMMAND) -f $(COMPOSE_FILE) --profile dev down
+destroy-dev: $(DEV_COMPOSE_FILE)
+	$(BASE_COMPOSE_COMMAND) -f $(DEV_COMPOSE_FILE) down
 
 download-bulma: ./static/css/
 	wget https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css -O ./static/css/bulma.min.css
