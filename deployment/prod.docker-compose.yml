@@ -1,0 +1,131 @@
+version: '3'
+services:
+  prod-db:
+    image: postgres:16.1-alpine
+    container_name: ln2-prod-db
+    hostname: db
+    env_file:
+      - ../docker.env
+    volumes:
+      - ../pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+  prod-redis:
+    image: redis:7.2.1-alpine
+    container_name: ln2-prod-redis
+    hostname: redis
+    restart: unless-stopped
+  prod-rabbitmq:
+    image: rabbitmq:3.13-rc
+    container_name: ln2-prod-rabbitmq
+    hostname: rmq
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+  prod-websocket:
+    image: ln2-websockify
+    container_name: ln2-prod-websockify
+    hostname: websockify
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+    volumes:
+      - ./websockify/entrypoint.sh:/entrypoint.sh:ro
+      - ./websockify/tokens.cfg:/tokens.cfg.template:ro
+  prod-nginx:
+    # TODO: build own nginx image
+    image: nginx:stable-alpine
+    container_name: ln2-prod-nginx
+    hostname: nginx
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/prod.conf:/etc/nginx/conf.d/site.conf:ro
+      - ../static:/static:ro
+    depends_on:
+      - prod-main-site
+  prod-md-api:
+    image: ln2-md-api
+    container_name: ln2-prod-md-api
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+    hostname: md-api
+  prod-db-api:
+    image: ln2-db-api
+    container_name: ln2-prod-db-api
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+    hostname: db-api
+  prod-auth:
+    image: ln2-auth
+    container_name: ln2-prod-auth
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+    hostname: auth
+    depends_on:
+      - prod-db
+      - prod-redis
+  prod-main-site:
+    image: ln2-main-site
+    container_name: ln2-prod-main-site
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+    hostname: main
+    depends_on:
+      - prod-db
+      - prod-redis
+      - prod-rabbitmq
+      - prod-auth
+      - prod-md-api
+      - prod-db-api
+  prod-master:
+    image: ln2-master
+    container_name: ln2-prod-master
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+    hostname: master
+    depends_on:
+      - prod-db
+      - prod-rabbitmq
+      - prod-auth
+    volumes:
+      - ../docker-master-server/stands:/usr/src/app/stands
+  prod-agent:
+    image: ln2-agent
+    container_name: ln2-prod-agent
+    restart: unless-stopped
+    user: root
+    privileged: true
+    env_file:
+      - ../docker.env
+    hostname: agent
+    depends_on:
+      - prod-rabbitmq
+    volumes:
+      - ${DOCKER_SOCKET}:/run/docker.sock
+  prod-deploy-api:
+    image: ln2-proxmox-deploy-api
+    container_name: ln2-prod-deploy-api
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+    hostname: deployapi
+    depends_on:
+      - prod-rabbitmq
+      - prod-auth
+  prod-deploy-agent:
+    image: ln2-proxmox-deploy-agent
+    container_name: ln2-prod-deploy-agent
+    restart: unless-stopped
+    env_file:
+      - ../docker.env
+    hostname: deployagent
+    depends_on:
+      - prod-deploy-api
+      - prod-rabbitmq
