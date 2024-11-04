@@ -26,6 +26,7 @@ services:
     container_name: ln2-prod-websockify
     hostname: websockify
     restart: unless-stopped
+    stop_grace_period: 1s
     env_file:
       - ../docker.env
     volumes:
@@ -48,6 +49,7 @@ services:
   prod-md-api:
     image: ln2-md-api
     container_name: ln2-prod-md-api
+    stop_grace_period: 1s
     restart: unless-stopped
     env_file:
       - ../docker.env
@@ -55,6 +57,7 @@ services:
   prod-db-api:
     image: ln2-db-api
     container_name: ln2-prod-db-api
+    stop_grace_period: 1s
     restart: unless-stopped
     env_file:
       - ../docker.env
@@ -62,6 +65,7 @@ services:
   prod-auth:
     image: ln2-auth
     container_name: ln2-prod-auth
+    stop_grace_period: 1s
     restart: unless-stopped
     env_file:
       - ../docker.env
@@ -72,6 +76,7 @@ services:
   prod-main-site:
     image: ln2-main-site
     container_name: ln2-prod-main-site
+    stop_grace_period: 1s
     restart: unless-stopped
     env_file:
       - ../docker.env
@@ -86,6 +91,7 @@ services:
   prod-master:
     image: ln2-master
     container_name: ln2-prod-master
+    stop_grace_period: 1s
     restart: unless-stopped
     env_file:
       - ../docker.env
@@ -99,6 +105,7 @@ services:
   prod-agent:
     image: ln2-agent
     container_name: ln2-prod-agent
+    stop_grace_period: 1s
     restart: unless-stopped
     user: root
     privileged: true
@@ -112,6 +119,7 @@ services:
   prod-deploy-api:
     image: ln2-proxmox-deploy-api
     container_name: ln2-prod-deploy-api
+    stop_grace_period: 1s
     restart: unless-stopped
     env_file:
       - ../docker.env
@@ -122,6 +130,7 @@ services:
   prod-deploy-agent:
     image: ln2-proxmox-deploy-agent
     container_name: ln2-prod-deploy-agent
+    stop_grace_period: 1s
     restart: unless-stopped
     env_file:
       - ../docker.env
