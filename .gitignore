@@ -1,4 +1,5 @@
 .env
+docker.env
 pgdata
 pgadmin
 docker-master-server/.env
