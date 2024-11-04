@@ -115,7 +115,7 @@ services:
     restart: unless-stopped
     env_file:
       - ../docker.env
-    hostname: deployapi
+    hostname: deploy-api
     depends_on:
       - prod-rabbitmq
       - prod-auth
@@ -125,7 +125,7 @@ services:
     restart: unless-stopped
     env_file:
       - ../docker.env
-    hostname: deployagent
+    hostname: deploy-agent
     depends_on:
       - prod-deploy-api
       - prod-rabbitmq
