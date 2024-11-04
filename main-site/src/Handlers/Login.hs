@@ -7,8 +7,10 @@ module Handlers.Login (getLoginR, postLoginR) where
 import           Api.Auth
 import           Data.Aeson
 import qualified Data.ByteString.Char8            as BS
+import           Data.Functor                     ((<&>))
 import           Data.Models.Auth.UserAuthRequest
 import           Data.Text                        (Text, pack, unpack)
+import           Data.Time.Clock
 import           Foundation
 import           Network.HTTP.Types
 import           Web.Cookie
@@ -53,7 +55,8 @@ postLoginR = do
       case authRes' of
         (Left e) -> redirect LoginR
         (Right token) -> do
-          setCookie $ defaultSetCookie { setCookieName = BS.pack "session", setCookieValue = BS.pack . unpack $ token }
+          expireTime <- liftIO getCurrentTime <&> addUTCTime (secondsToNominalDiffTime 86400)
+          setCookie $ defaultSetCookie { setCookieName = BS.pack "session", setCookieValue = BS.pack . unpack $ token, setCookieExpires = Just expireTime }
           redirect IndexR
     _formError -> do
       r@(UserAuthRequest {}) <- requireCheckJsonBody
