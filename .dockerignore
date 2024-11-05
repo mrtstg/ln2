@@ -12,4 +12,3 @@ frontend
 logs
 images
 docker-secondary-agent
-proxmox-fs-agent
