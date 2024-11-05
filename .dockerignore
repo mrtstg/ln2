@@ -6,7 +6,6 @@ Procfile
 .env
 sample.env
 docker-sample.env
-static
 pids
 pgadmin
 frontend
