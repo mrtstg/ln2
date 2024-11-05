@@ -1,4 +1,6 @@
 **/.stack-work
+**/deployment
+!./deployment
 pgdata
 Procfile
 .env
@@ -11,3 +13,4 @@ frontend
 logs
 images
 docker-secondary-agent
+proxmox-fs-agent
