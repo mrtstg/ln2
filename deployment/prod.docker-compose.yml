@@ -34,16 +34,12 @@ services:
       - ./websockify/tokens.cfg:/tokens.cfg.template:ro
   prod-nginx:
     # TODO: build own nginx image
-    image: nginx:stable-alpine
+    image: ln2-nginx
     container_name: ln2-prod-nginx
     hostname: nginx
     restart: unless-stopped
     ports:
       - 8000:8000
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/prod.conf:/etc/nginx/conf.d/site.conf:ro
-      - ../static:/static:ro
     depends_on:
       - prod-main-site
   prod-md-api:
