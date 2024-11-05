@@ -43,12 +43,12 @@ build-images:
 
 save-images: ./images
 	@for n in $(IMAGES_LIST); do \
-		docker save $$n -o ./images/$$n.tar; \
+		echo "Saving $$n" && docker save $$n -o ./images/$$n.tar; \
 	done
 
 restore-images: ./images
 	@for n in $(IMAGES_LIST); do \
-		docker load -i ./images/$$n.tar; \
+		echo "Restoring $$n" && docker load -i ./images/$$n.tar; \
 	done
 
 ./images:
