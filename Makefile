@@ -1,5 +1,5 @@
 HS_SERVICES=auth-service db-gen-api docker-master-server main-site md-render-api proxmox-fs-agent proxmox-deploy-api proxmox-deploy-agent
-IMAGES_LIST=ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api ln2-proxmox-deploy-api ln2-proxmox-deploy-agent
+IMAGES_LIST=ln2-main-site ln2-master ln2-auth ln2-agent ln2-md-api ln2-db-api ln2-proxmox-deploy-api ln2-proxmox-deploy-agent ln2-websockify ln2-nginx
 FRONTEND_PROJECTS=admin-course-form admin-users-form course-task-form users-solves-form course-create-form course-task-edit-form course-members-form novnc-connector deployments-page
 COMPOSE_BIN=docker compose
 ENV_FILE=.env
@@ -8,6 +8,9 @@ BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(DOCKER_ENV_FILE) --project-name
 DEV_COMPOSE_FILE=deployment/docker-compose.yml
 PROD_COMPOSE_FILE=deployment/prod.docker-compose.yml
 PROCFILE_DIR=procfiles
+
+build-nginx: ./deployment/nginx/Dockerfile
+	docker build -t ln2-nginx -f ./deployment/nginx/Dockerfile .
 
 build-websockify: ./deployment/websockify/Dockerfile
 	docker build -t ln2-websockify -f ./deployment/websockify/Dockerfile .
