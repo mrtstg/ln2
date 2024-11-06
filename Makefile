@@ -8,6 +8,7 @@ BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(DOCKER_ENV_FILE) --project-name
 DEV_COMPOSE_FILE=deployment/docker-compose.yml
 PROD_COMPOSE_FILE=deployment/prod.docker-compose.yml
 PROCFILE_DIR=procfiles
+BUILD_IMAGES := $(shell cat **/Dockerfile | grep FROM | cut -f2 -d ' ' | sort -u | grep -vE \(ln2-haskell\|rust-chef\))
 
 build-nginx: ./deployment/nginx/Dockerfile
 	docker build -t ln2-nginx -f ./deployment/nginx/Dockerfile .
@@ -40,6 +41,23 @@ build-images:
 	make -C md-render-api build-image
 	make -C proxmox-deploy-api build-image
 	make -C proxmox-deploy-agent build-image
+
+define \n
+
+
+endef
+
+define escape_image
+$(shell echo $(1) | sed 's/\//-/g')
+endef
+
+save-build-images: ./images
+	$(foreach image, $(BUILD_IMAGES), \
+		echo "Saving $(image)"${\n}docker save $(image) -o ./images/$(call escape_image, $(image)).tar${\n})
+
+restore-build-images: ./images
+	$(foreach image, $(BUILD_IMAGES), \
+		echo "Restoring $(image)"${\n}docker load -i ./images/$(call escape_image, $(image)).tar${\n})
 
 save-images: ./images
 	@for n in $(IMAGES_LIST); do \
