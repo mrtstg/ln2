@@ -25,7 +25,7 @@
 
 Для сборки потребуется файл `docker.env` в корневой директории, откуда будет взято значение `PROXMOX_AGENT_ACCESS_TOKEN`. Укажите его, после
 ```bash
-cp proxmox-fs-agent
+cd proxmox-fs-agent
 make build-bin-docker
 ```
 
