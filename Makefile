@@ -42,22 +42,17 @@ build-images:
 	make -C proxmox-deploy-api build-image
 	make -C proxmox-deploy-agent build-image
 
-define \n
-
-
-endef
-
 define escape_image
 $(shell echo $(1) | sed 's/\//-/g')
 endef
 
 save-build-images: ./images
 	$(foreach image, $(BUILD_IMAGES), \
-		echo "Saving $(image)"${\n}docker save $(image) -o ./images/$(call escape_image, $(image)).tar${\n})
+		echo "Saving $(image)";docker save $(image) -o ./images/$(call escape_image, $(image)).tar;)
 
 restore-build-images: ./images
 	$(foreach image, $(BUILD_IMAGES), \
-		echo "Restoring $(image)"${\n}docker load -i ./images/$(call escape_image, $(image)).tar${\n})
+		echo "Restoring $(image)";docker load -i ./images/$(call escape_image, $(image)).tar;)
 
 save-images: ./images
 	@for n in $(IMAGES_LIST); do \
