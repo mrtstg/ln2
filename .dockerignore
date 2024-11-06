@@ -8,7 +8,8 @@ sample.env
 docker-sample.env
 pids
 pgadmin
-frontend
+frontend/**/node_modules
+frontend/node_modules
 logs
 images
 docker-secondary-agent
