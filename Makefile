@@ -8,7 +8,7 @@ BASE_COMPOSE_COMMAND=$(COMPOSE_BIN) --env-file $(DOCKER_ENV_FILE) --project-name
 DEV_COMPOSE_FILE=deployment/docker-compose.yml
 PROD_COMPOSE_FILE=deployment/prod.docker-compose.yml
 PROCFILE_DIR=procfiles
-BUILD_IMAGES := $(shell cat **/Dockerfile | grep FROM | cut -f2 -d ' ' | sort -u | grep -vE \(ln2-haskell\|rust-chef\))
+BUILD_IMAGES := $(shell cat $(shell find ./ -name "Dockerfile" 2> /dev/null) | grep FROM | cut -f2 -d ' ' | sort -u | grep -vE \(ln2-haskell\|rust-chef\))
 
 build-nginx: ./deployment/nginx/Dockerfile
 	docker build -t ln2-nginx -f ./deployment/nginx/Dockerfile .
