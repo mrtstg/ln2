@@ -124,6 +124,30 @@ runServerCommand postgresString jwtSecret port = do
         deleteValue' redisConnection "token-admin"
       warp port app
 
+runCreateAdminCommand :: String -> AppCommand -> IO ()
+runCreateAdminCommand postgresString (CreateAdmin { .. }) = do
+  let adminRoleFilter = [ RoleName ==. "admins" ]
+  let login = T.pack getUserLogin
+  (userExists, roleExists) <- runDB postgresString $ do
+    uE <- exists [ UserLogin ==. login ]
+    rE <- exists adminRoleFilter
+    return (uE, rE)
+  -- TODO: random password generation
+  let password = fromMaybe "P@ssw0rd" getUserPassword
+  case (userExists, roleExists) of
+    (True, _) -> putStrLn "User already exists!"
+    (_, False) -> putStrLn "Administrator role is not created!"
+    (False, True) -> do
+      let pwdHash = (T.pack . sha256String) password
+      runDB postgresString $ do
+        uId <- insert (User { userPasswordHash=pwdHash, userName=T.pack getUserName, userLogin=login})
+        rId' <- selectFirst adminRoleFilter []
+        case rId' of
+          (Just (Entity rId _)) -> insert_ (RoleAssign uId rId)
+          Nothing               -> pure ()
+      putStrLn "User created!"
+runCreateAdminCommand _ _ = error "Wrong command type!"
+
 runCommand :: AppOpts -> IO ()
 runCommand (AppOpts port appCommand) = do
   postgresString' <- constructPostgreStringFromEnv
@@ -139,6 +163,7 @@ runCommand (AppOpts port appCommand) = do
           exitWith $ ExitFailure 1
         (Just jwtSecret) -> do
           case appCommand of
+            payload@(CreateAdmin {}) -> runCreateAdminCommand postgresString payload
             CreateDatabase        -> runCreateDatabaseCommand postgresString
             RunServer             -> runServerCommand postgresString jwtSecret port
             CreateRoles           -> runCreateRolesCommand postgresString

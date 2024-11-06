@@ -14,6 +14,12 @@ createDatabaseParser = pure CreateDatabase
 createRolesParser :: Parser AppCommand
 createRolesParser = pure CreateRoles
 
+createAdminParser :: Parser AppCommand
+createAdminParser = CreateAdmin
+  <$> strOption (long "login" <> metavar "LOGIN" <> help "New user login")
+  <*> optional (strOption (long "password" <> metavar "PASSWORD" <> help "New user password"))
+  <*> strOption (long "name" <> metavar "NAME" <> help "New user name" <> value "Administrator")
+
 issueTokenParser :: Parser AppCommand
 issueTokenParser = IssueToken <$>
   strOption (long "service" <> short 's' <> metavar "SERVICE" <> help "Service name for token to issue")
@@ -30,5 +36,6 @@ appParser = AppOpts <$>
     command "create-db" (info createDatabaseParser (progDesc "Create database")) <>
     command "create-roles" (info createRolesParser (progDesc "Create roles")) <>
     command "issue-token" (info issueTokenParser (progDesc "Issue token")) <>
-    command "revoke-token" (info revokeTokenParser (progDesc "Revoke token"))
+    command "revoke-token" (info revokeTokenParser (progDesc "Revoke token")) <>
+    command "create-admin" (info createAdminParser (progDesc "Create admin user"))
     )
