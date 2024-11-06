@@ -11,7 +11,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN cargo build --release
 
-FROM debian AS runtime
+FROM debian:trixie-slim AS runtime
 ENV TZ=Europe/Moscow
 WORKDIR /usr/local/bin/
 COPY --from=builder /app/target/release/docker-secondary-agent /usr/local/bin/rust_binary
