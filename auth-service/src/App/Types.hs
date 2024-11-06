@@ -13,4 +13,5 @@ data AppCommand = RunServer
   | CreateRoles
   | IssueToken { getTokenService :: !String }
   | RevokeToken { getTokenService :: !String }
+  | CreateAdmin { getUserLogin :: !String, getUserPassword :: !(Maybe String), getUserName :: !String }
   deriving (Show, Eq)
