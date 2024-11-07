@@ -9,6 +9,7 @@ DEV_COMPOSE_FILE=deployment/docker-compose.yml
 PROD_COMPOSE_FILE=deployment/prod.docker-compose.yml
 PROCFILE_DIR=procfiles
 BUILD_IMAGES := $(shell cat $(shell find ./ -name "Dockerfile" 2> /dev/null) | grep FROM | cut -f2 -d ' ' | sort -u | grep -vE \(ln2-haskell\|rust-chef\))
+DEPLOY_IMAGES := $(shell cat $(PROD_COMPOSE_FILE) | grep 'image:' | grep -vE 'ln2' | sort -u | sed 's/image://g' | sed 's/[[:blank:]]//g')
 
 build-nginx: ./deployment/nginx/Dockerfile
 	docker build -t ln2-nginx -f ./deployment/nginx/Dockerfile .
@@ -45,6 +46,14 @@ build-images:
 define escape_image
 $(shell echo $(1) | sed 's/\//-/g')
 endef
+
+save-deploy-images: ./images
+	$(foreach image, $(DEPLOY_IMAGES), \
+		echo "Saving $(image)";docker save $(image) -o ./images/$(call escape_image, $(image)).tar;)
+
+restore-deploy-images: ./images
+	$(foreach image, $(DEPLOY_IMAGES), \
+		echo "Restoring $(image)";docker load -i ./images/$(call escape_image, $(image)).tar;)
 
 save-build-images: ./images
 	$(foreach image, $(BUILD_IMAGES), \
