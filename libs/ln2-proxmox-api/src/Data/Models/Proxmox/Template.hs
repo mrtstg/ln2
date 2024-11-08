@@ -36,12 +36,12 @@ instance FromJSON MachineTemplateCreate where
 
 data MachineTemplatePatch = MachineTemplatePatch
   { getTemplatePatchId      :: !(Maybe Int)
-  , getTemplatePatchName    :: !Text
+  , getTemplatePatchName    :: !(Maybe Text)
   , getTemplatePatchComment :: !(Maybe Text)
   } deriving Show
 
 instance FromJSON MachineTemplatePatch where
   parseJSON = withObject "MachineTemplatePatch" $ \v -> MachineTemplatePatch
     <$> v .:? "id"
-    <*> v .:? "name" .!= ""
+    <*> v .:? "name"
     <*> v .:? "comment"
