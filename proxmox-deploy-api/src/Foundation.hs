@@ -55,6 +55,7 @@ MachineTemplate
   name Text
   comment Text default=''
   Primary proxmoxId
+  UniqueMachineTemplate name
   deriving Show
 MachineDeployment
   Id String
