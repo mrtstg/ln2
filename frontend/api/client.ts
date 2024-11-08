@@ -13,10 +13,12 @@ import type {
 } from "./types";
 import type { UserQuery, UserPatch, UserCreate } from "./types/user"
 import type { PageWrapper } from "./types/pageWrapper"
-import { allDeploymentErrorKinds, type DeploymentErrorKind, type DeploymentRead, type TaskDeploymentWrapper } from "./types/deployment"
+import { allDeploymentErrorKinds, createDeploymentError, type DeploymentErrorKind, type DeploymentRead, type TaskDeploymentWrapper } from "./types/deployment"
 import { VMTemplate } from "./types/template";
+import { createErrorWrapper } from "./types/errorWrapper"
 import { VM, VMNetwork } from "./types/vm";
 import type { ApiIDWrapper } from "./types/common"
+import { ErrorWrapper } from "./types/errorWrapper";
 
 export class ApiClient {
   base_url = "";
@@ -448,19 +450,15 @@ export class ApiClient {
     }
   }
 
-  async validateDeployment(vms: Array<VM>, networks: Array<VMNetwork>): Promise<[DeploymentErrorKind, object] | null> {
+  async validateDeployment(vms: Array<VM>, networks: Array<VMNetwork>): Promise<ErrorWrapper<DeploymentErrorKind> | null> {
     try {
       const _ = await this.client.post('/api/deployment/validate', {vms: vms, networks: networks})
       return null
     } catch (error) {
       if (error.response) {
-        if (error.response.data.error != undefined && error.response.data.type != undefined) {
-          if (allDeploymentErrorKinds.includes(error.response.data.type)) {
-            return [<DeploymentErrorKind>(error.response.data.type), error.response.data]
-          }
-        }
+        return createErrorWrapper(createDeploymentError, error.response.data)
       }
-      return ['unknown', {}]
+      return createErrorWrapper(createDeploymentError, {})
     }
   }
 }
