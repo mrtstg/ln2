@@ -35,8 +35,9 @@ templatesPresented proxmox tMap = do
 templatePatchToQuery :: MachineTemplatePatch -> [Update MachineTemplate]
 templatePatchToQuery (MachineTemplatePatch { .. }) = let
   nameQ = case getTemplatePatchName of
-    ""   -> []
-    name -> [MachineTemplateName =. name]
+    Nothing   -> []
+    (Just "") -> []
+    Just name -> [MachineTemplateName =. name]
   idQ = case getTemplatePatchId of
     Nothing    -> []
     (Just nid) -> [MachineTemplateProxmoxId =. nid]
