@@ -1,15 +1,15 @@
 import type { DeploymentErrorKind } from "../types/deployment"
+import type { ErrorWrapper } from "../types/errorWrapper"
 
-export const deploymentErrorToString = (data: [DeploymentErrorKind, any]): string => {
-  let kind = data[0]
-  let body = data[1]
+export const deploymentErrorToString = (data: ErrorWrapper<DeploymentErrorKind>): string => {
+  let kind = data.type
   switch(kind) {
   case 'template':
-    return 'Неизвестный шаблон: ' + body.value
+    return 'Неизвестный шаблон: ' + data.value
   case 'missingNetwork':
-    return 'Неизвестная сеть: ' + body.value
+    return 'Неизвестная сеть: ' + data.value
   case 'forbiddenNetwork':
-    return 'Недопустимое название сети: ' + body.value
+    return 'Недопустимое название сети: ' + data.value
   case 'emptyVMName':
     return 'Заполните все названия виртуальных машин'
   case 'emptyNetworkName':
@@ -19,17 +19,15 @@ export const deploymentErrorToString = (data: [DeploymentErrorKind, any]): strin
   case 'longNetworkName':
     return 'Названия всех сетей должны быть короче 16 символов!'
   case 'invalidCPU':
-    return 'Некорректное значение CPU: ' + body.value
+    return 'Некорректное значение CPU: ' + data.value
   case 'invalidSockets':
-    return 'Некорректное значение сокета: ' + body.value
+    return 'Некорректное значение сокета: ' + data.value
   case 'invalidMemory':
-    return 'Некорректное значение памяти: ' + body.value
+    return 'Некорректное значение памяти: ' + data.value
   case 'duplicateVMName':
-    return 'Дубликат имени виртуальной машины: ' + body.value
+    return 'Дубликат имени виртуальной машины: ' + data.value
   case 'duplicateNetworkName':
-    return 'Дубликат имени сети: ' + body.value
-  case 'unknown':
-		return 'Неизвестная ошибка'
+    return 'Дубликат имени сети: ' + data.value
   default:
 		return 'Неизвестная ошибка'
   }

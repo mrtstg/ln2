@@ -1,3 +1,5 @@
+import { genericArrayErrorCreator } from "./errorWrapper"
+
 export type TaskDeploymentWrapper = {
   data: DeploymentRead | null,
   pending: boolean
@@ -38,5 +40,7 @@ export const allDeploymentErrorKinds = [
   'duplicateNetworkName',
   'unknown'
   ]
+
+export const createDeploymentError = genericArrayErrorCreator<DeploymentErrorKind>(allDeploymentErrorKinds)
 
 export type DeploymentErrorKind = typeof allDeploymentErrorKinds[number]
