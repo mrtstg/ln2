@@ -14,7 +14,7 @@ import type {
 import type { UserQuery, UserPatch, UserCreate } from "./types/user"
 import type { PageWrapper } from "./types/pageWrapper"
 import { allDeploymentErrorKinds, createDeploymentError, type DeploymentErrorKind, type DeploymentRead, type TaskDeploymentWrapper } from "./types/deployment"
-import { VMTemplate } from "./types/template";
+import { VMTemplate, VMTemplatePatch, VMTemplateCreate, TemplateError, createTemplateError } from "./types/template";
 import { createErrorWrapper } from "./types/errorWrapper"
 import { VM, VMNetwork } from "./types/vm";
 import type { ApiIDWrapper } from "./types/common"
@@ -46,6 +46,24 @@ export class ApiClient {
       return data
     } else {
       return null
+    }
+  }
+
+  async createVMTemplate(payload: VMTemplateCreate): Promise<VMTemplate | ErrorWrapper<TemplateError>> {
+    try {
+      const { data } = await this.client.post<VMTemplate>('/api/templates', payload)
+      return data
+    } catch (error) {
+      return createErrorWrapper(createTemplateError, error.response ? error.response.data : {})
+    }
+  }
+
+  async patchVMTeplate(templateId: number, payload: VMTemplatePatch): Promise<VMTemplate | ErrorWrapper<TemplateError>> {
+    try {
+      const { data } = await this.client.patch<VMTemplate>('/api/templates/' + templateId, payload)
+      return data
+    } catch (error) {
+      return createErrorWrapper(createTemplateError, error.response ? error.response.data : {})
     }
   }
 
