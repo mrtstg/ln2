@@ -10,6 +10,7 @@ module Handlers.Templates
 import           Crud.Template
 import           Data.Aeson
 import           Data.Models.Proxmox.Template
+import           Data.Text                    (Text)
 import           Database.Persist
 import           Foundation
 import           Handlers.Auth
@@ -37,8 +38,8 @@ getTemplatesR = do
 postTemplatesR :: Handler Value
 postTemplatesR = let
   f :: MachineTemplateCreate -> Handler (Status, Value)
-  f payload = do
-    templateExists <- runDB $ exists [ MachineTemplateProxmoxId ==. getTemplateCreateId payload ]
+  f payload@(MachineTemplateCreate { .. }) = do
+    templateExists <- runDB $ exists [ MachineTemplateProxmoxId ==. getTemplateCreateId ]
     if templateExists then return (status400, object [ "error" .= String "Template exists" ]) else do
       template' <- runDB $ do
         key <- insert (machineTemplateCreateToModel payload)
@@ -57,20 +58,31 @@ patchTemplateR oldTemplateID = let
   newTemplateExists Nothing = return False
   newTemplateExists (Just tid) = runDB $ exists [ MachineTemplateProxmoxId ==. tid ]
 
+  newNameTaken :: Maybe Text -> Handler Bool
+  newNameTaken Nothing     = return False
+  newNameTaken (Just name) = runDB $ exists [ MachineTemplateName ==. name ]
+
   f :: MachineTemplatePatch -> Handler (Status, Value)
   f p@(MachineTemplatePatch { .. }) = do
     oldTemplateExists <- runDB $ exists [ MachineTemplateProxmoxId ==. oldTemplateID ]
     if not oldTemplateExists then return (status404, object [ "error" .= String "Not found" ]) else do
       newTemplateExists' <- newTemplateExists getTemplatePatchId
-      if newTemplateExists' then return (status400, object [ "error" .= String "New ID is taken" ]) else do
-        template' <- runDB $ do
-          updateWhere [ MachineTemplateProxmoxId ==. oldTemplateID ] (templatePatchToQuery p)
-          case getTemplatePatchId of
-            (Just newId) -> selectFirst [ MachineTemplateProxmoxId ==. newId ] []
-            Nothing -> selectFirst [ MachineTemplateProxmoxId ==. oldTemplateID ] []
-        case template' of
-          Nothing -> return (status500, object [ "error" .= String "Something went wrong" ])
-          (Just (Entity _ template)) -> return (status200, toJSON $ machineTemplateFromModel template)
+      newNameTaken' <- newNameTaken getTemplatePatchName
+      case (newTemplateExists', newNameTaken') of
+        (True, _) -> return (status400, object [ "error" .= String "New ID is taken" ])
+        (False, True) -> return (status400, object [ "error" .= String "New name is taken"])
+        (False, False) -> do
+          case templatePatchToQuery p of
+            [] -> return (status400, object [ "error" .= String "No update body"])
+            q -> do
+              template' <- runDB $ do
+                updateWhere [ MachineTemplateProxmoxId ==. oldTemplateID ] q
+                case getTemplatePatchId of
+                  (Just newId) -> selectFirst [ MachineTemplateProxmoxId ==. newId ] []
+                  Nothing -> selectFirst [ MachineTemplateProxmoxId ==. oldTemplateID ] []
+              case template' of
+                Nothing -> return (status500, object [ "error" .= String "Something went wrong" ])
+                (Just (Entity _ template)) -> return (status200, toJSON $ machineTemplateFromModel template)
   in do
   () <- requireAdminOrServiceAuth' requireApiAuth
   payload <- requireCheckJsonBody
