@@ -4,6 +4,7 @@ module Data.Models.Proxmox.Template
   ( MachineTemplate'(..)
   , MachineTemplatePatch(..)
   , MachineTemplateCreate(..)
+  , machineTemplateCreateToPatch
   ) where
 
 import           Data.Aeson
@@ -27,6 +28,13 @@ data MachineTemplateCreate = MachineTemplateCreate
   , getTemplateCreateName    :: !Text
   , getTemplateCreateComment :: !Text
   } deriving Show
+
+machineTemplateCreateToPatch :: MachineTemplateCreate -> MachineTemplatePatch
+machineTemplateCreateToPatch (MachineTemplateCreate { .. }) = MachineTemplatePatch
+  { getTemplatePatchId=Just getTemplateCreateId
+  , getTemplatePatchName=Just getTemplateCreateName
+  , getTemplatePatchComment=Just getTemplateCreateComment
+  }
 
 instance FromJSON MachineTemplateCreate where
   parseJSON = withObject "MachineTemplateCreate" $ \v -> MachineTemplateCreate
