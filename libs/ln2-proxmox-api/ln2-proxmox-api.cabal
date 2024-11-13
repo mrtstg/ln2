@@ -5,7 +5,7 @@ cabal-version: 2.2
 -- see: https://github.com/sol/hpack
 
 name:           ln2-proxmox-api
-version:        0.1.2.7
+version:        0.1.2.8
 description:    Please see the README on GitHub at <https://github.com/githubuser/ln2-proxmox-api#readme>
 homepage:       https://github.com/githubuser/ln2-proxmox-api#readme
 bug-reports:    https://github.com/githubuser/ln2-proxmox-api/issues
@@ -53,6 +53,7 @@ library
       Data.Models.Proxmox.Deploy.Request
       Data.Models.Proxmox.Deploy.VM
       Data.Models.Proxmox.Template
+      Data.Models.Proxmox.Template.Query
       Deploy.Proxmox
       Utils.Validate
   other-modules:
