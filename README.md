@@ -18,21 +18,6 @@
 
 ![Схема сервисов](./plantuml/services.png)
 
-# Установка Proxmox-агента
-
-Поскольку подключение к VM реализуется установкой статического VNC-порта (которое до сих пор закрыто от лица root-пользователя через API),
-процесс реализуется при помощи запущенного на ноде Proxmox агента. Для сборки требуется Docker с buildx и make
-
-Для сборки потребуется файл `docker.env` в корневой директории, откуда будет взято значение `PROXMOX_AGENT_ACCESS_TOKEN`. Укажите его, после
-```bash
-cd proxmox-fs-agent
-make build-bin-docker
-```
-
-После чего можете переместить директорию `deployment` на целевую ноду и запустить там `install.sh` с правами суперпользователя. После,
-запустите сервис командой `systemctl start proxmox-fs-agent` или перезагрузите ноду. Проверьте занятость 8000 порта. Если требуется иной
-сетевой порт, отредактируйте файл `proxmox-fs-agent.service`
-
 # Развертывание
 
     Система для запуска: любой дистрибутив Linux с поддержкой Docker и make
@@ -61,6 +46,58 @@ make build-images
 ```bash
 cp docker-sample.env docker.env # скопировать образец, если не делали этого раньше
 ```
+- Соберите и установите Proxmox-агент на используемую ноду (см. секцию ниже)
+- Запустите сервисы. Миграции базы данных выполнятся автоматически.
+```bash
+make deploy-prod
+```
+- Выпустите токен, используемые для взаимодействия между сервисами и поместите его в поле `SERVICE_ACCESS_TOKEN`
+```bash
+docker exec ln2-prod-auth /usr/src/app/haskell-binary issue-token -s common
+```
+- Создайте базовые роли
+```bash
+docker exec ln2-prod-auth /usr/src/app/haskell-binary create-roles
+```
+- Создайте администратора для управления платформой
+```bash
+docker exec ln2-prod-auth /usr/src/app/haskell-binary create-admin --login admin [--password P@ssw0rd] [--name Administrator]
+```
+- Перезапустите сервисы с новым токеном. Попробуйте получить доступ к платформе по адресу `http://<ip>:8000`
+```bash
+make destroy-prod && make deploy-prod
+docker restart ln2-prod-nginx # на всякий, иногда upstream'ы падают
+```
+
+## Установка Proxmox-агента
+
+Поскольку подключение к VM реализуется установкой статического VNC-порта (которое до сих пор закрыто от лица root-пользователя через API),
+процесс реализуется при помощи запущенного на ноде Proxmox агента. Для сборки требуется Docker с buildx и make
+
+Для сборки потребуется файл `docker.env` в корневой директории, откуда будет взято значение `PROXMOX_AGENT_ACCESS_TOKEN`. Укажите его, после
+```bash
+cd proxmox-fs-agent
+make build-bin-docker
+```
+
+После чего можете переместить директорию `deployment` на целевую ноду и запустить там `install.sh` с правами суперпользователя. После,
+запустите сервис командой `systemctl start proxmox-fs-agent` или перезагрузите ноду. Проверьте занятость 8000 порта. Если требуется иной
+сетевой порт, отредактируйте файл `proxmox-fs-agent.service`. Поправьте поле `PROXMOX_AGENT_URL`.
+
+## Портативность сборки
+
+Для экспорта образов, которые требуются для сборки и запуска существуют цели Makefile
+
+```bash
+# сохраняет образы как TAR-архивы в папке images
+make save-build-images
+make save-deploy-images
+# восстанавливает образы из TAR-архивов
+make restore-build-images
+make restore-deploy-images
+```
+
+Для экспорта образов микросервисов есть опции `save-images` и `restore-images`
 
 # Программные зависимости
 
