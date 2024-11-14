@@ -5,23 +5,38 @@ module Crud.Template
   , templatesPresented
   , TemplatePresentError(..)
   , httpCheckTemplatePatch
+  , queryTemplates
   ) where
 
 import           Api.Proxmox.VM
+import           Control.Monad.Trans.Reader
 import           Data.Aeson
-import           Data.Map                          (toList)
+import           Data.Map                           (toList)
 import           Data.Models.Proxmox.API.VM
 import           Data.Models.Proxmox.Configuration
 import           Data.Models.Proxmox.Template
-import           Data.Text                         (Text)
-import qualified Data.Text                         as T
+import           Data.Models.Proxmox.Template.Query
+import           Data.Text                          (Text)
+import qualified Data.Text                          as T
 import           Database.Persist
-import           Deploy.Proxmox                    (TemplatesMap)
+import           Database.Persist.Postgresql
+import           Deploy.Proxmox                     (TemplatesMap)
 import           Foundation
 import           Network.HTTP.Types
 import           Utils.IO
+import           Yesod.Core                         (MonadUnliftIO)
 
 data TemplatePresentError = TemplateIsNotPresent Text | TemplatePresentError String deriving Show
+
+queryTemplates :: (MonadUnliftIO m) => TemplateQuery -> ReaderT SqlBackend m [Entity MachineTemplate]
+queryTemplates (TemplateQuery { getTemplateQuery = "",.. }) = do
+  let limits = [LimitTo getTemplateQueryPageSize, OffsetBy $ getTemplateQueryPageSize * (getTemplateQueryPage - 1)]
+  selectList [] limits
+queryTemplates (TemplateQuery { .. }) = let
+  q' = toPersistValue $ "%" <> getTemplateQuery <> "%"
+  pageSize' = toPersistValue getTemplateQueryPageSize
+  offset' = toPersistValue $ getTemplateQueryPageSize * (getTemplateQueryPage - 1)
+  in rawSql "SELECT ?? FROM public.machine_template WHERE name LIKE ? OR comment LIKE ? ORDER BY proxmox_id DESC LIMIT ? OFFSET ?" [q', q', pageSize', offset']
 
 templatesPresented :: ProxmoxConfiguration -> TemplatesMap -> IO (Either TemplatePresentError ())
 templatesPresented proxmox tMap = do
