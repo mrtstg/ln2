@@ -3,6 +3,7 @@ module Utils
   ( toMachineDeploymentRead
   , machineTemplateFromModel
   , machineTemplateCreateToModel
+  , toMachineTemplateRead
   ) where
 
 import           Crud.DisplayNumbers           (displayNumberToPort)
@@ -31,6 +32,13 @@ machineTemplateFromModel (MachineTemplate { .. }) = MachineTemplate'
   machineTemplateProxmoxId
   machineTemplateName
   machineTemplateComment
+
+toMachineTemplateRead :: Entity MachineTemplate -> MachineTemplate'
+toMachineTemplateRead (Entity _ MachineTemplate { .. }) = MachineTemplate'
+  { getMachineTemplateName = machineTemplateName
+  , getMachineTemplateId = machineTemplateProxmoxId
+  , getMachineTemplateComment = machineTemplateComment
+  }
 
 toMachineDeploymentRead :: Bool -> Entity MachineDeployment -> Either String Deployment
 toMachineDeploymentRead showHidden (Entity (MachineDeploymentKey mId) MachineDeployment { .. }) = let

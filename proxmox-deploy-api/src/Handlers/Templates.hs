@@ -10,8 +10,11 @@ module Handlers.Templates
 
 import           Crud.Template
 import           Data.Aeson
+import           Data.Models.Auth
 import           Data.Models.Proxmox.Template
-import           Data.Text                    (Text)
+import           Data.Models.Proxmox.Template.Query
+import           Data.Text                          (Text)
+import qualified Data.Text                          as T
 import           Database.Persist
 import           Foundation
 import           Handlers.Auth
@@ -37,11 +40,31 @@ newNameTaken Nothing     = return False
 newNameTaken (Just name) = runDB $ exists [ MachineTemplateName ==. name ]
 
 postQueryTemplatesR :: Handler Value
-postQueryTemplatesR = undefined
+postQueryTemplatesR = let
+  correctQuery :: AuthSource -> TemplateQuery -> TemplateQuery
+  correctQuery (TokenAuth {}) q@(TemplateQuery { .. }) = q
+    { getTemplateQueryPage = max 1 getTemplateQueryPage
+    , getTemplateQueryPageSize = max 1 getTemplateQueryPageSize
+    }
+  correctQuery _ q@(TemplateQuery { .. }) = q
+    { getTemplateQueryPage = max 1 getTemplateQueryPage
+    , getTemplateQueryPageSize = min 100 (max 1 getTemplateQueryPageSize)
+    , getTemplateQuery = if T.length getTemplateQuery > 50 then "" else getTemplateQuery
+    }
+  in do
+  authSrc <- requireApiAuthF adminOrServiceAuthFilter
+  q'@(TemplateQuery { getTemplateQueryPageSize = pageSize }) <- requireCheckJsonBody
+  let q = correctQuery authSrc q'
+  (templates, templatesCount) <- runDB $ queryTemplates q
+  sendStatusJSON status200 $ object
+    [ "total" .= templatesCount
+    , "pageSize" .= pageSize
+    , "objects" .= map toMachineTemplateRead templates
+    ]
 
 getTemplatesR :: Handler Value
 getTemplatesR = do
-  _ <- requireApiAuth
+  _ <- requireApiAuthF adminOrServiceAuthFilter
   pageN <- getPageNumber
   totalTemplates <- runDB $ count ([] :: [Filter MachineTemplate])
   let params = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize]
