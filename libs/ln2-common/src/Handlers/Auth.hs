@@ -12,12 +12,15 @@ module Handlers.Auth
   , userAuthFilter
   , userAdminAuthFilter
   , userAuthMap
+  , serviceAuthMap
+  , serviceAuthFilter
   ) where
 
 import           Api.Auth
 import           Data.Aeson
-import           Data.Functor       (($>), (<&>))
+import           Data.Functor           (($>), (<&>))
 import           Data.Models.Auth
+import           Data.Models.Auth.Token
 import           Data.Models.User
 import           Foundation.Class
 import           Network.HTTP.Types
@@ -42,6 +45,14 @@ userAuthFilter (UserAuth {})  = True
 userAuthMap :: AuthSource -> UserDetails
 userAuthMap (TokenAuth {}) = error "Invalid auth source!"
 userAuthMap (UserAuth d)   = d
+
+serviceAuthFilter :: AuthSource -> Bool
+serviceAuthFilter (TokenAuth {}) = True
+serviceAuthFilter _              = False
+
+serviceAuthMap :: AuthSource -> AuthTokenResponse
+serviceAuthMap (UserAuth {}) = error "Invalid auth source!"
+serviceAuthMap (TokenAuth r) = r
 
 requireApiAuthF :: (EndpointsApp a) => (AuthSource -> Bool) -> HandlerFor a AuthSource
 requireApiAuthF f = do
