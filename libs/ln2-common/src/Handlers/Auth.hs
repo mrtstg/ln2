@@ -2,18 +2,24 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Handlers.Auth
   ( requireApiAuth
+  , requireApiAuthF
+  , requireApiAuth'
   , api403Error
   , checkAuth
   , checkUserAuth
-  , requireApiAdminOrService
-  , requireApiUserAuth
+  , checkAuthF
+  , adminOrServiceAuthFilter
+  , userAuthFilter
+  , userAdminAuthFilter
+  , userAuthMap
   ) where
 
 import           Api.Auth
 import           Data.Aeson
+import           Data.Functor       (($>), (<&>))
 import           Data.Models.Auth
-import           Data.Models.Endpoints (EndpointsConfiguration)
 import           Data.Models.User
+import           Foundation.Class
 import           Network.HTTP.Types
 import           Utils.Auth
 import           Yesod.Core
@@ -21,42 +27,56 @@ import           Yesod.Core
 api403Error :: Value
 api403Error = object [ "error" .= String "Unauthorized!" ]
 
-requireApiAdminOrService :: EndpointsConfiguration -> HandlerFor a AuthSource
-requireApiAdminOrService endpoints = do
-  authRes <- checkAuth endpoints
-  case authRes of
-    Nothing -> sendStatusJSON status403 api403Error
-    (Just t@(TokenAuth {})) -> return t
-    (Just u@(UserAuth (UserDetails { .. }))) ->
-      if adminRoleGranted getUserRoles then return u else sendStatusJSON status403 api403Error
+adminOrServiceAuthFilter :: AuthSource -> Bool
+adminOrServiceAuthFilter (TokenAuth {})    = True
+adminOrServiceAuthFilter (UserAuth (UserDetails { .. })) = adminRoleGranted getUserRoles
 
-requireApiUserAuth :: EndpointsConfiguration -> HandlerFor a UserDetails
-requireApiUserAuth endpoints = do
-  authRes <- checkUserAuth endpoints
-  case authRes of
-    Nothing      -> sendStatusJSON status403 api403Error
-    (Just userD) -> return userD
+userAdminAuthFilter :: AuthSource -> Bool
+userAdminAuthFilter (TokenAuth {}) = False
+userAdminAuthFilter (UserAuth (UserDetails { .. })) = adminRoleGranted getUserRoles
 
-requireApiAuth :: EndpointsConfiguration -> HandlerFor a AuthSource
-requireApiAuth endpoints = do
-  authRes <- checkAuth endpoints
+userAuthFilter :: AuthSource -> Bool
+userAuthFilter (TokenAuth {}) = False
+userAuthFilter (UserAuth {})  = True
+
+userAuthMap :: AuthSource -> UserDetails
+userAuthMap (TokenAuth {}) = error "Invalid auth source!"
+userAuthMap (UserAuth d)   = d
+
+requireApiAuthF :: (EndpointsApp a) => (AuthSource -> Bool) -> HandlerFor a AuthSource
+requireApiAuthF f = do
+  authSrc <- requireApiAuth
+  if f authSrc then return authSrc else sendStatusJSON status403 api403Error
+
+-- bypassing auth
+requireApiAuth' :: (EndpointsApp a, AuthBypassApp a) => HandlerFor a ()
+requireApiAuth' = do
+  authBypassed <- getYesod <&> appAuthBypass
+  if authBypassed then return () else requireApiAuth $> ()
+
+requireApiAuth :: (EndpointsApp a) => HandlerFor a AuthSource
+requireApiAuth = do
+  authRes <- checkAuth
   case authRes of
     Nothing        -> sendStatusJSON status403 api403Error
     (Just authSrc) -> return authSrc
 
-checkUserAuth :: EndpointsConfiguration -> HandlerFor a (Maybe UserDetails)
-checkUserAuth endpoints = do
-  tokenValue' <- lookupCookie "session"
-  case tokenValue' of
-    Nothing -> return Nothing
-    (Just tokenValue) -> do
-      validRes <- liftIO $ validateToken' endpoints tokenValue
-      case validRes of
-        (Left _)     -> return Nothing
-        (Right resp) -> (return . Just) resp
+checkUserAuth :: (EndpointsApp a) => HandlerFor a (Maybe UserDetails)
+checkUserAuth = do
+  authRes <- checkAuth
+  case authRes of
+    Nothing               -> return Nothing
+    (Just (TokenAuth {})) -> return Nothing
+    (Just (UserAuth d))   -> return (Just d)
 
-checkAuth :: EndpointsConfiguration -> HandlerFor a (Maybe AuthSource)
-checkAuth endpoints = do
+checkAuthF :: (EndpointsApp a) => (Maybe AuthSource -> Bool) -> HandlerFor a (Maybe AuthSource, Bool)
+checkAuthF f = do
+  res <- checkAuth
+  return (res, f res)
+
+checkAuth :: (EndpointsApp a) => HandlerFor a (Maybe AuthSource)
+checkAuth = do
+  endpoints <- getYesod <&> appEndpoints
   tokenValue' <- lookupCookie "session"
   case tokenValue' of
     Nothing -> do
