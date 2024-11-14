@@ -28,15 +28,23 @@ import           Yesod.Core                         (MonadUnliftIO)
 
 data TemplatePresentError = TemplateIsNotPresent Text | TemplatePresentError String deriving Show
 
-queryTemplates :: (MonadUnliftIO m) => TemplateQuery -> ReaderT SqlBackend m [Entity MachineTemplate]
+queryTemplates :: (MonadUnliftIO m) => TemplateQuery -> ReaderT SqlBackend m ([Entity MachineTemplate], Int)
 queryTemplates (TemplateQuery { getTemplateQuery = "",.. }) = do
   let limits = [LimitTo getTemplateQueryPageSize, OffsetBy $ getTemplateQueryPageSize * (getTemplateQueryPage - 1)]
-  selectList [] limits
+  templates <- selectList [] limits
+  templatesCount <- count ([] :: [Filter MachineTemplate])
+  return (templates, templatesCount)
 queryTemplates (TemplateQuery { .. }) = let
   q' = toPersistValue $ "%" <> getTemplateQuery <> "%"
   pageSize' = toPersistValue getTemplateQueryPageSize
   offset' = toPersistValue $ getTemplateQueryPageSize * (getTemplateQueryPage - 1)
-  in rawSql "SELECT ?? FROM public.machine_template WHERE name LIKE ? OR comment LIKE ? ORDER BY proxmox_id DESC LIMIT ? OFFSET ?" [q', q', pageSize', offset']
+  in do
+    templates <- rawSql "SELECT ?? FROM public.machine_template WHERE name LIKE ? OR comment LIKE ? ORDER BY proxmox_id DESC LIMIT ? OFFSET ?" [q', q', pageSize', offset']
+    count' <- rawSql "SELECT COUNT(*) FROM public.machine_template WHERE name LIKE ? OR comment LIKE ?" [q', q']
+    case count' of
+      (Single (PersistInt64 v):_) -> return (templates, fromIntegral v)
+      -- TODO: error handling
+      _anyOther                   -> return (templates, 0)
 
 templatesPresented :: ProxmoxConfiguration -> TemplatesMap -> IO (Either TemplatePresentError ())
 templatesPresented proxmox tMap = do
