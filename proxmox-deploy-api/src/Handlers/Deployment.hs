@@ -37,7 +37,6 @@ import           Database.Persist
 import           Deploy.Proxmox
 import           Foundation
 import           Handlers.Auth
-import           Handlers.Utils
 import           Network.HTTP.Types
 import           Rabbit
 import           Utils                              (toMachineDeploymentRead)
@@ -53,7 +52,7 @@ generateDeploymentUUID = do
 
 postValidateDeploymentR :: Handler Value
 postValidateDeploymentR = do
-  _ <- requireAnyAuth' requireApiAuth
+  _ <- requireApiAuth'
   req@(DeployRequest {}) <- requireCheckJsonBody
   templates' <- runDB $ selectList ([] :: [Filter MachineTemplate]) []
   () <- httpCheckDeployment templates' req
@@ -61,7 +60,7 @@ postValidateDeploymentR = do
 
 postDeploymentsR :: Handler Value
 postDeploymentsR = do
-  _ <- requireServiceAuth' requireApiAuth
+  _ <- requireApiAuthF serviceAuthFilter
   (DeploymentCreate courseId uid req@(DeployRequest { .. }) taskId) <- requireCheckJsonBody
   deploymentId <- generateDeploymentUUID
   templates' <- runDB $ selectList ([] :: [Filter MachineTemplate]) []
@@ -143,8 +142,7 @@ deleteDeploymentR deploymentId' = let
   isDeploymentOwner' _ (TokenAuth {}) = False
   isDeploymentOwner' ownerId (UserAuth (UserDetails { getUserDetailsId = uId })) = ownerId == uId
   in do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  authSrc <- requireApiAuth endpoints
+  authSrc <- requireApiAuth
   let deploymentId = MachineDeploymentKey deploymentId'
   deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
   case deployment' of
@@ -183,8 +181,7 @@ getDeploymentR deploymentId' = let
   f (TokenAuth {}) = True
   f (UserAuth {})  = False
   in do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  authSrc <- requireApiAuth endpoints
+  authSrc <- requireApiAuth
   let showHiddenVM = f authSrc
   let deploymentId = MachineDeploymentKey deploymentId'
   deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
@@ -218,8 +215,8 @@ deploymentQueryToOpts q = let
 
 postQueryDeploymentsCountR :: Handler Value
 postQueryDeploymentsCountR = do
-  _ <- requireServiceAuth' requireApiAuth
-  query@(DeploymentQuery { getDeploymentQueryPageSize = pageSize' }) <- requireCheckJsonBody
+  _ <- requireApiAuthF serviceAuthFilter
+  query@(DeploymentQuery {}) <- requireCheckJsonBody
   let (_, filters) = deploymentQueryToOpts query
   resultsAmount <- runDB $ count filters
   sendStatusJSON status200
@@ -231,7 +228,7 @@ postQueryDeploymentsCountR = do
 
 postQueryDeploymentsR :: Handler Value
 postQueryDeploymentsR = do
-  _ <- requireServiceAuth' requireApiAuth
+  _ <- requireApiAuthF serviceAuthFilter
   query@(DeploymentQuery { getDeploymentQueryPageSize = pageSize' }) <- requireCheckJsonBody
   let (limits, filters) = deploymentQueryToOpts query
   results <- runDB $ selectList filters limits

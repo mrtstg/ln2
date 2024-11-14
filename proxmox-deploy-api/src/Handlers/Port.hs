@@ -9,14 +9,13 @@ import           Data.Aeson
 import           Database.Persist
 import           Foundation
 import           Handlers.Auth
-import           Handlers.Utils
 import           Network.HTTP.Types
 import           Yesod.Core
 import           Yesod.Persist
 
 getSwitchPortR :: Int -> Handler Value
 getSwitchPortR portNumber = do
-  _ <- requireServiceAuth' requireApiAuth
+  _ <- requireApiAuthF serviceAuthFilter
   let displayNumber = portToDisplayNumber portNumber
   if displayNumber < 0 then sendStatusJSON status400 $ object [ "error" .= String "Port out of range!" ] else do
     display' <- runDB $ selectFirst [ TakenDisplayNumber ==. displayNumber ] []
