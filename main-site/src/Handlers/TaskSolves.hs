@@ -7,6 +7,7 @@ module Handlers.TaskSolves
 
 import           Crud.TaskSolves
 import           Data.Aeson
+import           Data.Functor           ((<&>))
 import           Data.Models.CourseTask
 import           Data.Models.User
 import           Data.Text
@@ -26,8 +27,7 @@ instance FromJSON TaskAnswer where
 
 getApiTaskSolvesR :: CourseTaskId -> Handler Value
 getApiTaskSolvesR ctId = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  UserDetails { .. } <- requireApiUserAuth endpoints
+  UserDetails { .. } <- requireApiAuthF userAuthFilter <&> userAuthMap
   pageN <- getPageNumber
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
@@ -50,8 +50,7 @@ getApiTaskSolvesR ctId = do
 postApiTaskSolvesR :: CourseTaskId -> Handler Value
 postApiTaskSolvesR ctId = do
   reqTime <- liftIO getCurrentTime
-  App { endpointsConfiguration = endpoints } <- getYesod
-  d <- requireApiUserAuth endpoints
+  d <- requireApiAuthF userAuthFilter <&> userAuthMap
   (TaskAnswer ans) <- requireCheckJsonBody
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of

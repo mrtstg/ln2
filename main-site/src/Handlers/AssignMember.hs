@@ -20,8 +20,7 @@ import           Yesod.Persist
 
 getAssignTeacherR :: Text -> Handler Value
 getAssignTeacherR userLogin = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  _ <- requireApiAdminOrService endpoints
+  _ <- requireApiAuthF adminOrServiceAuthFilter
   assignRes' <- liftIO $ assignRole' (unpack userLogin) "course-creator"
   case assignRes' of
     (RoleResult assignRes) -> sendStatusJSON status200 $ object [ "assigned" .= assignRes ]
@@ -33,8 +32,7 @@ getAssignMemberR cId@(CourseKey courseUUID) userLogin = let
     (UserAuth (UserDetails { .. })) -> isUserCourseAdmin courseUUID getUserRoles
     (TokenAuth {}) -> True
   in do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  authSrc <- requireApiAuth endpoints
+  authSrc <- requireApiAuth
   courseExists <- runDB $ exists [CourseId ==. cId]
   if not courseExists then sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ] else do
     let hasAccess = hasAccess' courseUUID authSrc

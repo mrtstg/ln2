@@ -13,6 +13,7 @@ import           Api.Deploy.User
 import           Crud.CourseTask
 import           Data.Aeson
 import           Data.ByteString.Lazy               (fromStrict)
+import           Data.Functor
 import           Data.Models.CourseTaskPayload
 import           Data.Models.Deployment
 import           Data.Models.Deployment.Api
@@ -33,7 +34,7 @@ f ctId courseId (UserDetails { .. }) (Deployment { .. }) = getDeploymentUserId =
 getDeployTaskApiR :: CourseTaskId -> Handler Value
 getDeployTaskApiR ctId = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  d@(UserDetails { .. }) <- requireApiUserAuth endpoints
+  d@(UserDetails { .. }) <- requireApiAuthF userAuthFilter <&> userAuthMap
   (Entity _ (CourseTask { courseTaskCourse = (CourseKey courseId) })) <- requireCourseTaskMember getUserRoles ctId
   deployments' <- liftIO $ getUserDeployments' endpoints 1 getUserDetailsId False
   case deployments' of
@@ -48,7 +49,7 @@ getDeployTaskApiR ctId = do
 postDeployTaskApiR :: CourseTaskId -> Handler Value
 postDeployTaskApiR ctId = do
   App { endpointsConfiguration = endpoints, userDeploymentLimit = userDeploymentLimit } <- getYesod
-  d@(UserDetails { .. }) <- requireApiUserAuth endpoints
+  d@(UserDetails { .. }) <- requireApiAuthF userAuthFilter <&> userAuthMap
   (Entity _ (CourseTask { courseTaskCourse = (CourseKey courseId), courseTaskPayload = payload' })) <- requireCourseTaskMember getUserRoles ctId
   hasPending <- hasPendingDeployment getUserDetailsId
   if hasPending then sendStatusJSON status429 $ object [ "error" .= String "Already pending deployment", "type" .= String "deploymentPending" ] else do

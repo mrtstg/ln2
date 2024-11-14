@@ -3,12 +3,10 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Handlers.CourseMembers (getCourseMembersR) where
 
-import           Data.Aeson
 import           Data.Models.User
 import           Database.Persist
 import           Foundation
-import           Handlers.Utils     (requireUserAuth)
-import           Network.HTTP.Types
+import           Handlers.Utils   (requireUserAuth)
 import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Persist
