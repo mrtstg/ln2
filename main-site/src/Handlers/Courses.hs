@@ -13,6 +13,7 @@ import           Api.User           (UserGetResult (..))
 import           Crud.Course
 import qualified Crud.User          as U
 import           Data.Aeson
+import           Data.Functor       ((<&>))
 import qualified Data.Map           as M
 import           Data.Models.Course
 import           Data.Models.User
@@ -97,8 +98,7 @@ getApiCoursesR = let
   helper (Just (UserGetResult d)) = Just d
   helper _                        = Nothing
   in do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiUserAuth endpoints
+  (UserDetails { .. }) <- requireApiAuthF userAuthFilter <&> userAuthMap
   pageN <- getPageNumber
   (courses, cAmount) <- getUserMembershipCourses getUserRoles pageN
   users <- liftIO $ U.retrieveCourseUsers courses
@@ -110,8 +110,7 @@ getApiCoursesR = let
 
 postApiCoursesR :: Handler Value
 postApiCoursesR = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  d@(UserDetails { getUserDetailsId = uId, getUserDetailsLogin = uLogin, getUserRoles = roles }) <- requireApiUserAuth endpoints
+  d@(UserDetails { getUserDetailsId = uId, getUserDetailsLogin = uLogin, getUserRoles = roles }) <- requireApiAuthF userAuthFilter <&> userAuthMap
   c@(CourseCreate { .. }) <- requireCheckJsonBody
   if not $ isUserCourseManager roles then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
     courseExists <- runDB $ exists [CourseName ==. getCourseCreateName]

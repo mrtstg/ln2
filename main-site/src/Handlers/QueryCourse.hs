@@ -21,8 +21,7 @@ getQueryCourseR courseId = let
     (TokenAuth {}) -> True
     (UserAuth (UserDetails { .. })) -> isUserAnyCourseAdmin getUserRoles
   in do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  authSrc <- requireApiAuth endpoints
+  authSrc <- requireApiAuth
   let hasAccess = hasAccess' authSrc
   if not hasAccess then sendStatusJSON status403 $ object [ "error" .= String "Unauthorized!" ] else do
     queryValue' <- lookupGetParam "query"

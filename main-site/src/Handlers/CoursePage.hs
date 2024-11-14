@@ -121,16 +121,14 @@ getCourseR cId@(CourseKey courseUUID) = do
 
 getApiCourseIdR :: CourseId -> Handler Value
 getApiCourseIdR cId = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  d <- requireApiAuth endpoints
+  d <- requireApiAuth
   course <- validateApiCourseId cId d isUserCourseMember
   sendStatusJSON status200 $ courseDetailsFromModel course Nothing
 
 -- TODO: own model for patching
 patchApiCourseIdR :: CourseId -> Handler Value
 patchApiCourseIdR cId = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  d <- requireApiAuth endpoints
+  d <- requireApiAuth
   _ <- validateApiCourseId cId d isUserCourseAdmin
   (CourseCreate cName cDesc) <- requireCheckJsonBody
   nameTaken <- runDB $ exists [CourseName ==. cName, CourseId !=. cId]
@@ -151,8 +149,7 @@ deleteApiCourseIdR (CourseKey courseUUID) = let
     (TokenAuth {}) -> True
     (UserAuth (UserDetails { .. })) -> isUserCourseAdmin courseUUID getUserRoles
   in do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  authSrc <- requireApiAuth endpoints
+  authSrc <- requireApiAuth
   if not $ hasManageAccess' authSrc then sendStatusJSON status403 $ object [ "error" .= String "You cant manage courses!" ] else do
     let isAdmin = hasCourseAccess' courseUUID authSrc
     if not isAdmin then sendStatusJSON status403 $ object [ "error" .= String "You're not admin of this course!" ] else do

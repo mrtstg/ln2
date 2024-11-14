@@ -13,13 +13,12 @@ import           Data.Models.User.Patch
 import           Foundation
 import           Handlers.Auth
 import           Network.HTTP.Types
-import           Utils.Auth
 import           Yesod.Core
 
 postUserApiCreateR :: Handler Value
 postUserApiCreateR = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  _ <- requireApiAdminOrService endpoints
+  _ <- requireApiAuthF adminOrServiceAuthFilter
   createData@(UserCreate {}) <- requireCheckJsonBody
   resp <- liftIO $ createUser' endpoints createData
   case resp of
@@ -30,7 +29,7 @@ postUserApiCreateR = do
 deleteUserApiWrapperR :: Int -> Handler Value
 deleteUserApiWrapperR uId = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  _ <- requireApiAdminOrService endpoints
+  _ <- requireApiAuthF adminOrServiceAuthFilter
   resp <- liftIO $ deleteUser' endpoints uId
   case resp of
     Api.User.NotFound -> sendStatusJSON status404 $ object ["error" .= String "Not found"]
@@ -40,7 +39,7 @@ deleteUserApiWrapperR uId = do
 patchUserApiWrapperR :: Int -> Handler Value
 patchUserApiWrapperR uId = do
   App { endpointsConfiguration = endpoints } <- getYesod
-  _ <- requireApiAdminOrService endpoints
+  _ <- requireApiAuthF adminOrServiceAuthFilter
   patchData@(UserPatch {}) <- requireCheckJsonBody
   resp <- liftIO $ patchUser' endpoints uId patchData
   case resp of

@@ -20,6 +20,7 @@ import           Control.Monad                 (unless, when)
 import           Crud.CourseTask
 import           Data.Aeson
 import           Data.ByteString               (toStrict)
+import           Data.Functor                  ((<&>))
 import           Data.Models.Auth
 import           Data.Models.CourseTask
 import           Data.Models.CourseTaskPayload
@@ -53,7 +54,7 @@ getApiAcceptTaskR :: CourseTaskId -> Int -> Handler Value
 getApiAcceptTaskR ctId uId = do
   redirect' <- getBoolParameter "redirect"
   App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- if redirect' then requireUserAuth else requireApiUserAuth endpoints
+  (UserDetails { .. }) <- if redirect' then requireUserAuth else requireApiAuthF userAuthFilter <&> userAuthMap
   courseTask' <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case (courseTask', redirect') of
     (Nothing, True) -> notFound
@@ -81,8 +82,7 @@ getApiAcceptTaskR ctId uId = do
 -- TODO: stand identifier existence check
 postApiCourseTaskR :: CourseId -> Handler Value
 postApiCourseTaskR cId = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiUserAuth endpoints
+  (UserDetails { .. }) <- requireApiAuthF userAuthFilter <&> userAuthMap
   (CourseTaskCreate { .. }) <- requireCheckJsonBody
   _ <- case getCourseTaskCreatePayload of
     (ContainerTaskPayload { .. }) -> do
@@ -167,8 +167,7 @@ getCourseTaskR ctId = do
 
 getApiCourseTaskR :: CourseId -> Handler Value
 getApiCourseTaskR cId = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  d@(UserDetails { .. }) <- requireApiUserAuth endpoints
+  d@(UserDetails { .. }) <- requireApiAuthF userAuthFilter <&> userAuthMap
   courseRes <- runDB $ selectFirst [ CourseId ==. cId ] []
   case courseRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Course not found!" ]
@@ -186,8 +185,7 @@ getApiCourseTaskR cId = do
 
 patchApiTaskR :: CourseTaskId -> Handler Value
 patchApiTaskR ctId = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiUserAuth endpoints
+  (UserDetails { .. }) <- requireApiAuthF userAuthFilter <&> userAuthMap
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
@@ -205,8 +203,7 @@ patchApiTaskR ctId = do
 
 deleteApiTaskR :: CourseTaskId -> Handler Value
 deleteApiTaskR ctId = do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  (UserDetails { .. }) <- requireApiUserAuth endpoints
+  (UserDetails { .. }) <- requireApiAuthF userAuthFilter <&> userAuthMap
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]
@@ -235,8 +232,7 @@ getApiTaskR ctId = let
     (TokenAuth {}) -> pure False
     (UserAuth d) -> getCourseTaskAccepted d cT
   in do
-  App { endpointsConfiguration = endpoints } <- getYesod
-  authSrc <- requireApiAuth endpoints
+  authSrc <- requireApiAuth
   courseTaskRes <- runDB $ selectFirst [ CourseTaskId ==. ctId ] []
   case courseTaskRes of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= String "Task not found!" ]

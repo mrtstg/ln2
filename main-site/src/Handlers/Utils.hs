@@ -6,10 +6,10 @@ module Handlers.Utils
   , generateCheckMessage
   ) where
 
-import           Api.Auth
 import           Data.Models.CheckMessage
 import           Data.Models.User
 import           Foundation
+import           Handlers.Auth
 import           Yesod.Core
 
 generateCheckMessage :: CheckMessage -> WidgetFor m ()
@@ -29,12 +29,7 @@ generateCheckMessage (CheckMessage { .. }) = [whamlet|
 
 requireUserAuth :: Handler UserDetails
 requireUserAuth = do
-  tokenValue' <- lookupCookie "session"
-  case tokenValue' of
-    Nothing -> redirect LoginR
-    (Just tokenValue) -> do
-      App { endpointsConfiguration = endpoints } <- getYesod
-      validRes <- liftIO $ validateToken' endpoints tokenValue
-      case validRes of
-        (Left _)     -> redirect LoginR
-        (Right resp) -> return resp
+  authRes <- checkUserAuth
+  case authRes of
+    Nothing  -> redirect LoginR
+    (Just d) -> return d

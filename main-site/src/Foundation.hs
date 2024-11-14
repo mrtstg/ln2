@@ -28,6 +28,7 @@ import           Data.Text
 import           Data.Time.Clock
 import           Database.Persist.Postgresql
 import qualified Database.Redis              as Redis
+import           Foundation.Class
 import           Handlers.Auth
 import qualified Network.AMQP                as R
 import           Utils.Auth
@@ -110,7 +111,13 @@ mkYesodData
 /api/task/#CourseTaskId/deploy DeployTaskApiR GET POST
 |]
 
-instance Yesod App where
+instance EndpointsApp App where
+  appEndpoints (App { .. }) = endpointsConfiguration
+
+instance AuthBypassApp App where
+  appAuthBypass = const False
+
+instance (EndpointsApp App) => Yesod App where
   approot = ApprootRelative
   makeSessionBackend _ = return Nothing
   errorHandler NotFound = fmap toTypedContent $ defaultLayout $ do
@@ -131,8 +138,8 @@ instance Yesod App where
 |]
   errorHandler e = defaultErrorHandler e
   defaultLayout widget = do
-    App { endpointsConfiguration = endpoints@(EndpointsConfiguration { getVMDeployAPIUrl = deployApi }) } <- getYesod
-    d' <- checkUserAuth endpoints
+    App { endpointsConfiguration = (EndpointsConfiguration { getVMDeployAPIUrl = deployApi }) } <- getYesod
+    d' <- checkUserAuth
     pc <- widgetToPageContent widget
     withUrlRenderer [hamlet|
 $doctype 5

@@ -8,6 +8,7 @@ module Handlers.Deployments
 
 import           Api
 import           Api.Deploy.User
+import           Data.Functor                ((<&>))
 import           Data.Models.Deployment
 import           Data.Models.User
 import qualified Data.Text                   as T
@@ -54,7 +55,7 @@ getDeploymentsApiR :: Handler Value
 getDeploymentsApiR = do
   App { endpointsConfiguration = endpoints } <- getYesod
   pageN <- getPageNumber
-  (UserDetails { .. }) <- requireApiUserAuth endpoints
+  (UserDetails { .. }) <- requireApiAuthF userAuthFilter <&> userAuthMap
   deployments' <- liftIO $ getUserDeployments' endpoints pageN getUserDetailsId False
   case deployments' of
     (Left e) -> sendStatusJSON status500 $ object [ "error" .= e]

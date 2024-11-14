@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TemplateHaskell   #-}
 module Handlers.VMConsole (getVMConsoleR) where
 
 import           Foundation
