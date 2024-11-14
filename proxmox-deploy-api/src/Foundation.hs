@@ -25,6 +25,7 @@ import           Data.Models.Proxmox.Configuration
 import           Data.Pool                         (Pool)
 import           Data.Text
 import           Database.Persist.Postgresql
+import           Foundation.Class
 import qualified Network.AMQP                      as R
 import           Yesod.Core
 import           Yesod.Persist
@@ -73,7 +74,8 @@ mkYesodData
   [parseRoutes|
 /vm/ids MachineIDsR GET
 /templates TemplatesR GET POST
-/templates/#Int TemplateR PATCH DELETE
+/templates/query QueryTemplatesR POST
+!/templates/#Int TemplateR PATCH DELETE
 /auth AuthR GET
 /deployments/query QueryDeploymentsR POST
 /deployments/query/count QueryDeploymentsCountR POST
@@ -83,6 +85,12 @@ mkYesodData
 !/deployment/#String DeploymentR DELETE GET
 /api/port/#Int/switch SwitchPortR GET
 |]
+
+instance EndpointsApp App where
+  appEndpoints (App { .. }) = endpointsConfiguration
+
+instance AuthBypassApp App where
+  appAuthBypass (App { .. }) = bypassAuth
 
 instance Yesod App where
   makeSessionBackend _ = return Nothing

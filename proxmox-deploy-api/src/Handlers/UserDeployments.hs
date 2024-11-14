@@ -9,7 +9,6 @@ import           Database.Persist
 import           Foundation
 import           Handlers.Auth
 import           Handlers.Params
-import           Handlers.Utils
 import           Network.HTTP.Types
 import           Utils              (toMachineDeploymentRead)
 import           Yesod.Core
@@ -17,7 +16,7 @@ import           Yesod.Persist
 
 getUserDeploymentsR :: Int -> Handler Value
 getUserDeploymentsR userId = do
-  _ <- requireServiceAuth' requireApiAuth
+  _ <- requireApiAuthF serviceAuthFilter
   hideFlag <- lookupGetParam "showUnavailable"
   let showHidden = fromMaybe "1" hideFlag == "1"
   let pageSize = 50

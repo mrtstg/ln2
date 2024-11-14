@@ -39,7 +39,6 @@ library
       Handlers.Port
       Handlers.Templates
       Handlers.UserDeployments
-      Handlers.Utils
       Rabbit
       Utils
   other-modules:

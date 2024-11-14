@@ -5,6 +5,7 @@ module Handlers.Templates
   , postTemplatesR
   , patchTemplateR
   , deleteTemplateR
+  , postQueryTemplatesR
   ) where
 
 import           Crud.Template
@@ -16,7 +17,6 @@ import           Foundation
 import           Handlers.Auth
 import           Handlers.Params
 import           Handlers.Response
-import           Handlers.Utils
 import           Network.HTTP.Types
 import           Utils
 import           Yesod.Core
@@ -36,9 +36,12 @@ newNameTaken :: Maybe Text -> Handler Bool
 newNameTaken Nothing     = return False
 newNameTaken (Just name) = runDB $ exists [ MachineTemplateName ==. name ]
 
+postQueryTemplatesR :: Handler Value
+postQueryTemplatesR = undefined
+
 getTemplatesR :: Handler Value
 getTemplatesR = do
-  () <- requireAnyAuth' requireApiAuth
+  _ <- requireApiAuth
   pageN <- getPageNumber
   totalTemplates <- runDB $ count ([] :: [Filter MachineTemplate])
   let params = [LimitTo defaultPageSize, OffsetBy $ (pageN - 1) * defaultPageSize]
@@ -70,7 +73,7 @@ postTemplatesR = let
               Nothing -> return (status500, object [ "error" .= String "Something went wrong" ])
               (Just template) -> return (status200, toJSON $ machineTemplateFromModel template)
   in do
-  () <- requireAdminOrServiceAuth' requireApiAuth
+  _ <- requireApiAuthF adminOrServiceAuthFilter
   payload <- requireCheckJsonBody
   f payload >>= sendCurryJSON
 
@@ -102,7 +105,7 @@ patchTemplateR oldTemplateID = let
                     Nothing -> return (status500, object [ "error" .= String "Something went wrong" ])
                     (Just (Entity _ template)) -> return (status200, toJSON $ machineTemplateFromModel template)
   in do
-  () <- requireAdminOrServiceAuth' requireApiAuth
+  _ <- requireApiAuthF adminOrServiceAuthFilter
   payload <- requireCheckJsonBody
   f payload >>= sendCurryJSON
 
@@ -115,5 +118,5 @@ deleteTemplateR templateId = let
       runDB $ deleteWhere [ MachineTemplateProxmoxId ==. templateId ]
       return (status204, object [])
   in do
-  () <- requireAdminOrServiceAuth' requireApiAuth
+  _ <- requireApiAuthF adminOrServiceAuthFilter
   f >>= sendCurryJSON
