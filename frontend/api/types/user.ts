@@ -7,12 +7,6 @@ export type UserDetails = {
   roles: [R.RoleDetails]
 }
 
-export type UserQuery = {
-  total: number,
-  pageSize: number,
-  objects: [UserDetails]
-}
-
 export type UserCreate = {
   name: string,
   password: string,
