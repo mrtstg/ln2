@@ -1,8 +1,11 @@
 <script lang="ts">
   import { ApiClient } from "../api/client"
-  import type { UserDetails, UserQuery } from "../api/types"
+  import type { UserDetails } from "../api/types/user"
+  import type { PageWrapper } from "../api/types/pageWrapper"
   import DangerMessage from "./DangerMessage.svelte"
   import SuccessMessage from "./SuccessMessage.svelte"
+  import SearchField from "./search/SearchField.svelte";
+  import NumberPagination from "./NumberPagination.svelte"
 
   export let apiUrl: string
   export let courseId: string
@@ -21,28 +24,11 @@
     loadCallback = client.queryCourseUsers(courseId, query, getMembers, getAdmins, pageNumber)
   }
 
-  const cleanQuery = () => {
-    query = ''
-    queryWrapper()
-  }
-
-  const goToPage = (page: number) => {
-    pageNumber = page
-    queryWrapper()
-  }
-
-  const nextPage = () => { goToPage(pageNumber + 1) }
-  const prevPage = () => { goToPage(pageNumber - 1) }
-
-  let loadCallback: Promise<UserQuery | null> | null = null
+  let loadCallback: Promise<PageWrapper<Array<UserDetails>> | null> | null = null
   queryWrapper()
 </script>
 
-<div class="is-flex is-flex-direction-row is-justify-content-space-between is-fullwidth mb-5">
-  <input maxlength="30" class="input is-flex-grow-1" type="text" placeholder="Ваш запрос" bind:value={query}>
-  <button class="button ml-3" on:click={queryWrapper}> Искать </button>
-  <button class="button ml-3" on:click={cleanQuery}> Очистить </button>
-</div>
+<SearchField bind:query={query} maxLength={30} queryWrapper={async () => queryWrapper()}/>
 
 {#if loadCallback != null}
   {#await loadCallback}
@@ -61,25 +47,7 @@
           </div>
         </div>
       {/each}
-      <nav class="pagination is-centered" role="navigation">
-        <button class="pagination-previous" on:click={prevPage} disabled={pageNumber == 1}> Назад </button>
-
-        <button class="pagination-next" on:click={nextPage} disabled={pageNumber * queryRes.pageSize >= queryRes.total}> Вперед </button>
-
-        <ul class="pagination-list">
-          {#if pageNumber >= 3}
-            <li><a class="pagination-link" on:click={() => goToPage(1)}> 1 </a></li>
-            <li><span class="pagination-ellipsis">&hellip;</span></li>
-          {/if}
-          {#if pageNumber >= 2}
-            <li><a class="pagination-link" on:click={prevPage}> { pageNumber - 1 } </a></li>
-          {/if}
-          <li><a class="pagination-link is-current"> { pageNumber } </a></li>
-          {#if pageNumber * queryRes.pageSize < queryRes.total}
-            <li><a class="pagination-link" on:click={nextPage}> { pageNumber + 1} </a></li>
-          {/if}
-        </ul>
-      </nav>
+      <NumberPagination bind:pageNumber={pageNumber} pageLoadCallback={async (_) => queryWrapper()} queryRes={queryRes}/>
     {/if}
   {:catch}
     <DangerMessage title="Ошибка" description="Не удалось загрузить базу пользователей" additionalStyle="is-fullwdith"/>
