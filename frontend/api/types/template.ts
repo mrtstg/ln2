@@ -1,5 +1,11 @@
 import { genericArrayErrorCreator } from "./errorWrapper"
 
+export type VMTemplateQuery = {
+  pageSize: number,
+  page: number,
+  query: string
+}
+
 export type VMTemplate = {
   id: number,
   name: string,
