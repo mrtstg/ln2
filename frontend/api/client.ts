@@ -11,7 +11,7 @@ import type {
   TaskCreateResponse,
   CourseTaskPatch,
 } from "./types";
-import type { UserQuery, UserPatch, UserCreate } from "./types/user"
+import type { UserPatch, UserCreate, UserDetails } from "./types/user"
 import type { PageWrapper } from "./types/pageWrapper"
 import { allDeploymentErrorKinds, createDeploymentError, type DeploymentErrorKind, type DeploymentRead, type TaskDeploymentWrapper } from "./types/deployment"
 import { VMTemplate, VMTemplatePatch, VMTemplateCreate, TemplateError, createTemplateError, VMTemplateQuery } from "./types/template";
@@ -49,7 +49,7 @@ export class ApiClient {
     }
   }
 
-  async queryVMTemplates(query: VMTemplateQuery): Promise<PageWrapper<VMTemplate> | ErrorWrapper<TemplateError>> {
+  async queryVMTemplates(query: VMTemplateQuery): Promise<PageWrapper<Array<VMTemplate>> | ErrorWrapper<TemplateError>> {
     try {
       const { data } = await this.client.post('/api/templates/query', query)
       return data
@@ -461,7 +461,7 @@ export class ApiClient {
     }
   }
   
-  async queryCourseUsers(courseId: string, query: string, getMembers: boolean, getAdmins: boolean, page: number): Promise<UserQuery | null> {
+  async queryCourseUsers(courseId: string, query: string, getMembers: boolean, getAdmins: boolean, page: number): Promise<PageWrapper<Array<UserDetails>> | null> {
     try {
       const { data } = await this.client.get("/api/query/course/" + courseId, {params: {
         getMembers: getMembers ? '1' : '0',
