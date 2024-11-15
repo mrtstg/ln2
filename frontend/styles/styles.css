@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* fixes conflict with bulma */
+*, button, input, optgroup, select, textarea {
+    @apply font-normal;
+}
+
 .vnc-container__wrapper {
     @apply flex flex-row w-full justify-center items-center;
 }
