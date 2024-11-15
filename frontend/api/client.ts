@@ -14,7 +14,7 @@ import type {
 import type { UserQuery, UserPatch, UserCreate } from "./types/user"
 import type { PageWrapper } from "./types/pageWrapper"
 import { allDeploymentErrorKinds, createDeploymentError, type DeploymentErrorKind, type DeploymentRead, type TaskDeploymentWrapper } from "./types/deployment"
-import { VMTemplate, VMTemplatePatch, VMTemplateCreate, TemplateError, createTemplateError } from "./types/template";
+import { VMTemplate, VMTemplatePatch, VMTemplateCreate, TemplateError, createTemplateError, VMTemplateQuery } from "./types/template";
 import { createErrorWrapper } from "./types/errorWrapper"
 import { VM, VMNetwork } from "./types/vm";
 import type { ApiIDWrapper } from "./types/common"
@@ -41,11 +41,20 @@ export class ApiClient {
   }
 
   async getVMTemplates(page: number): Promise<PageWrapper<Array<VMTemplate>> | null> {
-    const { data, status } = await this.client.get("/api/templates", { params: { page: page} })
-    if (status === 200) {
+    try {
+      const { data, status } = await this.client.get("/api/templates", { params: { page: page} })
       return data
-    } else {
+    } catch (error) {
       return null
+    }
+  }
+
+  async queryVMTemplates(query: VMTemplateQuery): Promise<PageWrapper<VMTemplate> | ErrorWrapper<TemplateError>> {
+    try {
+      const { data } = await this.client.post('/api/templates/query', query)
+      return data
+    } catch (error) {
+      return createErrorWrapper(createTemplateError, error.response ? error.response.data : {})
     }
   }
 
@@ -58,10 +67,19 @@ export class ApiClient {
     }
   }
 
-  async patchVMTeplate(templateId: number, payload: VMTemplatePatch): Promise<VMTemplate | ErrorWrapper<TemplateError>> {
+  async patchVMTemplate(templateId: number, payload: VMTemplatePatch): Promise<VMTemplate | ErrorWrapper<TemplateError>> {
     try {
       const { data } = await this.client.patch<VMTemplate>('/api/templates/' + templateId, payload)
       return data
+    } catch (error) {
+      return createErrorWrapper(createTemplateError, error.response ? error.response.data : {})
+    }
+  }
+
+  async deleteVMTemplate(templateId: number): Promise<ErrorWrapper<TemplateError> | null> {
+    try {
+      const _ = await this.client.delete('/api/templates/' + templateId)
+      return null
     } catch (error) {
       return createErrorWrapper(createTemplateError, error.response ? error.response.data : {})
     }
