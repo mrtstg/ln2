@@ -29,7 +29,6 @@ export const allTemplatesErrors = [
   'templateIDTaken',
   'templateNotFound',
   'noUpdateBody',
-  'templateNotFound',
   'forbiddenTemplateID',
   'emptyTemplateName',
   'longTemplateName',
