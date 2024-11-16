@@ -96,6 +96,7 @@ mkYesodData
 /users/import ImportUserR GET POST
 /vm/#Int/console VMConsoleR GET
 /deployments DeploymentsR GET
+/templates TemplatesR GET
 /api/deployments DeploymentsApiR GET
 /api/user UserApiCreateR POST
 /api/user/#Int UserApiWrapperR DELETE PATCH

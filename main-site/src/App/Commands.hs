@@ -34,6 +34,7 @@ import           Handlers.Login
 import           Handlers.Logout
 import           Handlers.QueryCourse
 import           Handlers.TaskSolves
+import           Handlers.Templates
 import           Handlers.UserApi
 import           Handlers.Users
 import           Handlers.VMConsole
