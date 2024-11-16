@@ -24,6 +24,7 @@ export type VMTemplatePatch = {
   comment?: string | null
 }
 
+// TODO: add unauthorized error?
 export const allTemplatesErrors = [
   'templateNameTaken',
   'templateIDTaken',
