@@ -1,11 +1,12 @@
 <script lang="ts">
   import { ApiClient } from "../../api/client"
-  import type { UserDetails } from "../../api/types";
+  import type { UserDetails } from "../../api/types/user";
   import UserQueryForm from "../../components/UserQueryForm.svelte"
   import DangerMessage from "../../components/DangerMessage.svelte";
   import SuccessMessage from "../../components/SuccessMessage.svelte";
   import { deleteUserErrorToString  } from "../../api/utils"
 
+  //@ts-ignore
   let url = API_URL
   const api = new ApiClient(url)
 
