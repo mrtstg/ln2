@@ -61,6 +61,7 @@ library
       Handlers.Logout
       Handlers.QueryCourse
       Handlers.TaskSolves
+      Handlers.Templates
       Handlers.UserApi
       Handlers.Users
       Handlers.Utils
