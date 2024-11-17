@@ -22,7 +22,10 @@
   }
 
   const unselectTemplate = () => {
+    creatingTemplate = false
     selectedTemplate = null
+    updateTemplateCallback = null
+    createTemplateCallback = null
     dropFormData()
   }
 
@@ -34,11 +37,26 @@
     createTemplateCallback = createTemplateWrapper()
   }
 
+  const deleteTemplate = () => {
+    updateTemplateCallback = deleteTemplateWrapper()
+  }
+
+  const deleteTemplateWrapper = async (): Promise<string> => {
+    const res = await api.deleteVMTemplate(selectedTemplate!.id)
+    if (res == null) {
+      unselectTemplate()
+      return 'ok'
+    } else {
+      return templateErrorToString(res)
+    }
+  }
+
   const createTemplateWrapper = async (): Promise<string> => {
     const res = await api.createVMTemplate(formData)
     if ('type' in res) {
       return templateErrorToString(res)
     } else {
+      unselectTemplate()
       return 'ok'
     }
   }
@@ -52,7 +70,6 @@
   if ('type' in res) {
     return templateErrorToString(res)
   } else {
-    // TODO: queryWrapper()
     unselectTemplate()
     return 'ok'
   }
@@ -85,6 +102,7 @@ let createTemplateCallback: Promise<string> | null = null
     <TemplateForm bind:formData={formData}/>
     {#if updateTemplateCallback == null}
       <button class="button is-success is-fullwidth p-3" on:click={updateTemplate}> Обновить данные </button>
+      <button class="button is-danger is-fullwidth p-3 mt-3" on:click={deleteTemplate}> Удалить шаблон </button>
     {:else}
       {#await updateTemplateCallback}
         <SuccessMessage title="Обновляем данные..." description="" additionalStyle="is-fullwidth"/>
@@ -95,6 +113,7 @@ let createTemplateCallback: Promise<string> | null = null
       {:catch}
         <DangerMessage title="Ошибка!" description="Что-то пошло не так." additionalStyle="is-fullwidth"/>
         <button class="button is-success is-fullwidth p-3" on:click={updateTemplate}> Обновить данные </button>
+        <button class="button is-danger is-fullwidth p-3 mt-3" on:click={deleteTemplate}> Удалить шаблон </button>
       {/await}
     {/if}
     </div>
