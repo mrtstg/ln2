@@ -168,12 +168,16 @@ $doctype 5
         <div .navbar-start>
           <a href=@{IndexR} .navbar-item>
             Главная
-          $if isJust d'
-            <a href=@{CoursesR} .navbar-item>
-              Мои курсы
-            $if isJust deployApi
-              <a href=@{DeploymentsR} .navbar-item>
-                Развертывания
+          $case d'
+            $of Just (UserDetails { .. })
+              <a href=@{CoursesR} .navbar-item>
+                Мои курсы
+              $if isJust deployApi
+                <a href=@{DeploymentsR} .navbar-item>
+                  Развертывания
+              $if isUserCourseManager getUserRoles
+                <a href=@{AdminCoursesR} .navbar-item>
+                  Управление курсами
 
         <div .navbar-end>
           $case d'
@@ -182,20 +186,22 @@ $doctype 5
                 Войти
             $of Just (UserDetails { .. })
               $if adminRoleGranted getUserRoles
-                <a href=@{EditUsersR} .navbar-item>
-                  Пользователи
-              $if isUserCourseManager getUserRoles
-                <a href=@{AdminCoursesR} .navbar-item>
-                  Управление курсами
+                <div .navbar-item.has-dropdown.is-hoverable>
+                  <div .navbar-link>
+                    Администрирование
+                  <div .navbar-dropdown>
+                    <a .navbar-item href=@{ImportUserR}>
+                      Импорт пользователей
+                    <a href=@{EditUsersR} .navbar-item>
+                      Управление пользователями
+                    <a href=@{TemplatesR} .navbar-item>
+                      Управление шаблонами VM
               <div .navbar-item.has-dropdown.is-hoverable>
                 <div .navbar-link>
                   #{ getUserDetailsName }
                 <div .navbar-dropdown>
                   <a .navbar-item href=@{LogoutR}>
                     Выйти
-                  $if adminRoleGranted getUserRoles
-                    <a .navbar-item href=@{ImportUserR}>
-                      Импорт пользователей
     ^{pageBody pc}
   <script src="/static/js/navbar.js">
 |]
