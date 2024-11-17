@@ -62,5 +62,5 @@ defaultSDNNetworkCreate zone name = SDNNetworkCreate
   , getSDNNetworkCreateName = name
   , getSDNNetworkCreateAlias = Nothing
   , getSDNNetworkCreateTag = Nothing
-  , getSDNNetworkCreateVlanaware = True
+  , getSDNNetworkCreateVlanaware = False
   }
