@@ -139,10 +139,10 @@ cloneVM conf@(ProxmoxConfiguration { .. }) payload@(VMCloneParams { .. }) = do
           Nothing        -> (return . Left) $ errorTextFromStatus status
           (Just errors') -> (return . Left) $ show errors'
 
-getNodeVMStatus' :: ProxmoxConfiguration -> Int -> IO (Either String ProxmoxVMStatusWrapper)
+getNodeVMStatus' :: ProxmoxConfiguration -> Int -> IO (Either String ProxmoxVMStatus)
 getNodeVMStatus' conf vmid = commonHttpErrorHandler $ getNodeVMStatus conf vmid
 
-getNodeVMStatus :: ProxmoxConfiguration -> Int -> ExceptT HttpException IO (Either String ProxmoxVMStatusWrapper)
+getNodeVMStatus :: ProxmoxConfiguration -> Int -> ExceptT HttpException IO (Either String ProxmoxVMStatus)
 getNodeVMStatus conf@(ProxmoxConfiguration { .. }) vmid = do
   let reqString = T.unpack $ "GET " <> proxmoxBaseUrl <> "/nodes/" <> proxmoxNodeName <> "/qemu/" <> (T.pack . show) vmid <> "/status/current"
   request <- parseRequest reqString >>= (liftIO . prepareProxmoxRequest conf)
@@ -152,7 +152,7 @@ getNodeVMStatus conf@(ProxmoxConfiguration { .. }) vmid = do
   if statusIsSuccessful status then do
     case body of
       (Left e)                                   -> (return . Left) $ show e
-      (Right (ProxmoxResponseWrapper status' _)) -> return $ Right status'
+      (Right (ProxmoxResponseWrapper (ProxmoxVMStatusWrapper status') _)) -> return $ Right status'
   else (return . Left) $ errorTextFromStatus status
 
 getNodeVMs' :: ProxmoxConfiguration -> IO (Either String [ProxmoxVM])
