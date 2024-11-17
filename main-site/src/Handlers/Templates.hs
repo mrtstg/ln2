@@ -15,7 +15,7 @@ getTemplatesR = do
   (UserDetails { .. }) <- requireUserAuth
   if not (adminRoleGranted getUserRoles) then redirect IndexR else do
     defaultLayout $ do
-      setTitle "Развертывания"
+      setTitle "Шаблоны VM"
       [whamlet|
 <div .container.pt-2.py-3>
   <h1 .title.is-3> Шаблоны VM
