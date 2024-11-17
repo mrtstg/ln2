@@ -16,7 +16,6 @@ import           Api.Proxmox
 import           Api.Proxmox.SDN
 import           Control.Monad                     (when)
 import           Control.Monad.Trans.Except
-import           Data.Aeson
 import           Data.Models.Proxmox.API.SDNSubnet
 import           Data.Models.Proxmox.Configuration
 import           Data.Text                         (Text)
@@ -84,14 +83,11 @@ createSDNSubnet conf@(ProxmoxConfiguration { .. }) payload@(SDNSubnetCreate { ..
   request' <- parseRequest reqString
   request <- liftIO $ prepareProxmoxRequest conf request'
   let jsonRequest = setRequestBodyJSON payload request
-  response <- httpJSONEither jsonRequest
+  response <- httpBS jsonRequest
   let status = getResponseStatus response
   case statusCode status of
     200        -> return $ Right ()
-    _someError -> do
-      case getResponseBody response :: Either JSONException (ProxmoxResponseWrapper Value) of
-        (Left e) -> (return . Left) $ errorTextFromStatus status
-        (Right (ProxmoxResponseWrapper _ errors)) -> (return . Left . show) errors
+    _someError -> (return . Left) $ errorTextFromStatus status
 
 getVnetSubnets' :: ProxmoxConfiguration -> VnetName -> IO (Either String [SDNSubnet])
 getVnetSubnets' conf vnet = commonHttpErrorHandler $ getVnetSubnets conf vnet
