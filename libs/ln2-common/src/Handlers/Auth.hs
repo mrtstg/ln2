@@ -14,6 +14,7 @@ module Handlers.Auth
   , userAuthMap
   , serviceAuthMap
   , serviceAuthFilter
+  , requireApiAuthFH
   ) where
 
 import           Api.Auth
@@ -53,6 +54,12 @@ serviceAuthFilter _              = False
 serviceAuthMap :: AuthSource -> AuthTokenResponse
 serviceAuthMap (UserAuth {}) = error "Invalid auth source!"
 serviceAuthMap (TokenAuth r) = r
+
+requireApiAuthFH :: (EndpointsApp a) => (AuthSource -> HandlerFor a Bool) -> HandlerFor a AuthSource
+requireApiAuthFH f = do
+  authSrc <- requireApiAuth
+  result <- f authSrc
+  if result then return authSrc else sendStatusJSON status403 api403Error
 
 requireApiAuthF :: (EndpointsApp a) => (AuthSource -> Bool) -> HandlerFor a AuthSource
 requireApiAuthF f = do
