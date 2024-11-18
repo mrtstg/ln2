@@ -110,12 +110,14 @@ destroyNetworks networkMap = do
 destroyVMs :: (MonadIO m) => [DeployVM'] -> DeployM m (Either [String] ())
 destroyVMs vmData = do
   DeployEnv { .. } <- ask
+  let vmids = map getDeployVMID' vmData
   stopRes <- mapM (
     liftIO .
     delayWrapper (Just 100000) .
-    stopVM' proxmoxConfiguration .
-    getDeployVMID') vmData
+    stopVM' proxmoxConfiguration
+    ) vmids
   when (any isLeft stopRes) $ errorLog "Failed to stop VMs" stopRes >>= (const . pure) ()
+  _ <- (liftIO . retryIOEither 10 10000000) $ waitVMsF proxmoxConfiguration (proxmoxNodeName proxmoxConfiguration) vmids ((==) VMStopped . getProxmoxVMStatus)
   () <- liftIO $ threadDelay 5000000
   deleteRes <- mapM (
     liftIO .
@@ -130,7 +132,9 @@ destroyVMs vmData = do
 deployVMs :: (MonadIO m) => NetworkNameReplaceMap -> [DeployVM'] -> DeployM m (Either [String] ())
 deployVMs networks vmData = do
   DeployEnv { .. } <- ask
+  let vmids = map getDeployVMID' vmData
   cloneRes <- mapM (liftIO . delayWrapper Nothing . cloneVM' proxmoxConfiguration . deployVMToCloneParams) vmData
+  _ <- (liftIO . retryIOEither 10 5000000) $ waitVMsF proxmoxConfiguration (proxmoxNodeName proxmoxConfiguration) vmids (isNothing . getProxmoxVMLock)
   if any isLeft cloneRes then do
     errorLog "Failed to clone VMs" cloneRes <&> Left
   else do
