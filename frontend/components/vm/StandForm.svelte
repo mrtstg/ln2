@@ -33,7 +33,8 @@
       cores: 1,
       memory: 1024,
       networks: [],
-      userAvailable: true
+      userAvailable: true,
+      storage: ""
     }]
   }
 
