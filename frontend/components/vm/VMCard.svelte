@@ -82,6 +82,13 @@
       </label>
     </div>
     <div class="field">
+      <label class="label"> Хранилище для копирования VM </label>
+      <div class="control">
+        <input class="input" type="text" bind:value={data.storage}>
+      </div>
+      <p class="hint"> Опционально. VM будет скопирована в стандартное хранилище шаблона. </p>
+    </div>
+    <div class="field">
       <label class="label"> Подключить сеть </label>
       <div class="control">
         <div class="is-flex is-flex-direction-row">
