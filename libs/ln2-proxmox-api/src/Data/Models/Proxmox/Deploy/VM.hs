@@ -10,6 +10,7 @@ module Data.Models.Proxmox.Deploy.VM
 import           Data.Aeson
 import qualified Data.Aeson.KeyMap                           as K
 import qualified Data.Map                                    as M
+import           Data.Maybe
 import           Data.Models.Proxmox.API.VMClone
 import           Data.Models.Proxmox.Deploy.Network
 import           Data.Models.Proxmox.Deploy.NetworkInterface
@@ -86,6 +87,7 @@ data DeployVM = TemplateDeployVM
   , getDeployVMAdditionalConfig  :: !(M.Map Text Text)
   , getDeployVMNetworkInterfaces :: ![NetworkConnection]
   , getDeployVMUserAvailable     :: !Bool
+  , getDeployVMStorage           :: !(Maybe Text)
   } deriving Show
 
 instance FromJSON DeployVM where
@@ -101,10 +103,11 @@ instance FromJSON DeployVM where
       <*> v .:? "config" .!= M.empty
       <*> v .: "networks"
       <*> v .:? "userAvailable" .!= True
+      <*> v .:? "storage"
     _unknownType -> fail "Unknown type!"
 
 instance ToJSON DeployVM where
-  toJSON (TemplateDeployVM { .. }) = object
+  toJSON (TemplateDeployVM { .. }) = object $
     [ "template" .= getDeployVMTemplateName
     , "name" .= getDeployVMName
     , "snapshot" .= getDeployVMTemplateSnapname
@@ -115,4 +118,8 @@ instance ToJSON DeployVM where
     , "networks" .= getDeployVMNetworkInterfaces
     , "type" .= String "template"
     , "userAvailable" .= getDeployVMUserAvailable
-    ]
+    ] <> storageF where
+      storageF = case getDeployVMStorage of
+        Nothing            -> []
+        (Just "")          -> []
+        (Just storageName) -> ["storage" .= storageName, "full" .= True]
