@@ -67,7 +67,7 @@ createSimpleSDNZone conf@(ProxmoxConfiguration { .. }) zoneName = do
   let reqString = T.unpack $ "POST " <> proxmoxBaseUrl <> "/cluster/sdn/zones"
   request' <- parseRequest reqString
   request <- liftIO $ prepareProxmoxRequest conf request'
-  let payload = object [ "type" .= String "simple", "zone" .= zoneName, "dhcp" .= String "dnsmasq"]
+  let payload = object [ "type" .= String "simple", "zone" .= zoneName, "dhcp" .= String "dnsmasq", "ipam" .= (String . T.pack) (proxmoxIPAMName proxmoxSDNNetwork)]
   let jsonRequest = setRequestBodyJSON payload request
   response <- httpBS jsonRequest
   let status = getResponseStatus response

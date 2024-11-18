@@ -42,7 +42,8 @@ make build-images
 - Скопируйте образец env-файла для запуска в Docker. Поправьте по необходимости адрес Unix-сокета Docker (строка `DOCKER_SOCKET`).
 Сгенерируйте и вставьте секретный ключ для JWT аутентификации (например, при помощи команды `openssl rand -hex 32`) в поле `AUTH_JWT_SECRET`.
 Укажите IP Proxmox-ноды вместо `<ip>`, впишите название ноды в поле `PROXMOX_NODE_NAME`. Создайте токен и впишите его данные в поля 
-`PROXMOX_API_TOKEN_SECRET` и `PROXMOX_API_TOKEN_ID`
+`PROXMOX_API_TOKEN_SECRET` и `PROXMOX_API_TOKEN_ID`. Укажите наименование IPAM 
+(обычно создается по умолчанию с именем `pve`) в поле `PROXMOX_INTERNET_IPAM_NAME`
 ```bash
 cp docker-sample.env docker.env # скопировать образец, если не делали этого раньше
 ```
