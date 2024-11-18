@@ -15,7 +15,7 @@ instance FromJSON ProxmoxVMStatusWrapper where
   parseJSON = withObject "ProxmoxVMStatusWrapper" $ \v -> ProxmoxVMStatusWrapper
     <$> v .: "status"
 
-data ProxmoxVMStatus = VMStopped | VMRunning deriving Show
+data ProxmoxVMStatus = VMStopped | VMRunning deriving (Show, Enum, Eq)
 
 instance FromJSON ProxmoxVMStatus where
   parseJSON = withText "ProxmoxVMStatus" $ \case

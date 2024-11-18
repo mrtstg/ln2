@@ -4,6 +4,8 @@
 module Api.Proxmox.VM
   ( getNodeVMs
   , getNodeVMs'
+  , getVMConfig
+  , getVMConfig'
   , cloneAndWaitVM'
   , cloneVM
   , cloneVM'
@@ -17,6 +19,7 @@ module Api.Proxmox.VM
   , stopVM'
   , getNodeVMStatus
   , getNodeVMStatus'
+  , waitVMsF
   ) where
 
 import           Api
@@ -25,6 +28,7 @@ import           Control.Concurrent                (threadDelay)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import qualified Data.ByteString.Char8             as BS
+import           Data.Functor                      ((<&>))
 import           Data.Maybe                        (isJust)
 import           Data.Models.Proxmox.API.VM
 import           Data.Models.Proxmox.API.VMClone
@@ -33,7 +37,18 @@ import qualified Data.Text                         as T
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
 import           System.Timeout
+import           Utils.IO
 import           Yesod.Core                        (liftIO)
+
+waitVMsF :: ProxmoxConfiguration -> NodeName -> [Int] -> (ProxmoxVM -> Bool) -> IO (Either String ())
+waitVMsF conf@(ProxmoxConfiguration { .. }) nodeName vmids filterF = do
+  vmConfigsRes <- mapM (liftIO . retryIOEither 5 2000000 . getVMConfig' conf nodeName) vmids
+  let vmConfigs = sequence vmConfigsRes
+  case vmConfigs of
+    (Left e)        -> return (Left e)
+    (Right configs) -> do
+      let suitable = all filterF configs
+      if suitable then (return . return) () else return $ Left "VM is not ready"
 
 stopVM :: ProxmoxConfiguration -> Int -> ExceptT HttpException IO (Either String ())
 stopVM conf@(ProxmoxConfiguration { .. }) vmid = do
@@ -172,3 +187,18 @@ getNodeVMs conf@(ProxmoxConfiguration { .. }) nodeName = do
         (Left e)                               -> (return . Left) $ show e
         (Right (ProxmoxResponseWrapper vms _)) -> return $ Right vms
     _someError -> (return . Left) $ show (statusCode status) <> BS.unpack (statusMessage status)
+
+getVMConfig' :: ProxmoxConfiguration -> NodeName -> Int -> IO (Either String ProxmoxVM)
+getVMConfig' conf nodeName vmid = commonHttpErrorHandler $ getVMConfig conf nodeName vmid
+
+getVMConfig :: ProxmoxConfiguration -> NodeName -> Int -> ExceptT HttpException IO (Either String ProxmoxVM)
+getVMConfig conf@(ProxmoxConfiguration { .. }) nodeName vmid = do
+  let reqString = T.unpack $ "GET " <> proxmoxBaseUrl <> "/nodes/" <> nodeName <> "/qemu/" <> (T.pack . show $ vmid) <> "/config"
+  request <- parseRequest reqString >>= (liftIO . prepareProxmoxRequest conf)
+  response <- httpJSONEither request
+  let status = getResponseStatus response
+  if statusIsSuccessful status then
+    case getResponseBody response of
+      (Left e)                                    -> (return . Left) $ show e
+      (Right (ProxmoxResponseWrapper vmConfig _)) -> return $ Right vmConfig
+    else (return . Left . errorTextFromStatus) status
