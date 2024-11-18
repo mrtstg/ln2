@@ -3,6 +3,7 @@
 {-# LANGUAGE RecordWildCards   #-}
 module Data.Models.Proxmox.Configuration
   ( ProxmoxConfiguration(..)
+  , ProxmoxNetworkConfiguration(..)
   , getProxmoxConfigurationFromEnv
   , proxmoxNetworkConfigurationToPayload
   , proxmoxOutNetwork
@@ -20,6 +21,7 @@ data ProxmoxNetworkConfiguration = ProxmoxNetworkConfiguration
   , proxmoxNetworkDHCPBegin :: !String
   , proxmoxNetworkDHCPEnd   :: !String
   , proxmoxNetworkGateway   :: !String
+  , proxmoxIPAMName         :: !String
   } deriving (Show)
 
 proxmoxNetworkConfigurationToPayload :: ProxmoxNetworkConfiguration -> SDNSubnetCreate
@@ -39,16 +41,19 @@ getProxmoxNetworkConfigurationFromEnv = do
   dhcp_begin' <- lookupEnv "PROXMOX_INTERNET_NETWORK_DHCP_BEGIN"
   dhcp_end' <- lookupEnv "PROXMOX_INTERNET_NETWORK_DHCP_END"
   gateway' <- lookupEnv "PROXMOX_INTERNET_NETWORK_GATEWAY"
+  ipam' <- lookupEnv "PROXMOX_INTERNET_IPAM_NAME"
   return $ do
     network_cidr <- network_cidr'
     dhcp_begin <- dhcp_begin'
     dhcp_end <- dhcp_end'
     gateway <- gateway'
+    ipam <- ipam'
     return $ ProxmoxNetworkConfiguration
       { proxmoxNetworkCIDR = network_cidr
       , proxmoxNetworkDHCPBegin = dhcp_begin
       , proxmoxNetworkDHCPEnd = dhcp_end
       , proxmoxNetworkGateway = gateway
+      , proxmoxIPAMName = ipam
       }
 
 data ProxmoxConfiguration = ProxmoxConfiguration
