@@ -36,9 +36,9 @@ import           Network.HTTP.Types.Status
 import           Utils.IO
 import           Yesod.Core                        (liftIO)
 
-waitVMsF :: ProxmoxConfiguration -> NodeName -> [Int] -> (Maybe ProxmoxVMConfig -> Bool) -> IO (Either String ())
-waitVMsF conf@(ProxmoxConfiguration { .. }) nodeName vmids filterF = do
-  vmConfigsRes <- mapM (liftIO . retryIOEither 5 2000000 . getVMConfig' conf nodeName) vmids
+waitVMsF :: ProxmoxConfiguration -> [Int] -> (Maybe ProxmoxVMConfig -> Bool) -> IO (Either String ())
+waitVMsF conf@(ProxmoxConfiguration { .. }) vmids filterF = do
+  vmConfigsRes <- mapM (liftIO . retryIOEither 5 2000000 . getVMConfig' conf proxmoxNodeName) vmids
   let vmConfigs = sequence vmConfigsRes
   case vmConfigs of
     (Left e)        -> return (Left e)
