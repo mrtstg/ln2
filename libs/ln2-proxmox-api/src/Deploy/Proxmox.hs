@@ -28,6 +28,7 @@ import           Data.Maybe
 import           Data.Models.Proxmox.Agent
 import           Data.Models.Proxmox.API.SDNNetwork
 import           Data.Models.Proxmox.API.VM
+import           Data.Models.Proxmox.API.VM.Config
 import           Data.Models.Proxmox.Configuration
 import           Data.Models.Proxmox.Deploy.Network
 import           Data.Models.Proxmox.Deploy.VM
@@ -48,6 +49,15 @@ type DeployM m = ReaderT (ProxmoxDeployEnv m) m
 
 delayWrapper :: (MonadIO m) => Maybe Int -> m a -> m a
 delayWrapper delay' v = liftIO (threadDelay (fromMaybe 1000000 delay')) >>= const v
+
+waitVMsStateF :: (MonadIO m) => ProxmoxConfiguration -> [Int] -> (ProxmoxVMStatus -> Bool) -> m (Either String ())
+waitVMsStateF proxmoxConfiguration@(ProxmoxConfiguration { .. }) vmids filterF = do
+  vmStateRes <- mapM (liftIO . retryIOEither 5 2000000 . getNodeVMStatus' proxmoxConfiguration) vmids
+  case sequence vmStateRes of
+    (Left e) -> return (Left e)
+    (Right statuses) -> do
+      let suitable = all filterF statuses
+      if suitable then (return . return) () else return $ Left "VM is not suitable"
 
 standNotPresent :: (MonadIO m) => NetworkNameReplaceMap -> [DeployVM'] -> DeployM m (Either String ())
 standNotPresent networksMap vmData = do
@@ -117,8 +127,7 @@ destroyVMs vmData = do
     stopVM' proxmoxConfiguration
     ) vmids
   when (any isLeft stopRes) $ errorLog "Failed to stop VMs" stopRes >>= (const . pure) ()
-  _ <- (liftIO . retryIOEither 10 10000000) $ waitVMsF proxmoxConfiguration (proxmoxNodeName proxmoxConfiguration) vmids ((==) VMStopped . getProxmoxVMStatus)
-  () <- liftIO $ threadDelay 5000000
+  _ <- (liftIO . retryIOEither 5 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMStopped)
   deleteRes <- mapM (
     liftIO .
     delayWrapper (Just 500000) .
@@ -130,11 +139,15 @@ destroyVMs vmData = do
     (pure . pure) ()
 
 deployVMs :: (MonadIO m) => NetworkNameReplaceMap -> [DeployVM'] -> DeployM m (Either [String] ())
-deployVMs networks vmData = do
+deployVMs networks vmData = let
+  f :: Maybe ProxmoxVMConfig -> Bool
+  f Nothing                       = False
+  f (Just ProxmoxVMConfig { .. }) = isNothing getProxmoxVMConfigLock
+  in do
   DeployEnv { .. } <- ask
   let vmids = map getDeployVMID' vmData
   cloneRes <- mapM (liftIO . delayWrapper Nothing . cloneVM' proxmoxConfiguration . deployVMToCloneParams) vmData
-  _ <- (liftIO . retryIOEither 10 5000000) $ waitVMsF proxmoxConfiguration (proxmoxNodeName proxmoxConfiguration) vmids (isNothing . getProxmoxVMLock)
+  _ <- (liftIO . retryIOEither 10 5000000) $ waitVMsF proxmoxConfiguration (proxmoxNodeName proxmoxConfiguration) vmids f
   if any isLeft cloneRes then do
     errorLog "Failed to clone VMs" cloneRes <&> Left
   else do
