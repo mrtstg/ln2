@@ -36,6 +36,7 @@ deployVMToCloneParams (TemplateDeployVM' { getDeployVMTemplateData' = TemplateDe
   , getVMCloneNewID = getDeployVMID'
   , getVMCloneName = Just getDeployVMName
   , getVMCloneDescription = Nothing
+  , getVMCloneStorage = getDeployVMStorage
   }
 
 deployVMToConfigPayload :: NetworkNameReplaceMap -> DeployVM' -> Value
