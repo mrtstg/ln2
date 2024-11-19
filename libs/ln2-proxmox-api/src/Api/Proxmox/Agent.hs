@@ -3,6 +3,8 @@ module Api.Proxmox.Agent
   ( setVMDisplay
   , setVMDisplay'
   , setVMDisplay''
+  , getNodeVMIds
+  , getNodeVMIds'
   , DisplaySetResponse(..)
   ) where
 
@@ -20,6 +22,23 @@ import           Network.HTTP.Types.Status
 import           Yesod.Core                        (MonadIO (liftIO))
 
 data DisplaySetResponse = DisplaySetOk | Unauthorized | AlreadySet | NotFound | DisplaySetError String deriving Show
+
+getNodeVMIds' :: ProxmoxConfiguration -> IO (Either String [Int])
+getNodeVMIds' conf = commonHttpErrorHandler $ getNodeVMIds conf
+
+getNodeVMIds :: ProxmoxConfiguration -> ExceptT HttpException IO (Either String [Int])
+getNodeVMIds conf@(ProxmoxConfiguration { proxmoxFSAgentURL = agentUrl, proxmoxFSAgentToken = token }) = do
+  let reqString = T.unpack $ "GET " <> agentUrl <> "/vmids"
+  request <- parseRequest reqString
+    >>= (liftIO . setSSLIgnore conf)
+    <&> addRequestHeader "Authorization" (pack $ "Bearer " <> T.unpack token)
+  response <- httpJSONEither request
+  let status = getResponseStatus response
+  if statusIsSuccessful status then
+    case getResponseBody response of
+      (Left e)      -> (return . Left . show) e
+      (Right vmids) -> return $ return vmids
+  else (return . Left . errorTextFromStatus) status
 
 setVMDisplay'' :: ProxmoxConfiguration -> AgentRequest -> IO DisplaySetResponse
 setVMDisplay'' conf payload = do
