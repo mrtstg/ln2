@@ -31,6 +31,7 @@ mkYesodData
   "App"
   [parseRoutes|
 /args/vnc/#Int VMArgsR POST
+/vmids VMIdR GET
 |]
 
 instance Yesod App where
