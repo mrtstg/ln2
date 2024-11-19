@@ -13,6 +13,7 @@ import           App.Types
 import qualified Data.Text          as T
 import           Foundation
 import           Handlers.VMArgs
+import           Handlers.VMID
 import           System.Environment
 import           System.Exit
 import           Yesod.Core
