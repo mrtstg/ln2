@@ -178,6 +178,7 @@ $doctype 5
               $if isUserCourseManager getUserRoles
                 <a href=@{AdminCoursesR} .navbar-item>
                   Управление курсами
+            $of Nothing
 
         <div .navbar-end>
           $case d'
