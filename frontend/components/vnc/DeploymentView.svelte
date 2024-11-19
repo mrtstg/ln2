@@ -69,7 +69,7 @@
         <div class="font-semibold text-neutral-950 dark:text-neutral-200 flex flex-row flex-wrap items-center">
           {#each Object.entries(deploymentData.vmMap) as [key, value]}
             <div class="pl-2 flex items-center flex-row border-b-2 cursor-pointer {getTabStyle(key == activeVM)}">
-              <span on:click={() => { activeVM = (activeVM == key) ? "" : key }}> { key } </span>
+              <span class="font-semibold" on:click={() => { activeVM = (activeVM == key) ? "" : key }}> { key } </span>
               <a class="icon my-1" target="_blank" href={generateVNCConsoleLink(value)}>
                 <NewTabIcon/>
               </a>
