@@ -127,7 +127,7 @@ destroyVMs vmData = do
     stopVM' proxmoxConfiguration
     ) vmids
   when (any isLeft stopRes) $ errorLog "Failed to stop VMs" stopRes >>= (const . pure) ()
-  _ <- (liftIO . retryIOEither 5 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMStopped)
+  _ <- (liftIO . retryIOEither 30 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMStopped)
   deleteRes <- mapM (
     liftIO .
     delayWrapper (Just 500000) .
@@ -147,7 +147,7 @@ deployVMs networks vmData = let
   DeployEnv { .. } <- ask
   let vmids = map getDeployVMID' vmData
   cloneRes <- mapM (liftIO . delayWrapper Nothing . cloneVM' proxmoxConfiguration . deployVMToCloneParams) vmData
-  _ <- (liftIO . retryIOEither 10 5000000) $ waitVMsF proxmoxConfiguration vmids f
+  _ <- (liftIO . retryIOEither 30 2000000) $ waitVMsF proxmoxConfiguration vmids f
   if any isLeft cloneRes then do
     errorLog "Failed to clone VMs" cloneRes <&> Left
   else do
