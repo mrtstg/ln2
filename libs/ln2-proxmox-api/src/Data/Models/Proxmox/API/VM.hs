@@ -24,6 +24,7 @@ instance FromJSON ProxmoxVMStatus where
     _anyOther -> error "Invalid VM status enum"
 
 -- TODO: bind all fields
+-- TODO: type for lock
 data ProxmoxVM = ProxmoxVM
   { getProxmoxVMStatus  :: !ProxmoxVMStatus
   , getProxmoxVMId      :: !Int

@@ -6,7 +6,6 @@ module Api.Proxmox.VM
   , getNodeVMs'
   , getVMConfig
   , getVMConfig'
-  , cloneAndWaitVM'
   , cloneVM
   , cloneVM'
   , patchVM
@@ -24,23 +23,20 @@ module Api.Proxmox.VM
 
 import           Api
 import           Api.Proxmox
-import           Control.Concurrent                (threadDelay)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
 import qualified Data.ByteString.Char8             as BS
-import           Data.Functor                      ((<&>))
-import           Data.Maybe                        (isJust)
 import           Data.Models.Proxmox.API.VM
+import           Data.Models.Proxmox.API.VM.Config
 import           Data.Models.Proxmox.API.VMClone
 import           Data.Models.Proxmox.Configuration
 import qualified Data.Text                         as T
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status
-import           System.Timeout
 import           Utils.IO
 import           Yesod.Core                        (liftIO)
 
-waitVMsF :: ProxmoxConfiguration -> NodeName -> [Int] -> (ProxmoxVM -> Bool) -> IO (Either String ())
+waitVMsF :: ProxmoxConfiguration -> NodeName -> [Int] -> (Maybe ProxmoxVMConfig -> Bool) -> IO (Either String ())
 waitVMsF conf@(ProxmoxConfiguration { .. }) nodeName vmids filterF = do
   vmConfigsRes <- mapM (liftIO . retryIOEither 5 2000000 . getVMConfig' conf nodeName) vmids
   let vmConfigs = sequence vmConfigsRes
@@ -105,35 +101,6 @@ patchVM conf@(ProxmoxConfiguration { .. }) vmid payload = do
           Nothing        -> (return . Left) $ errorTextFromStatus status
           (Just errors') -> (return . Left) $ show errors'
 
-cloneAndWaitVM' :: ProxmoxConfiguration -> VMCloneParams -> Maybe Int -> IO (Either String ProxmoxVM)
-cloneAndWaitVM' conf payload timeoutLength = let
-  timeoutFunction :: IO a -> Maybe Int -> IO (Maybe a)
-  timeoutFunction f = \case
-    Nothing -> do
-      res <- f
-      (pure . pure) res
-    (Just timeout') -> timeout timeout' f
-  waitForVM :: VMCloneParams -> IO ProxmoxVM
-  waitForVM p@(VMCloneParams { .. }) = do
-    vms' <- getNodeVMs' conf
-    vms <- case vms' of
-      (Left _)    -> return []
-      (Right vms) -> return vms
-    let filteredVMs = filter (\(ProxmoxVM { .. }) -> getVMCloneVMID == getProxmoxVMId && isJust getProxmoxVMLock) vms
-    if null filteredVMs then do
-      () <- threadDelay 500000
-      waitForVM p
-    else return (head filteredVMs)
-  in do
-    cloneRes <- cloneVM' conf payload
-    case cloneRes of
-      (Left e) -> return (Left e)
-      (Right ()) -> do
-        vmRes <- timeoutFunction (waitForVM payload) timeoutLength
-        case vmRes of
-          Nothing       -> (return . Left) "Timeout reached!"
-          (Just vmInfo) -> (return . Right) vmInfo
-
 cloneVM' :: ProxmoxConfiguration -> VMCloneParams -> IO (Either String ())
 cloneVM' conf payload = commonHttpErrorHandler $ cloneVM conf payload
 
@@ -188,10 +155,10 @@ getNodeVMs conf@(ProxmoxConfiguration { .. }) nodeName = do
         (Right (ProxmoxResponseWrapper vms _)) -> return $ Right vms
     _someError -> (return . Left) $ show (statusCode status) <> BS.unpack (statusMessage status)
 
-getVMConfig' :: ProxmoxConfiguration -> NodeName -> Int -> IO (Either String ProxmoxVM)
+getVMConfig' :: ProxmoxConfiguration -> NodeName -> Int -> IO (Either String (Maybe ProxmoxVMConfig))
 getVMConfig' conf nodeName vmid = commonHttpErrorHandler $ getVMConfig conf nodeName vmid
 
-getVMConfig :: ProxmoxConfiguration -> NodeName -> Int -> ExceptT HttpException IO (Either String ProxmoxVM)
+getVMConfig :: ProxmoxConfiguration -> NodeName -> Int -> ExceptT HttpException IO (Either String (Maybe ProxmoxVMConfig))
 getVMConfig conf@(ProxmoxConfiguration { .. }) nodeName vmid = do
   let reqString = T.unpack $ "GET " <> proxmoxBaseUrl <> "/nodes/" <> nodeName <> "/qemu/" <> (T.pack . show $ vmid) <> "/config"
   request <- parseRequest reqString >>= (liftIO . prepareProxmoxRequest conf)
