@@ -15,6 +15,7 @@ data VMCloneParams = VMCloneParams
   , getVMCloneDescription :: !(Maybe Text)
   , getVMCloneName        :: !(Maybe Text)
   , getVMCloneSnapname    :: !(Maybe Text)
+  , getVMCloneStorage     :: !(Maybe Text)
   } deriving Show
 
 instance ToJSON VMCloneParams where
@@ -22,7 +23,12 @@ instance ToJSON VMCloneParams where
     [ "newid" .= getVMCloneNewID ]
     ++ vmName
     ++ vmSnapname
-    ++ vmDescription where
+    ++ vmDescription
+    ++ vmStorage where
+      vmStorage = case getVMCloneStorage of
+        Nothing            -> []
+        (Just "")          -> []
+        (Just storageName) -> ["storage" .= storageName, "full" .= True]
       vmName = case getVMCloneName of
         Nothing        -> []
         (Just vmName') -> [ "name" .= vmName' ]
