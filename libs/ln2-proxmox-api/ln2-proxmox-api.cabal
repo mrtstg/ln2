@@ -46,6 +46,7 @@ library
       Data.Models.Proxmox.API.SDNSubnet
       Data.Models.Proxmox.API.SDNZone
       Data.Models.Proxmox.API.VM
+      Data.Models.Proxmox.API.VM.Config
       Data.Models.Proxmox.API.VMClone
       Data.Models.Proxmox.Configuration
       Data.Models.Proxmox.Deploy.Network
