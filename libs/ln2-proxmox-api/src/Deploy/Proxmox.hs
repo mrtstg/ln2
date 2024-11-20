@@ -50,9 +50,18 @@ type DeployM m = ReaderT (ProxmoxDeployEnv m) m
 delayWrapper :: (MonadIO m) => Maybe Int -> m a -> m a
 delayWrapper delay' v = liftIO (threadDelay (fromMaybe 1000000 delay')) >>= const v
 
+waitVMNonExistence :: (MonadIO m) => ProxmoxConfiguration -> [Int] -> m (Either String ())
+waitVMNonExistence proxmoxConfiguration@(ProxmoxConfiguration { .. }) vmids = do
+  nodeVMIdsRes <- liftIO $ retryIOEither 10 2000000 (getNodeVMIds' proxmoxConfiguration)
+  case nodeVMIdsRes of
+    (Left e) -> return (Left e)
+    (Right ids) -> do
+      let vmDontExist = all (`notElem` ids) vmids
+      if vmDontExist then (return . return) () else return $ Left "VM still exists"
+
 waitVMsStateF :: (MonadIO m) => ProxmoxConfiguration -> [Int] -> (ProxmoxVMStatus -> Bool) -> m (Either String ())
 waitVMsStateF proxmoxConfiguration@(ProxmoxConfiguration { .. }) vmids filterF = do
-  vmStateRes <- mapM (liftIO . retryIOEither 5 2000000 . getNodeVMStatus' proxmoxConfiguration) vmids
+  vmStateRes <- mapM (liftIO . retryIOEither 10 2000000 . getNodeVMStatus' proxmoxConfiguration) vmids
   case sequence vmStateRes of
     (Left e) -> return (Left e)
     (Right statuses) -> do
@@ -63,7 +72,7 @@ standNotPresent :: (MonadIO m) => NetworkNameReplaceMap -> [DeployVM'] -> Deploy
 standNotPresent networksMap vmData = do
   DeployEnv { .. } <- ask
   let vmIds = map getDeployVMID' vmData
-  vms' <- (liftIO . retryIOEither 5 1000000) $ getNodeVMs' proxmoxConfiguration
+  vms' <- (liftIO . retryIOEither 10 2000000) $ getNodeVMs' proxmoxConfiguration
   case vms' of
     (Left e) -> return (Left e)
     (Right vms) -> do
@@ -72,7 +81,7 @@ standNotPresent networksMap vmData = do
         return (Left "Some VMs is still presented")
       else do
         let networkNames = (map snd . M.toList) networksMap
-        networks' <- (liftIO . retryIOEither 5 1000000) $ getSDNNetworks' proxmoxConfiguration
+        networks' <- (liftIO . retryIOEither 10 2000000) $ getSDNNetworks' proxmoxConfiguration
         case networks' of
           (Left e) -> return (Left e)
           (Right networks) -> do
@@ -85,7 +94,7 @@ standPresent :: (MonadIO m) => NetworkNameReplaceMap -> [DeployVM'] -> DeployM m
 standPresent networksMap vmData = do
   DeployEnv { .. } <- ask
   let networkNames = (map snd . M.toList) networksMap
-  networks' <- (liftIO . retryIOEither 5 1000000) $ getSDNNetworks' proxmoxConfiguration
+  networks' <- (liftIO . retryIOEither 10 2000000) $ getSDNNetworks' proxmoxConfiguration
   case networks' of
     (Left e) -> return (Left e)
     (Right networks) -> do
@@ -94,7 +103,7 @@ standPresent networksMap vmData = do
         return (Left "Some networks is not created")
       else do
         let vmIds = map getDeployVMID' vmData
-        vms' <- (liftIO . retryIOEither 5 1000000) $ getNodeVMs' proxmoxConfiguration
+        vms' <- (liftIO . retryIOEither 10 2000000) $ getNodeVMs' proxmoxConfiguration
         case vms' of
           (Left e) -> return (Left e)
           (Right vms) -> do
@@ -133,7 +142,8 @@ destroyVMs vmData = do
     delayWrapper (Just 500000) .
     deleteVM' proxmoxConfiguration .
     getDeployVMID') vmData
-  if any isLeft deleteRes then
+  vmWaitRes <- (liftIO . retryIOEither 30 2000000) $ waitVMNonExistence proxmoxConfiguration vmids
+  if isLeft vmWaitRes then
     errorLog "Failed to delete VMs" deleteRes <&> Left
   else
     (pure . pure) ()
@@ -160,6 +170,7 @@ deployVMs networks vmData = let
         errorLog "Failed to assign VM port" assignRes <&> Left
       else do
         startRes <- mapM (liftIO . delayWrapper (Just 100000) . startVM' proxmoxConfiguration . getDeployVMID') vmData
+        _ <- (liftIO . retryIOEither 30 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMRunning)
         if any isLeft startRes then do
           errorLog "Failed to power on VMs" startRes <&> Left
         else (pure . Right) ()
