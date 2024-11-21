@@ -75,6 +75,15 @@
     }
   }
 
+  const moveVM = (index: number, delta: number) => {
+    if (index + delta < 0 || index + delta >= standVMs.length) {
+      return
+    }
+    const movingVM = standVMs.splice(index, 1)
+    standVMs.splice(index + delta, 0, movingVM[0])
+    standVMs = [...standVMs]
+  }
+
   updateAvailableNetworks()
   let templatesPromise: Promise<Array<VMTemplate> | null> = getTemplatesWrapper()
 </script>
@@ -98,7 +107,14 @@
     <div class="columns is-multiline p-3">
       {#each standVMs as item, itemIndex }
         <div class="column is-5">
-          <VMCard bind:data={item} availableNetworks={availableNetworks} availableTemplates={templates} deleteCallback={async () => deleteVM(itemIndex)}/>
+          <VMCard 
+            bind:data={item} 
+            availableNetworks={availableNetworks} 
+            availableTemplates={templates} 
+            deleteCallback={async () => deleteVM(itemIndex)}
+            moveLeftCallback={async () => moveVM(itemIndex, -1)}
+            moveRightCallback={async () => moveVM(itemIndex, 1)}
+          />
         </div>
       {/each}
       <br>

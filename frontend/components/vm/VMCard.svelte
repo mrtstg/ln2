@@ -40,6 +40,8 @@
   export let deleteCallback: () => Promise<void> = async () => {}
   export let availableNetworks: Array<string> = Array()
   export let availableTemplates: Array<VMTemplate> = Array()
+  export let moveLeftCallback: () => Promise<void> = async () => {}
+  export let moveRightCallback: () => Promise<void> = async () => {}
 </script>
 
 <div class="card">
@@ -126,6 +128,8 @@
     {/if}
   </div>
   <footer class="card-footer">
+    <button class="card-footer-item" on:click={moveLeftCallback}> &lt; </button>
     <button class="card-footer-item" on:click={deleteCallback}> Удалить </button>
+    <button class="card-footer-item" on:click={moveRightCallback}> &gt; </button>
   </footer>
 </div>
