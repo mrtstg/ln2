@@ -17,6 +17,7 @@ import           Api.Proxmox
 import           Control.Monad                     (when)
 import           Control.Monad.Trans.Except
 import           Data.Aeson
+import           Data.Maybe                        (isJust)
 import           Data.Models.Proxmox.API.SDNZone
 import           Data.Models.Proxmox.Configuration
 import qualified Data.Text                         as T
@@ -63,12 +64,20 @@ createSimpleSDNZone' :: ProxmoxConfiguration -> ZoneName -> IO (Either String ()
 createSimpleSDNZone' conf zoneName = commonHttpErrorHandler $ createSimpleSDNZone conf zoneName
 
 createSimpleSDNZone :: ProxmoxConfiguration -> ZoneName -> ExceptT HttpException IO (Either String ())
-createSimpleSDNZone conf@(ProxmoxConfiguration { .. }) zoneName = do
+createSimpleSDNZone conf@(ProxmoxConfiguration { .. }) zoneName = let
+  zonePayload = object $
+    [ "type" .= String "simple"
+    , "zone" .= zoneName
+    ] ++ dhcp' ++ ipam'
+  ipam' = case proxmoxIPAMName proxmoxSDNNetwork of
+    Nothing     -> []
+    (Just ipam) -> ["ipam" .= ipam]
+  dhcp' = ["dhcp" .= String "dnsmasq" | all (\x -> isJust $ x proxmoxSDNNetwork) [proxmoxIPAMName, proxmoxNetworkDHCPEnd, proxmoxNetworkDHCPBegin]]
+  in do
   let reqString = T.unpack $ "POST " <> proxmoxBaseUrl <> "/cluster/sdn/zones"
   request' <- parseRequest reqString
   request <- liftIO $ prepareProxmoxRequest conf request'
-  let payload = object [ "type" .= String "simple", "zone" .= zoneName, "dhcp" .= String "dnsmasq", "ipam" .= (String . T.pack) (proxmoxIPAMName proxmoxSDNNetwork)]
-  let jsonRequest = setRequestBodyJSON payload request
+  let jsonRequest = setRequestBodyJSON zonePayload request
   response <- httpBS jsonRequest
   let status = getResponseStatus response
   case statusCode status of
