@@ -18,17 +18,27 @@ proxmoxOutNetwork = "internet"
 
 data ProxmoxNetworkConfiguration = ProxmoxNetworkConfiguration
   { proxmoxNetworkCIDR      :: !String
-  , proxmoxNetworkDHCPBegin :: !String
-  , proxmoxNetworkDHCPEnd   :: !String
+  , proxmoxNetworkDHCPBegin :: !(Maybe String)
+  , proxmoxNetworkDHCPEnd   :: !(Maybe String)
   , proxmoxNetworkGateway   :: !String
-  , proxmoxIPAMName         :: !String
+  , proxmoxIPAMName         :: !(Maybe String)
   } deriving (Show)
 
 proxmoxNetworkConfigurationToPayload :: ProxmoxNetworkConfiguration -> SDNSubnetCreate
-proxmoxNetworkConfigurationToPayload ProxmoxNetworkConfiguration { .. } = SDNSubnetCreate
+proxmoxNetworkConfigurationToPayload ProxmoxNetworkConfiguration { .. } = let
+  dhcpData = do
+    startAddress <- proxmoxNetworkDHCPBegin
+    endAddress <- proxmoxNetworkDHCPEnd
+    -- checking for requiring all values
+    ipamName <- proxmoxIPAMName
+    return (["start-address=" <> startAddress <> ",end-address=" <> endAddress], ipamName)
+  dhcpR = case dhcpData of
+    Nothing            -> Nothing
+    (Just (dhcpR', _)) -> return dhcpR'
+  in SDNSubnetCreate
   { getSDNSubnetCreateName = proxmoxNetworkCIDR
   , getSDNSubnetCreateVnet = proxmoxOutNetwork
-  , getSDNSubnetCreateDhcpRange = Just ["start-address=" <> proxmoxNetworkDHCPBegin <> ",end-address=" <> proxmoxNetworkDHCPEnd]
+  , getSDNSubnetCreateDhcpRange = dhcpR
   , getSDNSubnetCreateDhcpDns = Nothing
   , getSDNSubnetCreateGateway = Just proxmoxNetworkGateway
   , getSDNSubnetCreateSnat = True
@@ -44,16 +54,13 @@ getProxmoxNetworkConfigurationFromEnv = do
   ipam' <- lookupEnv "PROXMOX_INTERNET_IPAM_NAME"
   return $ do
     network_cidr <- network_cidr'
-    dhcp_begin <- dhcp_begin'
-    dhcp_end <- dhcp_end'
     gateway <- gateway'
-    ipam <- ipam'
     return $ ProxmoxNetworkConfiguration
       { proxmoxNetworkCIDR = network_cidr
-      , proxmoxNetworkDHCPBegin = dhcp_begin
-      , proxmoxNetworkDHCPEnd = dhcp_end
+      , proxmoxNetworkDHCPBegin = dhcp_begin'
+      , proxmoxNetworkDHCPEnd = dhcp_end'
       , proxmoxNetworkGateway = gateway
-      , proxmoxIPAMName = ipam
+      , proxmoxIPAMName = ipam'
       }
 
 data ProxmoxConfiguration = ProxmoxConfiguration
