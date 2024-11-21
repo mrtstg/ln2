@@ -130,19 +130,20 @@ destroyVMs :: (MonadIO m) => [DeployVM'] -> DeployM m (Either [String] ())
 destroyVMs vmData = do
   DeployEnv { .. } <- ask
   let vmids = map getDeployVMID' vmData
+  let vmAmount = length vmids
   stopRes <- mapM (
     liftIO .
     delayWrapper (Just 100000) .
     stopVM' proxmoxConfiguration
     ) vmids
   when (any isLeft stopRes) $ errorLog "Failed to stop VMs" stopRes >>= (const . pure) ()
-  _ <- (liftIO . retryIOEither 30 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMStopped)
+  _ <- (liftIO . retryIOEither (30 * vmAmount) 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMStopped)
   deleteRes <- mapM (
     liftIO .
     delayWrapper (Just 500000) .
     deleteVM' proxmoxConfiguration .
     getDeployVMID') vmData
-  vmWaitRes <- (liftIO . retryIOEither 30 2000000) $ waitVMNonExistence proxmoxConfiguration vmids
+  vmWaitRes <- (liftIO . retryIOEither (30 * vmAmount) 2000000) $ waitVMNonExistence proxmoxConfiguration vmids
   if isLeft vmWaitRes then
     errorLog "Failed to delete VMs" deleteRes <&> Left
   else
@@ -156,8 +157,9 @@ deployVMs networks vmData = let
   in do
   DeployEnv { .. } <- ask
   let vmids = map getDeployVMID' vmData
+  let vmAmount = length vmids
   cloneRes <- mapM (liftIO . delayWrapper Nothing . cloneVM' proxmoxConfiguration . deployVMToCloneParams) vmData
-  _ <- (liftIO . retryIOEither 30 2000000) $ waitVMsF proxmoxConfiguration vmids f
+  _ <- (liftIO . retryIOEither (30 * vmAmount) 2000000) $ waitVMsF proxmoxConfiguration vmids f
   if any isLeft cloneRes then do
     errorLog "Failed to clone VMs" cloneRes <&> Left
   else do
@@ -170,7 +172,7 @@ deployVMs networks vmData = let
         errorLog "Failed to assign VM port" assignRes <&> Left
       else do
         startRes <- mapM (liftIO . delayWrapper (Just 100000) . startVM' proxmoxConfiguration . getDeployVMID') vmData
-        _ <- (liftIO . retryIOEither 30 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMRunning)
+        _ <- (liftIO . retryIOEither (30 * vmAmount) 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMRunning)
         if any isLeft startRes then do
           errorLog "Failed to power on VMs" startRes <&> Left
         else (pure . Right) ()
