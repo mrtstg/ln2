@@ -180,7 +180,7 @@ deployVMs networks vmData = let
   let vmids = map getDeployVMID' vmData
   let vmAmount = length vmids
   cloneRes <- mapM (liftIO . delayWrapper Nothing . cloneVM' proxmoxConfiguration . deployVMToCloneParams) vmData
-  _ <- (liftIO . retryIOEither (120 * vmAmount) 5000000) $ waitVMsF proxmoxConfiguration vmids f
+  _ <- (liftIO . retryIOEither (240 * vmAmount) 5000000) $ waitVMsF proxmoxConfiguration vmids f
   if any isLeft cloneRes then do
     errorLog "Failed to clone VMs" cloneRes <&> Left
   else do
