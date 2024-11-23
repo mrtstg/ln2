@@ -9,7 +9,7 @@ type Tries = Int
 type Timeout = Int
 
 retryIOEither' :: IO (Either a b) -> IO (Either a b)
-retryIOEither' = retryIOEither 5 100000
+retryIOEither' = retryIOEither 10 5000000
 
 retryIOEither :: Tries -> Timeout -> IO (Either a b) -> IO (Either a b)
 retryIOEither tries timeout f = do
