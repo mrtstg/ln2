@@ -8,6 +8,7 @@ module Crud.Deployment
   , httpCheckDeployment
   , deploymentErrorLog
   , generateTemplatesMap
+  , findDeploymentByDisplay
   ) where
 
 import           Control.Monad.Trans.Reader
@@ -83,6 +84,29 @@ httpCheckDeployment templates payload = do
     (Left (DuplicateNetwork v)) -> sendStatusJSON status400 $ object
       [ "error" .= ("Duplicated network name: " <> v), "type" .= String "duplicateNetworkName", "value" .= v]
     (Right ()) -> pure ()
+
+findDeploymentByDisplay :: [Filter MachineDeployment] -> Int -> Handler (Maybe DeploymentData)
+findDeploymentByDisplay deploymentFilter displayNumber = let
+  iterateDeployments :: [Entity MachineDeployment] -> Handler (Maybe MachineDeployment)
+  iterateDeployments [] = pure Nothing
+  iterateDeployments (Entity _ d@(MachineDeployment { .. }):ds) = do
+    payload' <- decodeDeploymentPayload machineDeploymentPayload
+    case payload' of
+      (Left _) -> iterateDeployments ds
+      (Right (DeploymentPayload { .. })) -> do
+        if displayNumber `elem` getDeploymentVMDisplays then
+          (return . return) d
+        else iterateDeployments ds
+  in do
+  deployments <- runDB $ selectList deploymentFilter []
+  iterResult <- iterateDeployments deployments
+  case iterResult of
+    Nothing -> return Nothing
+    (Just (MachineDeployment { .. })) -> do
+      data' <- decodeDeploymentData machineDeploymentData
+      case data' of
+        (Left _)                      -> return Nothing
+        (Right d@(DeploymentData {})) -> return (Just d)
 
 decodeDeploymentData :: BS.ByteString -> Handler (Either String DeploymentData)
 decodeDeploymentData payload = case (eitherDecode . fromStrict) payload of
