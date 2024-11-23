@@ -10,7 +10,9 @@ export type TemplateVM = {
   memory: number | null,
   networks: Array<VMNetworkInterface>,
   userAvailable: boolean,
-  storage: string | null
+  storage: string | null,
+  startDelay: number,
+  cpuLimit: number,
 }
 
 export type VMNetworkInterface = {

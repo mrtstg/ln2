@@ -91,6 +91,23 @@
       <p class="hint"> Опционально. VM будет скопирована в стандартное хранилище шаблона. </p>
     </div>
     <div class="field">
+      <label class="label"> Задержка после включения </label>
+      <div class="control">
+        <input class="input" type="number" bind:value={data.startDelay} min="0">
+      </div>
+      <p class="hint"> После включения VM будет выждано указанное количество секунд </p>
+    </div>
+    <div class="field">
+      <label class="label"> Лимит CPU </label>
+      <div class="control">
+        <input class="input" type="number" min="-1" step="any">
+      </div>
+      <p class="hint">
+        <a href="https://pve.proxmox.com/wiki/Qemu/KVM_Virtual_Machines"> Документация. </a>
+        При отрицательном значении будет использован параметр из шаблона.
+      </p>
+    </div>
+    <div class="field">
       <label class="label"> Подключить сеть </label>
       <div class="control">
         <div class="is-flex is-flex-direction-row">

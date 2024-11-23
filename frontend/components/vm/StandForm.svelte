@@ -34,7 +34,9 @@
       memory: 1024,
       networks: [],
       userAvailable: true,
-      storage: ""
+      storage: "",
+      startDelay: 0,
+      cpuLimit: -1
     }]
   }
 
