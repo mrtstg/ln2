@@ -119,7 +119,11 @@ standPresent networksMap vmData = let
               cfgRes <- (liftIO . retryIOEither 30 2000000) $ waitVMsF proxmoxConfiguration vmIds f
               case cfgRes of
                 (Left _)   -> return (Left "Some VMs is locked")
-                (Right ()) -> (return . Right) ()
+                (Right ()) -> do
+                  stateRes <- (liftIO . retryIOEither 10 1000000) $ waitVMsStateF proxmoxConfiguration vmIds (VMRunning ==)
+                  case stateRes of
+                    (Left _)   -> return (Left "Some VMs is not started")
+                    (Right ()) -> (return . Right) ()
 
 destroyNetworks :: (MonadIO m) => NetworkNameReplaceMap -> DeployM m (Either [String] ())
 destroyNetworks networkMap = do
