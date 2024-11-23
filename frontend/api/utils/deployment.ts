@@ -28,6 +28,8 @@ export const deploymentErrorToString = (data: ErrorWrapper<DeploymentErrorKind>)
     return 'Дубликат имени виртуальной машины: ' + data.value
   case 'duplicateNetworkName':
     return 'Дубликат имени сети: ' + data.value
+  case 'invalidStartDelay':
+    return 'Некорректное значение задержки старта: ' + data.value
   default:
 		return 'Неизвестная ошибка'
   }
