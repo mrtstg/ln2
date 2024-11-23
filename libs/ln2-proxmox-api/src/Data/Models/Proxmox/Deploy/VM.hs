@@ -57,7 +57,7 @@ deployVMToConfigPayload networkMap (TemplateDeployVM' { getDeployVMTemplateData'
     memoryField = case getDeployVMMemory of
       Nothing       -> []
       (Just memory) -> ["memory" .= memory]
-    cpuLimitField = ["cpuLimit" .= getDeployVMCpuLimit | getDeployVMCpuLimit > 0]
+    cpuLimitField = ["cpulimit" .= getDeployVMCpuLimit | getDeployVMCpuLimit > 0]
 
 instance ToJSON DeployVM' where
   toJSON (TemplateDeployVM' { .. }) = object
