@@ -100,10 +100,10 @@
     <div class="field">
       <label class="label"> Лимит CPU </label>
       <div class="control">
-        <input class="input" type="number" min="-1" step="any">
+        <input class="input" type="number" min="-1" step="0.1" bind:value={data.cpuLimit}>
       </div>
       <p class="hint">
-        <a href="https://pve.proxmox.com/wiki/Qemu/KVM_Virtual_Machines"> Документация. </a>
+        <a class="is-underlined" href="https://pve.proxmox.com/wiki/Qemu/KVM_Virtual_Machines"> Документация. </a>
         При отрицательном значении будет использован параметр из шаблона.
       </p>
     </div>
