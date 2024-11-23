@@ -38,6 +38,7 @@ export const allDeploymentErrorKinds = [
   'invalidMemory',
   'duplicateVMName',
   'duplicateNetworkName',
+  'invalidStartDelay',
   'unknown'
   ]
 
