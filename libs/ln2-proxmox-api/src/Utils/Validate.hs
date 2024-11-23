@@ -25,7 +25,8 @@ data DeployValidaionError =
   LongNetworkName |
   InvalidCPU Int |
   InvalidMemory Int |
-  InvalidSockets Int
+  InvalidSockets Int |
+  InvalidStartDelay Int
   deriving Show
 
 serviceNetworks :: [T.Text]
@@ -64,6 +65,7 @@ validateDeployVM existingTemplates existingNetworks (TemplateDeployVM { .. }) = 
     let vmNameLength = T.length getDeployVMName
     () <- when (vmNameLength == 0) $ Left EmptyVMName
     () <- when (vmNameLength > 15) $ Left LongVMName
+    () <- when (getDeployVMStartDelay < 0) $ Left (InvalidStartDelay getDeployVMStartDelay)
     pure ()
 
 validateDeployNetwork :: DeployNetwork -> Either DeployValidaionError ()
