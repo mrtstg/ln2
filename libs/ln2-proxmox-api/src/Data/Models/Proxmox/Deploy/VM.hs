@@ -46,7 +46,8 @@ deployVMToConfigPayload networkMap (TemplateDeployVM' { getDeployVMTemplateData'
   memoryField <>
   networkConnectionsToPayload networkMap getDeployVMNetworkInterfaces <>
   -- TODO: variate autostart on proxmox launch
-  ["onboot" .= String "1"]  where
+  ["onboot" .= String "1"] <>
+  cpuLimitField where
     coresField = case getDeployVMCores of
       Nothing      -> []
       (Just cores) -> ["cores" .= cores]
@@ -56,6 +57,7 @@ deployVMToConfigPayload networkMap (TemplateDeployVM' { getDeployVMTemplateData'
     memoryField = case getDeployVMMemory of
       Nothing       -> []
       (Just memory) -> ["memory" .= memory]
+    cpuLimitField = ["cpuLimit" .= getDeployVMCpuLimit | getDeployVMCpuLimit > 0]
 
 instance ToJSON DeployVM' where
   toJSON (TemplateDeployVM' { .. }) = object
@@ -89,6 +91,8 @@ data DeployVM = TemplateDeployVM
   , getDeployVMNetworkInterfaces :: ![NetworkConnection]
   , getDeployVMUserAvailable     :: !Bool
   , getDeployVMStorage           :: !(Maybe Text)
+  , getDeployVMStartDelay        :: !Int
+  , getDeployVMCpuLimit          :: !Float
   } deriving Show
 
 instance FromJSON DeployVM where
@@ -105,6 +109,8 @@ instance FromJSON DeployVM where
       <*> v .: "networks"
       <*> v .:? "userAvailable" .!= True
       <*> v .:? "storage"
+      <*> v .:? "startDelay" .!= 0
+      <*> v .:? "cpuLimit" .!= 0
     _unknownType -> fail "Unknown type!"
 
 instance ToJSON DeployVM where
@@ -119,6 +125,8 @@ instance ToJSON DeployVM where
     , "networks" .= getDeployVMNetworkInterfaces
     , "type" .= String "template"
     , "userAvailable" .= getDeployVMUserAvailable
+    , "startDelay" .= getDeployVMStartDelay
+    , "cpuLimit" .= getDeployVMCpuLimit
     ] <> storageF where
       storageF = case getDeployVMStorage of
         Nothing            -> []
