@@ -154,6 +154,9 @@ deployVMs networks vmData = let
   f :: Maybe ProxmoxVMConfig -> Bool
   f Nothing                       = False
   f (Just ProxmoxVMConfig { .. }) = isNothing getProxmoxVMConfigLock
+  startF :: ProxmoxConfiguration -> DeployVM' -> IO (Either String ())
+  startF conf (TemplateDeployVM' { getDeployVMTemplateData' = TemplateDeployVM { .. }, ..}) = do
+    delayWrapper (Just $ getDeployVMStartDelay * 1000000 + 100000) $ startVM' conf getDeployVMID'
   in do
   DeployEnv { .. } <- ask
   let vmids = map getDeployVMID' vmData
@@ -171,7 +174,7 @@ deployVMs networks vmData = let
       if any isLeft assignRes then do
         errorLog "Failed to assign VM port" assignRes <&> Left
       else do
-        startRes <- mapM (liftIO . delayWrapper (Just 100000) . startVM' proxmoxConfiguration . getDeployVMID') vmData
+        startRes <- mapM ( liftIO . startF proxmoxConfiguration ) vmData
         _ <- (liftIO . retryIOEither (30 * vmAmount) 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMRunning)
         if any isLeft startRes then do
           errorLog "Failed to power on VMs" startRes <&> Left
