@@ -23,6 +23,7 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Reader
 import           Data.Either
 import           Data.Functor                       ((<&>))
+import           Data.List                          (intersect)
 import qualified Data.Map                           as M
 import           Data.Maybe
 import           Data.Models.Proxmox.Agent
@@ -129,25 +130,29 @@ destroyNetworks networkMap = do
 destroyVMs :: (MonadIO m) => [DeployVM'] -> DeployM m (Either [String] ())
 destroyVMs vmData = do
   DeployEnv { .. } <- ask
-  let vmids = map getDeployVMID' vmData
-  let vmAmount = length vmids
-  stopRes <- mapM (
-    liftIO .
-    delayWrapper (Just 100000) .
-    stopVM' proxmoxConfiguration
-    ) vmids
-  when (any isLeft stopRes) $ errorLog "Failed to stop VMs" stopRes >>= (const . pure) ()
-  _ <- (liftIO . retryIOEither (30 * vmAmount) 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMStopped)
-  deleteRes <- mapM (
-    liftIO .
-    delayWrapper (Just 500000) .
-    deleteVM' proxmoxConfiguration .
-    getDeployVMID') vmData
-  vmWaitRes <- (liftIO . retryIOEither (30 * vmAmount) 2000000) $ waitVMNonExistence proxmoxConfiguration vmids
-  if isLeft vmWaitRes then
-    errorLog "Failed to delete VMs" deleteRes <&> Left
-  else
-    (pure . pure) ()
+  exitstingVMIds' <- (liftIO . retryIOEither 30 2000000) $ getNodeVMIds' proxmoxConfiguration
+  case exitstingVMIds' of
+    (Left _) -> errorLog "Failed to get node IDS" [] <&> Left
+    (Right existingVMIds) -> do
+      let vmids = map getDeployVMID' vmData `intersect` existingVMIds
+      let vmAmount = length vmids
+      stopRes <- mapM (
+        liftIO .
+        delayWrapper (Just 100000) .
+        stopVM' proxmoxConfiguration
+        ) vmids
+      when (any isLeft stopRes) $ errorLog "Failed to stop VMs" stopRes >>= (const . pure) ()
+      _ <- (liftIO . retryIOEither (30 * vmAmount) 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMStopped)
+      deleteRes <- mapM (
+        liftIO .
+        delayWrapper (Just 500000) .
+        deleteVM' proxmoxConfiguration .
+        getDeployVMID') vmData
+      vmWaitRes <- (liftIO . retryIOEither (30 * vmAmount) 2000000) $ waitVMNonExistence proxmoxConfiguration vmids
+      if isLeft vmWaitRes then
+        errorLog "Failed to delete VMs" deleteRes <&> Left
+      else
+        (pure . pure) ()
 
 deployVMs :: (MonadIO m) => NetworkNameReplaceMap -> [DeployVM'] -> DeployM m (Either [String] ())
 deployVMs networks vmData = let
