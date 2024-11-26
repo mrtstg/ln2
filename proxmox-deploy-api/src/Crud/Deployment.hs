@@ -83,6 +83,8 @@ httpCheckDeployment templates payload = do
       [ "error" .= ("Duplicated VM name: " <> v), "type" .= String "duplicateVMName", "value" .= v]
     (Left (DuplicateNetwork v)) -> sendStatusJSON status400 $ object
       [ "error" .= ("Duplicated network name: " <> v), "type" .= String "duplicateNetworkName", "value" .= v]
+    (Left (InvalidStartDelay v)) -> sendStatusJSON status400 $ object
+      [ "error" .= ("Invalid start delay value: " <> show v), "type" .= String "invalidStartDelay", "value" .= (Number . read . show) v]
     (Right ()) -> pure ()
 
 findDeploymentByDisplay :: [Filter MachineDeployment] -> Int -> Handler (Maybe DeploymentData)
