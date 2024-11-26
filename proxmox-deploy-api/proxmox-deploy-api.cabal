@@ -37,8 +37,10 @@ library
       Handlers.Deployment
       Handlers.MachineID
       Handlers.Port
+      Handlers.Power
       Handlers.Templates
       Handlers.UserDeployments
+      Handlers.Utils
       Rabbit
       Utils
   other-modules:
