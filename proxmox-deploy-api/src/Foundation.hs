@@ -83,6 +83,8 @@ mkYesodData
 /deployment DeploymentsR POST
 /deployment/validate ValidateDeploymentR POST
 !/deployment/#String DeploymentR DELETE GET
+/api/vm/#Int/power PowerR GET
+/api/vm/#Int/power/switch SwitchPowerR GET
 /api/port/#Int/switch SwitchPortR GET
 |]
 
