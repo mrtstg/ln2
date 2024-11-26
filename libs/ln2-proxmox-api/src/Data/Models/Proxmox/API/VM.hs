@@ -21,7 +21,11 @@ instance FromJSON ProxmoxVMStatus where
   parseJSON = withText "ProxmoxVMStatus" $ \case
     "running" -> pure VMRunning
     "stopped" -> pure VMStopped
-    _anyOther -> error "Invalid VM status enum"
+    anyOther -> error $ "Invalid VM status enum: " ++ show anyOther
+
+instance ToJSON ProxmoxVMStatus where
+  toJSON VMRunning = String "running"
+  toJSON VMStopped = String "stopped"
 
 -- TODO: bind all fields
 -- TODO: type for lock
