@@ -42,6 +42,7 @@ library
       Handlers.UserDeployments
       Handlers.Utils
       Rabbit
+      Redis
       Utils
   other-modules:
       Paths_proxmox_deploy_api
@@ -58,10 +59,12 @@ library
     , connection ==0.3.1
     , containers ==0.6.7
     , directory ==1.3.7.1
+    , hedis ==0.15.2
     , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , ln2-common
     , ln2-proxmox-api
+    , ln2-redis
     , load-env ==0.2.1.0
     , monad-logger ==0.3.40
     , network ==3.1.4.0
@@ -93,10 +96,12 @@ executable proxmox-deploy-api-exe
     , connection ==0.3.1
     , containers ==0.6.7
     , directory ==1.3.7.1
+    , hedis ==0.15.2
     , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , ln2-common
     , ln2-proxmox-api
+    , ln2-redis
     , load-env ==0.2.1.0
     , monad-logger ==0.3.40
     , network ==3.1.4.0
@@ -130,10 +135,12 @@ test-suite proxmox-deploy-api-test
     , connection ==0.3.1
     , containers ==0.6.7
     , directory ==1.3.7.1
+    , hedis ==0.15.2
     , http-conduit ==2.3.8.1
     , http-types ==0.12.3
     , ln2-common
     , ln2-proxmox-api
+    , ln2-redis
     , load-env ==0.2.1.0
     , monad-logger ==0.3.40
     , network ==3.1.4.0

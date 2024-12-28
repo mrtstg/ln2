@@ -25,6 +25,7 @@ import           Data.Models.Proxmox.Configuration
 import           Data.Pool                         (Pool)
 import           Data.Text
 import           Database.Persist.Postgresql
+import qualified Database.Redis                    as Redis
 import           Foundation.Class
 import qualified Network.AMQP                      as R
 import           Yesod.Core
@@ -37,6 +38,7 @@ data App = App
   , proxmoxConfiguration   :: !ProxmoxConfiguration
   , devEnabled             :: !Bool
   , bypassAuth             :: !Bool
+  , redisConnection        :: !Redis.Connection
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|

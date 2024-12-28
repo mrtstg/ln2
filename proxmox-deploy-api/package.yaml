@@ -40,8 +40,10 @@ dependencies:
 - network == 3.1.4.0
 - connection == 0.3.1
 - containers == 0.6.7
+- hedis == 0.15.2
 - ln2-common
 - ln2-proxmox-api
+- ln2-redis
 
 ghc-options:
 - -Wall
