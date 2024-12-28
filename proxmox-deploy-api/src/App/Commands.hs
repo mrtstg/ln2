@@ -35,6 +35,7 @@ import           Handlers.UserDeployments
 import           Network.AMQP                       (openConnection')
 import           Network.Socket                     (PortNumber)
 import           Rabbit
+import           Redis.Environment
 import           System.Exit
 import           Utils.Environment
 import           Yesod.Core
@@ -100,11 +101,15 @@ runServerCommand port = do
                   bypassAuth <- isAuthBypassed
                   devEnabled <- isDevEnabled
                   postgresPool <- runStdoutLoggingT $ createPostgresqlPool (BS.pack postgresString) 10
-                  let app = App postgresPool endpoints rabbitConn proxmoxConf devEnabled bypassAuth
-                  () <- declareSDN proxmoxConf
-                  _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
-                  _ <- prepareRabbitQuery rabbitConn
-                  warp port app
+                  redis' <- redisConnectionFromEnv
+                  case redis' of
+                    Nothing -> putStrLn "No redis config provided"
+                    (Just redis) -> do
+                      let app = App postgresPool endpoints rabbitConn proxmoxConf devEnabled bypassAuth redis
+                      () <- declareSDN proxmoxConf
+                      _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
+                      _ <- prepareRabbitQuery rabbitConn
+                      warp port app
 
 runCommand :: AppOpts -> IO ()
 runCommand (AppOpts _ CreateDatabase) = runCreateDatabaseCommand
