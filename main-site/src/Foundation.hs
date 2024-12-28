@@ -31,6 +31,7 @@ import qualified Database.Redis              as Redis
 import           Foundation.Class
 import           Handlers.Auth
 import qualified Network.AMQP                as R
+import           System.Random               (StdGen)
 import           Utils.Auth
 import           Yesod.Core
 import           Yesod.Form
