@@ -13,6 +13,7 @@
 - [x] Автозагрузка Docker-образов
 - [ ] Добавить healthcheck'и
 - [ ] Внедрить ln2-common к старым сервисам
+- [ ] Оптимизировать процесс поиска DeploymentData по порту
 
 # Схема сервисов
 
@@ -42,8 +43,14 @@ make build-images
 - Скопируйте образец env-файла для запуска в Docker. Поправьте по необходимости адрес Unix-сокета Docker (строка `DOCKER_SOCKET`).
 Сгенерируйте и вставьте секретный ключ для JWT аутентификации (например, при помощи команды `openssl rand -hex 32`) в поле `AUTH_JWT_SECRET`.
 Укажите IP Proxmox-ноды вместо `<ip>`, впишите название ноды в поле `PROXMOX_NODE_NAME`. Создайте токен и впишите его данные в поля 
-`PROXMOX_API_TOKEN_SECRET` и `PROXMOX_API_TOKEN_ID`. Укажите наименование IPAM 
-(обычно создается по умолчанию с именем `pve`) в поле `PROXMOX_INTERNET_IPAM_NAME`
+`PROXMOX_API_TOKEN_SECRET` и `PROXMOX_API_TOKEN_ID`. 
+
+Если будет использоваться DHCP-сервер от SDN (dnsmasq), укажите наименование IPAM 
+(обычно создается по умолчанию с именем `pve`) в поле `PROXMOX_INTERNET_IPAM_NAME`, поправьте необходимые данные в полях
+`PROXMOX_INTERNET_NETWORK_DHCP_BEGIN` и `PROXMOX_INTERNET_NETWORK_DHCP_END`, которые определяют
+начало DHCP-пула и его конец. dnsmasq может плохо функционировать, если включен Firewall, поэтому
+как альтернативный вариант, требуется закомментировать строки и развернуть свою реализацию DHCP-сервера
+в сети (собственный инстанс dnsmasq, VM с DHCP сервером, и.т.д)
 ```bash
 cp docker-sample.env docker.env # скопировать образец, если не делали этого раньше
 ```
