@@ -83,13 +83,13 @@ restore-images: ./images
 	mkdir ./static/css -p
 
 procfile: $(PROCFILE_DIR)/main
-	foreman start -f $(PROCFILE_DIR)/main -d .
+	overmind start -f $(PROCFILE_DIR)/main -d .
 
 procfile-docker: $(PROCFILE_DIR)/docker
-	foreman start -f $(PROCFILE_DIR)/docker -d .
+	overmind start -f $(PROCFILE_DIR)/docker -d .
 
 procfile-agentless: $(PROCFILE_DIR)/agentless
-	foreman start -f $(PROCFILE_DIR)/agentless -d .
+	overmind start -f $(PROCFILE_DIR)/agentless -d .
 
 build-lib-image: deployment/Dockerfile
 	docker build -t ln2-haskell -f deployment/Dockerfile .

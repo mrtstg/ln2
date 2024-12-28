@@ -109,4 +109,4 @@ make restore-deploy-images
 
 # Программные зависимости
 
-- foreman - запуск сервисов вне Docker
+- overmind & tmux - запуск сервисов вне Docker
