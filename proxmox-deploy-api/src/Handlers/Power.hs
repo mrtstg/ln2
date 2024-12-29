@@ -63,7 +63,7 @@ getSwitchPowerR vmPort = do
             _ <- dropPendingPowerControl userId vmid
             case powerRes' of
               (Left _) -> sendStatusJSON status500 $ object ["error" .= String "Internal error"]
-              (Right _) -> sendStatusJSON status400 $ object ["state" .= if vmState == VMStopped then VMRunning else VMStopped]
+              (Right _) -> sendStatusJSON status200 $ object ["state" .= if vmState == VMStopped then VMRunning else VMStopped]
 
 getPowerR :: Int -> Handler Value
 getPowerR vmPort = do
