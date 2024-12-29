@@ -16,7 +16,7 @@ import type { PageWrapper } from "./types/pageWrapper"
 import { allDeploymentErrorKinds, createDeploymentError, type DeploymentErrorKind, type DeploymentRead, type TaskDeploymentWrapper } from "./types/deployment"
 import { VMTemplate, VMTemplatePatch, VMTemplateCreate, TemplateError, createTemplateError, VMTemplateQuery } from "./types/template";
 import { createErrorWrapper } from "./types/errorWrapper"
-import { VM, VMNetwork } from "./types/vm";
+import { VM, VMNetwork, VMPowerSwitchErrorKind, createVMPowerSwitchError } from "./types/vm";
 import type { ApiIDWrapper } from "./types/common"
 import { ErrorWrapper } from "./types/errorWrapper";
 
@@ -495,6 +495,27 @@ export class ApiClient {
         return createErrorWrapper(createDeploymentError, error.response.data)
       }
       return createErrorWrapper(createDeploymentError, {})
+    }
+  }
+
+  async getVMPowerState(port: string): Promise<string | null> {
+    try {
+      const { data } = await this.client.get('/api/vm/' + port + '/power')
+      return data.state
+    } catch (error) {
+      return null
+    }
+  }
+
+  async switchVMPowerState(port: string): Promise<ErrorWrapper<VMPowerSwitchErrorKind> | string> {
+    try {
+      const { data } = await this.client.get('/api/vm/' + port + '/power/switch')
+      return data.state
+    } catch (error) {
+      if (error.response) {
+        return createErrorWrapper(createVMPowerSwitchError, error.response.data)
+      }
+      return createErrorWrapper(createVMPowerSwitchError, {})
     }
   }
 }
