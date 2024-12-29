@@ -36,12 +36,15 @@
       userAvailable: true,
       storage: "",
       startDelay: 0,
-      cpuLimit: -1
+      cpuLimit: -1,
+      index: 0
     }]
+    updateVMIndex()
   }
 
   const deleteVM = (index: number) => {
     standVMs.splice(index, 1)
+    updateVMIndex()
     standVMs = [...standVMs]
   }
 
@@ -67,6 +70,13 @@
     }
   }
 
+  const updateVMIndex = () => {
+    for (let i = 0; i < standVMs.length; i++) {
+      standVMs[i].index = i
+    }
+    standVMs = [...standVMs]
+  }
+
   const getTemplatesWrapper = async (): Promise<Array<VMTemplate> | null> => {
     // TODO: get all templates
     const res = await api.getVMTemplates(1)
@@ -84,6 +94,7 @@
     const movingVM = standVMs.splice(index, 1)
     standVMs.splice(index + delta, 0, movingVM[0])
     standVMs = [...standVMs]
+    updateVMIndex()
   }
 
   updateAvailableNetworks()
