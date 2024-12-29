@@ -23,7 +23,7 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Reader
 import           Data.Either
 import           Data.Functor                       ((<&>))
-import           Data.List                          (intersect)
+import           Data.List                          (intersect, sortOn)
 import qualified Data.Map                           as M
 import           Data.Maybe
 import           Data.Models.Proxmox.Agent
@@ -192,7 +192,7 @@ deployVMs networks vmData = let
       if any isLeft assignRes then do
         errorLog "Failed to assign VM port" assignRes <&> Left
       else do
-        startRes <- mapM ( liftIO . startF proxmoxConfiguration ) vmData
+        startRes <- (mapM ( liftIO . startF proxmoxConfiguration ) . sortOn (getDeployVMIndex . getDeployVMTemplateData')) vmData
         _ <- (liftIO . retryIOEither (60 * vmAmount) 2000000) $ waitVMsStateF proxmoxConfiguration vmids ((==) VMRunning)
         if any isLeft startRes then do
           errorLog "Failed to power on VMs" startRes <&> Left
