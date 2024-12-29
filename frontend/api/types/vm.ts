@@ -1,3 +1,5 @@
+import { genericArrayErrorCreator } from "./errorWrapper"
+
 export type VM = TemplateVM
 
 // TODO: add omitted fields
@@ -46,3 +48,11 @@ export const allNetworkDevicesTypes = [
 ]
 
 export type NetworkDeviceType = typeof allNetworkDevicesTypes[number]
+
+export const allVMPowerSwitchErrorKinds = [
+  'powerPending'
+]
+
+export type VMPowerSwitchErrorKind = typeof allVMPowerSwitchErrorKinds[number]
+
+export const createVMPowerSwitchError = genericArrayErrorCreator<VMPowerSwitchErrorKind>(allVMPowerSwitchErrorKinds)
