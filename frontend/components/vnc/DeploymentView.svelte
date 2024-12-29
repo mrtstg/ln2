@@ -78,7 +78,12 @@
         </div>
         {#each Object.entries(deploymentData.vmMap) as [key, value]}
           {#if activeVM == key }
-            <NoVnc url={getVNCLink(value)} {showDesktopName}/>
+            <NoVnc 
+              url={getVNCLink(value)} 
+              {showDesktopName}
+              getPowerCallback={() => { return api.getVMPowerState(value)}}
+              setPowerCallback={() => { return api.switchVMPowerState(value)}}
+            />
           {/if}
         {/each}
       {/if}
