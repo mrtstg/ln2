@@ -1,12 +1,14 @@
 <script lang="ts">
   import NoVnc from "../../components/vnc/NoVNC.svelte";
   import { generateVNCLink, suggestWSProto } from "../../api/utils/vnc"
+  import { ApiClient } from "../../api/client"
 
   //@ts-ignore
   const proto = suggestWSProto(window, WS_PROTO);
 
   //@ts-ignore
   let url: string = API_URL;
+  let api: ApiClient = new ApiClient(url)
   if (url.length == 0) {
     url = window.location.host
   }
@@ -27,5 +29,9 @@
   {#if isDev}
     { JSON.stringify(proto + "://" + url + generateVNCLink(vmID)) }
   {/if}
-  <NoVnc url={proto + "://" + url + generateVNCLink(vmID)}/>
+  <NoVnc 
+    url={proto + "://" + url + generateVNCLink(vmID)}
+    getPowerCallback={() => { return api.getVMPowerState(vmID)}}
+    setPowerCallback={() => { return api.switchVMPowerState(vmID)}}
+  />
 {/if}
