@@ -93,6 +93,7 @@ data DeployVM = TemplateDeployVM
   , getDeployVMStorage           :: !(Maybe Text)
   , getDeployVMStartDelay        :: !Int
   , getDeployVMCpuLimit          :: !Float
+  , getDeployVMIndex             :: !Int
   } deriving Show
 
 instance FromJSON DeployVM where
@@ -111,6 +112,7 @@ instance FromJSON DeployVM where
       <*> v .:? "storage"
       <*> v .:? "startDelay" .!= 0
       <*> v .:? "cpuLimit" .!= 0
+      <*> v .:? "index" .!= 0
     _unknownType -> fail "Unknown type!"
 
 instance ToJSON DeployVM where
@@ -127,6 +129,7 @@ instance ToJSON DeployVM where
     , "userAvailable" .= getDeployVMUserAvailable
     , "startDelay" .= getDeployVMStartDelay
     , "cpuLimit" .= getDeployVMCpuLimit
+    , "index" .= getDeployVMIndex
     ] <> storageF where
       storageF = case getDeployVMStorage of
         Nothing            -> []
