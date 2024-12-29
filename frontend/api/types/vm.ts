@@ -13,6 +13,7 @@ export type TemplateVM = {
   storage: string | null,
   startDelay: number,
   cpuLimit: number,
+  index: number
 }
 
 export type VMNetworkInterface = {
