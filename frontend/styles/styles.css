@@ -20,7 +20,7 @@
 }
 
 .vmbody {
-    @apply dark:bg-[#282828];
+    @apply dark:bg-[#282828] h-screen w-screen;
 }
 
 .icon {
