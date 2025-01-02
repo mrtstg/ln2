@@ -24,6 +24,7 @@ $doctype 5
     <meta charset=utf-8>
     ^{pageHead pc}
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/bulma.min.css">
     <link rel=stylesheet href=/static/css/styles.css>
   <body .vmbody>
     ^{pageBody pc}
