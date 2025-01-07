@@ -10,6 +10,13 @@ PROD_COMPOSE_FILE=deployment/prod.docker-compose.yml
 PROCFILE_DIR=procfiles
 BUILD_IMAGES := $(shell cat $(shell find ./ -name "Dockerfile" 2> /dev/null) | grep FROM | cut -f2 -d ' ' | sort -u | grep -vE \(ln2-haskell\|rust-chef\|scratch\))
 DEPLOY_IMAGES := $(shell cat $(PROD_COMPOSE_FILE) | grep 'image:' | grep -vE 'ln2' | sort -u | sed 's/image://g' | sed 's/[[:blank:]]//g')
+CA_PATH=./ca
+
+$(CA_PATH):
+	mkdir -p $(CA_PATH)
+
+build-ca: ./deployment/ssl/Dockerfile $(CA_PATH)
+	docker build --build-arg domain="ln2.mrtstg.ru" -f ./deployment/ssl/Dockerfile --output=$(CA_PATH) .
 
 build-nginx: ./deployment/nginx/Dockerfile
 	docker build -t ln2-nginx -f ./deployment/nginx/Dockerfile .
