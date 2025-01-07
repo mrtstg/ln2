@@ -12,5 +12,6 @@ FROM nginx:stable-alpine
 COPY deployment/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY deployment/nginx/prod.conf /etc/nginx/conf.d/site.conf
 COPY static /static
+COPY ca /etc/ssl/ca/
 COPY --from=builder /project/static/css/* /static/css/
 COPY --from=builder /project/static/js/* /static/js/
