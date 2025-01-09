@@ -44,7 +44,7 @@ services:
     hostname: nginx
     restart: unless-stopped
     ports:
-      - 8000:8000
+      - ${NGINX_PORT:-8000}:${NGINX_PORT:-8000}
     depends_on:
       - prod-main-site
   prod-md-api:
