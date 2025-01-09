@@ -8,10 +8,9 @@
 
 # Развертывание
 
-    Система для запуска: любой дистрибутив Linux с поддержкой Docker и make
+    Система для запуска: любой дистрибутив Linux с поддержкой Docker и make. Требуется buildx плагин для Docker.
 
-- Установить make
-- Собрать образ nginx и frontend проекта. Для варианта хостинга за реверс-прокси существует опция сборки nginx, который функционирует по HTTP.
+Соберите образ nginx и frontend проекта. Для варианта хостинга за реверс-прокси существует опция сборки nginx, который функционирует по HTTP.
 ```bash
 make build-nginx
 ```
@@ -24,19 +23,19 @@ make build-nginx
 make build-nginx-ssl
 ```
 
-- Собрать образ websockify
+Соберите образ websockify
 ```bash
 make build-websockify
 ```
-- Собрать базовый образ для сборки сервисов на Haskell
+Соберите базовый образ для сборки сервисов на Haskell
 ```bash
 make build-lib-image
 ```
-- Запустить сборку образов сервисов
+Запустите сборку образов сервисов
 ```bash
 make build-images
 ```
-- Скопируйте образец env-файла для запуска в Docker. Поправьте по необходимости адрес Unix-сокета Docker (строка `DOCKER_SOCKET`).
+Скопируйте образец env-файла для запуска в Docker. Поправьте по необходимости адрес Unix-сокета Docker (строка `DOCKER_SOCKET`).
 Сгенерируйте и вставьте секретный ключ для JWT аутентификации (например, при помощи команды `openssl rand -hex 32`) в поле `AUTH_JWT_SECRET`.
 Укажите IP Proxmox-ноды вместо `<ip>`, впишите название ноды в поле `PROXMOX_NODE_NAME`. Создайте токен и впишите его данные в поля 
 `PROXMOX_API_TOKEN_SECRET` и `PROXMOX_API_TOKEN_ID`. 
@@ -52,24 +51,24 @@ make build-images
 ```bash
 cp docker-sample.env docker.env # скопировать образец, если не делали этого раньше
 ```
-- Соберите и установите Proxmox-агент на используемую ноду (см. секцию ниже)
-- Запустите сервисы. Миграции базы данных выполнятся автоматически.
+Соберите и установите Proxmox-агент на используемую ноду (см. секцию ниже)
+Запустите сервисы. Миграции базы данных выполнятся автоматически.
 ```bash
 make deploy-prod
 ```
-- Выпустите токен, используемые для взаимодействия между сервисами и поместите его в поле `SERVICE_ACCESS_TOKEN`
+Выпустите токен, используемые для взаимодействия между сервисами и поместите его в поле `SERVICE_ACCESS_TOKEN`
 ```bash
 docker exec ln2-prod-auth /usr/src/app/haskell-binary issue-token -s common
 ```
-- Создайте базовые роли
+Создайте базовые роли
 ```bash
 docker exec ln2-prod-auth /usr/src/app/haskell-binary create-roles
 ```
-- Создайте администратора для управления платформой
+Создайте администратора для управления платформой
 ```bash
 docker exec ln2-prod-auth /usr/src/app/haskell-binary create-admin --login admin [--password P@ssw0rd] [--name Administrator]
 ```
-- Перезапустите сервисы с новым токеном. Попробуйте получить доступ к платформе по адресу `http://<ip>:8000`
+Перезапустите сервисы с новым токеном. Попробуйте получить доступ к платформе по адресу `http://<ip>:8000` (или `https://<domain>`, если используете NGINX с HTTPS)
 ```bash
 make destroy-prod && make deploy-prod
 docker restart ln2-prod-nginx # на всякий, иногда upstream'ы падают
