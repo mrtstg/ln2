@@ -28,6 +28,11 @@ services:
     restart: unless-stopped
     env_file:
       - ../.env
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 3s
+      timeout: 3s
+      retries: 5
   dev-websocket:
     image: ln2-websockify
     container_name: ln2-dev-websockify
