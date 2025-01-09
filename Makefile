@@ -16,10 +16,13 @@ $(CA_PATH):
 	mkdir -p $(CA_PATH)
 
 build-ca: ./deployment/ssl/Dockerfile $(CA_PATH)
-	docker build --build-arg domain="example.com" -f ./deployment/ssl/Dockerfile --output=$(CA_PATH) .
+	docker build --build-arg domain="ln2.mrtstg.local" -f ./deployment/ssl/Dockerfile --output=$(CA_PATH) .
 
 build-nginx: ./deployment/nginx/Dockerfile
 	docker build -t ln2-nginx -f ./deployment/nginx/Dockerfile .
+
+build-nginx-ssl: ./deployment/nginx/Dockerfile
+	docker build --build-arg config="deployment/nginx/prod-ssl.conf" -f ./deployment/nginx/Dockerfile -t ln2-nginx .
 
 build-websockify: ./deployment/websockify/Dockerfile
 	docker build -t ln2-websockify -f ./deployment/websockify/Dockerfile .

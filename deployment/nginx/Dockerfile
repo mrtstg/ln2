@@ -9,8 +9,9 @@ RUN ["make", "download-bulma"]
 RUN ["make", "build-frontend"]
 
 FROM nginx:stable-alpine
+ARG config=deployment/nginx/prod.conf
 COPY deployment/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY deployment/nginx/prod.conf /etc/nginx/conf.d/site.conf
+COPY $config /etc/nginx/conf.d/site.conf
 COPY static /static
 COPY ca /etc/ssl/ca/
 COPY --from=builder /project/static/css/* /static/css/
