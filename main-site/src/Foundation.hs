@@ -88,6 +88,7 @@ mkYesodData
 /course/#CourseId/members CourseMembersR GET
 /solves/course/#CourseId/ CourseSolvesR GET
 /solves/tasks/#CourseId/#Int/ CourseUserTasksR GET
+/solves/tasks/#CourseTaskId CourseTaskSolvesR GET
 /solves/task/#CourseTaskId/#Int/ UserTaskSolvesR GET
 /solves/solve/#CourseSolvesId UserSolveR GET
 /task/#CourseTaskId CourseTaskR GET
@@ -104,6 +105,7 @@ mkYesodData
 /api/assign/#CourseId/#Text AssignMemberR GET
 /api/assign/role/teacher/#Text AssignTeacherR GET
 /api/query/course/#Text QueryCourseR GET
+/api/query/task/#CourseTaskId QueryCourseByTaskR GET
 /api/courses/#CourseId ApiCourseIdR GET PATCH DELETE
 /api/course/#CourseId/task ApiCourseTaskR POST GET
 /api/task/#CourseTaskId ApiTaskR DELETE GET PATCH
