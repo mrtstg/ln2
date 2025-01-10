@@ -461,6 +461,20 @@ export class ApiClient {
     }
   }
   
+  async queryCourseUsersByTask(taskId: string, query: string, getMembers: boolean, getAdmins: boolean, page: number): Promise<PageWrapper<Array<UserDetails>> | null> {
+    try {
+      const { data } = await this.client.get("/api/query/task/" + taskId, {params: {
+        getMembers: getMembers ? '1' : '0',
+        getAdmins: getAdmins ? '1' : '0',
+        query: query,
+        page: page
+      }})
+      return data
+    } catch (error) {
+      return null
+    }
+  }
+
   async queryCourseUsers(courseId: string, query: string, getMembers: boolean, getAdmins: boolean, page: number): Promise<PageWrapper<Array<UserDetails>> | null> {
     try {
       const { data } = await this.client.get("/api/query/course/" + courseId, {params: {
