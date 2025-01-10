@@ -7,17 +7,21 @@ module Crud.VMIds
   ) where
 
 import           Api.Proxmox.VM
+import           Data.Functor                      ((<&>))
 import           Data.Models.Proxmox.API.VM        (ProxmoxVM (getProxmoxVMId))
 import           Data.Models.Proxmox.Configuration
 import           Data.Text                         (Text)
 import           Database.Persist
 import           Foundation
+import           Foundation.Class
 import           Utils.IO                          (retryIOEither')
 import           Yesod.Core
 import           Yesod.Persist
 
-vmIDsRange :: [Int]
-vmIDsRange = [100..999999999]
+vmIDsRange :: (StartVMIDApp a) => HandlerFor a [Int]
+vmIDsRange = do
+  startVMID' <- getYesod <&> max 100 . startVMID
+  pure [startVMID'..999999999]
 
 -- returns VERY big list
 suggestVMIds :: ProxmoxConfiguration -> Handler (Either String [Int])
@@ -29,7 +33,7 @@ suggestVMIds conf = do
       let vmIds = map getProxmoxVMId vms
       dbMachines <- runDB $ selectList [] []
       let dbMachinesId = map (\(Entity _ e) -> reservedMachineNumber e) dbMachines
-      (return . Right) $ filter (\el -> el `notElem` vmIds && el `notElem` dbMachinesId) vmIDsRange
+      vmIDsRange <&> Right . filter (\el -> el `notElem` vmIds && el `notElem` dbMachinesId)
 
 freeVMIds :: [Int] -> Handler ()
 freeVMIds vmIds = runDB $ do

@@ -8,10 +8,13 @@ module Crud.DisplayNumbers
   , reserveDisplays
   ) where
 
+import           Data.Functor     ((<&>))
 import           Data.Maybe       (fromMaybe)
 import           Data.Text        (Text)
 import           Database.Persist
 import           Foundation
+import           Foundation.Class
+import           Yesod.Core
 import           Yesod.Persist
 
 portToDisplayNumber :: Int -> Int
@@ -20,9 +23,11 @@ portToDisplayNumber n = n - 5900
 displayNumberToPort :: Int -> Int
 displayNumberToPort = (+ 5900)
 
-displayNumbers :: [Int]
+displayNumbers :: (StartDisplayApp a) => HandlerFor a [Int]
 -- taking up to 30000 port
-displayNumbers = filter excludePorts [1..24100] where
+displayNumbers = do
+  startDisplay' <- getYesod <&> max 1 . startDisplay
+  return $ filter excludePorts [startDisplay'..24100] where
   excludePorts :: Int -> Bool
   -- 8006 port - proxmox UI
   excludePorts 2106 = False
@@ -34,7 +39,7 @@ suggestDisplayNumbers :: Handler [Int]
 suggestDisplayNumbers = do
   displays <- runDB $ selectList [] []
   let displayNumbers' = map (\(Entity _ e) -> takenDisplayNumber e) displays
-  return $ filter (`notElem` displayNumbers') displayNumbers
+  displayNumbers <&> filter (`notElem` displayNumbers')
 
 freeDisplayNumbers :: [Int] -> Handler ()
 freeDisplayNumbers displayNums = runDB $ do

@@ -39,6 +39,8 @@ data App = App
   , devEnabled             :: !Bool
   , bypassAuth             :: !Bool
   , redisConnection        :: !Redis.Connection
+  , startDisplayValue      :: !Int
+  , startVMIDValue         :: !Int
   }
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
@@ -95,6 +97,12 @@ instance EndpointsApp App where
 
 instance AuthBypassApp App where
   appAuthBypass (App { .. }) = bypassAuth
+
+instance StartDisplayApp App where
+  startDisplay (App { .. }) = startDisplayValue
+
+instance StartVMIDApp App where
+  startVMID (App { .. }) = startVMIDValue
 
 instance Yesod App where
   makeSessionBackend _ = return Nothing

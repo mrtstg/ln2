@@ -18,6 +18,8 @@ import           App.Types
 import           Control.Monad                      (when)
 import           Control.Monad.Logger               (runStdoutLoggingT)
 import qualified Data.ByteString.Char8              as BS
+import           Data.Functor                       ((<&>))
+import           Data.Maybe                         (fromMaybe)
 import           Data.Models.Endpoints
 import           Data.Models.Proxmox.API.SDNNetwork (defaultSDNNetworkCreate)
 import           Data.Models.Proxmox.Configuration
@@ -105,7 +107,19 @@ runServerCommand port = do
                   case redis' of
                     Nothing -> putStrLn "No redis config provided"
                     (Just redis) -> do
-                      let app = App postgresPool endpoints rabbitConn proxmoxConf devEnabled bypassAuth redis
+                      startDisplay <- lookupEnvInt "PROXMOX_START_DISPLAY" <&> fromMaybe 1
+                      startVMID <- lookupEnvInt "PROXMOX_START_VMID" <&> fromMaybe 100
+                      let app = App {
+                          startVMIDValue=startVMID
+                        , startDisplayValue=startDisplay
+                        , redisConnection=redis
+                        , rabbitConnection=rabbitConn
+                        , proxmoxConfiguration=proxmoxConf
+                        , postgresqlPool=postgresPool
+                        , endpointsConfiguration=endpoints
+                        , devEnabled=devEnabled
+                        , bypassAuth=bypassAuth
+                        }
                       () <- declareSDN proxmoxConf
                       _ <- prepareRabbitConsumer rabbitConn (rabbitResultConsumer app)
                       _ <- prepareRabbitQuery rabbitConn
