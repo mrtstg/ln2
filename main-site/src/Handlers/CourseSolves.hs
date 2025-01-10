@@ -6,6 +6,7 @@ module Handlers.CourseSolves
   , getCourseUserTasksR
   , getUserTaskSolvesR
   , getUserSolveR
+  , getCourseTaskSolvesR
   ) where
 
 import           Api                           (ApiPageWrapper (..))
@@ -118,37 +119,41 @@ getUserTaskSolvesR ctId uId = let
   case courseTask' of
     Nothing -> notFound
     (Just (CourseTask { courseTaskCourse = cId@(CourseKey cId'), courseTaskType = taskType', .. })) -> do
-      case courseTaskTypeFromString taskType' of
-        Nothing -> redirect $ CourseSolvesR cId
-        (Just taskType) -> do
-          userData' <- liftIO $ getUserById' uId
-          case userData' of
-            (UserGetResult (UserDetails { .. })) -> do
-              if not $ isUserCourseAdmin cId' roles then permissionDenied "У вас нет доступа к курсу!" else do
-                pageN <- getPageNumber
-                -- TODO: rework this shi
-                (solves, solvesTotal) <- if taskType == ContainerTask then getTaskSolves pageN uId ctId else return ([], 0)
+      if not $ isUserCourseAdmin cId' roles then permissionDenied "У вас нет доступа к курсу!" else do
+        course' <- runDB $ get cId
+        case courseTaskTypeFromString taskType' of
+          Nothing -> redirect $ CourseTaskSolvesR ctId
+          (Just taskType) -> do
+            case course' of
+              Nothing                -> notFound
+              (Just (Course { .. })) -> do
+                userData' <- liftIO $ getUserById' uId
+                case userData' of
+                  (UserGetResult (UserDetails { .. })) -> do
+                    pageN <- getPageNumber
+                    -- TODO: rework this shi
+                    (solves, solvesTotal) <- if taskType == ContainerTask then getTaskSolves pageN uId ctId else return ([], 0)
 
-                App { endpointsConfiguration = endpoints } <- getYesod
-                let solvesIds = map ((\(CourseSolvesKey tId) -> tId) . entityKey) solves
-                rawTasks <- liftIO $ if taskType == ContainerTask then retrieveTasks endpoints solvesIds else return M.empty
-                let tasksMap = unwrapTaskMap rawTasks
-                let tasksFullyLoaded = length solvesIds == M.size tasksMap && all (isJust . getWrapperResult . snd) (M.toList tasksMap)
-                taskAccepted <- runDB $ exists [ CourseSolveAcceptionTaskId ==. ctId, CourseSolveAcceptionUserId ==. uId ]
+                    App { endpointsConfiguration = endpoints } <- getYesod
+                    let solvesIds = map ((\(CourseSolvesKey tId) -> tId) . entityKey) solves
+                    rawTasks <- liftIO $ if taskType == ContainerTask then retrieveTasks endpoints solvesIds else return M.empty
+                    let tasksMap = unwrapTaskMap rawTasks
+                    let tasksFullyLoaded = length solvesIds == M.size tasksMap && all (isJust . getWrapperResult . snd) (M.toList tasksMap)
+                    taskAccepted <- runDB $ exists [ CourseSolveAcceptionTaskId ==. ctId, CourseSolveAcceptionUserId ==. uId ]
 
-                taskDeployment <- getTaskDeployment taskType
-                defaultLayout $ do
-                  setTitle (toHtml $ courseTaskName <> ": " <> getUserDetailsName)
-                  [whamlet|
+                    taskDeployment <- getTaskDeployment taskType
+                    defaultLayout $ do
+                      setTitle (toHtml $ courseTaskName <> ": " <> getUserDetailsName)
+                      [whamlet|
 <div .container.pt-2.py-3>
   <nav .breadcrumb>
     <ul>
       <li>
         <a href=@{AdminCoursesR}> Курсы
       <li>
-        <a href=@{CourseSolvesR cId}> Выбранный курс
+        <a href=@{CourseSolvesR cId}> #{courseName}
       <li>
-        <a href=@{CourseUserTasksR cId uId}> Выбранный пользователь
+        <a href=@{CourseUserTasksR cId uId}> #{getUserDetailsName}
       <li .is-active>
         <a href=#> #{courseTaskName}
   <h1 .title.pb-3> #{getUserDetailsName}: решения задачи #{courseTaskName}
@@ -218,7 +223,7 @@ getUserTaskSolvesR ctId uId = let
             $forall (k, v) <- M.toList getDeploymentVMMap
               <a href=@{VMConsoleR v} target=_blank .button.is-link> #{k}
 |]
-            _anyError -> redirect $ CourseSolvesR cId
+                  _anyError -> redirect $ CourseSolvesR cId
 
 getUserSolveR :: CourseSolvesId -> Handler Html
 getUserSolveR csId@(CourseSolvesKey csId') = do
@@ -270,4 +275,33 @@ getUserSolveR csId@(CourseSolvesKey csId') = do
           <p> Ошибка!
         <div .message-body>
           Решение не удалось загрузить или оно более не хранится в базе.
+|]
+
+getCourseTaskSolvesR :: CourseTaskId -> Handler Html
+getCourseTaskSolvesR ctId = do
+  (UserDetails { getUserRoles = roles }) <- requireUserAuth
+  courseTask' <- runDB $ get ctId
+  case courseTask' of
+    Nothing -> notFound
+    (Just (CourseTask { courseTaskCourse = cId@(CourseKey courseId),.. })) -> do
+      course' <- runDB $ get cId
+      case course' of
+        Nothing -> notFound
+        (Just (Course { .. })) -> do
+          if not $ isUserCourseAdmin courseId roles then permissionDenied "У вас нет доступа к курсу!" else do
+            defaultLayout $ do
+              setTitle (toHtml $ "Решения пользователей: " <> courseName)
+              [whamlet|
+<div .container.pt-2.py-3>
+  <nav .breadcrumb>
+    <ul>
+      <li>
+        <a href=@{AdminCoursesR}> Курсы
+      <li>
+        <a href=@{CourseSolvesR cId}> #{courseName}
+      <li .is-active>
+        <a href=#> #{courseTaskName}
+  <h1 .title.pb-3> #{courseTaskName}: решения пользователей
+  <div #app>
+<script src=/static/js/courseTaskSolvesForm.js>
 |]

@@ -111,7 +111,7 @@ getCourseR cId@(CourseKey courseUUID) = do
             $if isAdmin
               <footer .card-footer>
                 <a .card-footer-item href=@{CourseTaskEditR cId tId}> Редактировать
-                <a .card-footer-item href=@{CourseSolvesR cId}> Решения
+                <a .card-footer-item href=@{CourseTaskSolvesR tId}> Решения
   <div .is-flex.is-flex-direction-row.is-justify-content-center.is-align-content-center>
     <a href=@{CourseR cId}?page=#{pageV - 1}>
       <button .button.is-primary.mx-3 :pageV == 1:disabled> Назад
