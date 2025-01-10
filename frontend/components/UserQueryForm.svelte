@@ -8,7 +8,8 @@
   import NumberPagination from "./NumberPagination.svelte"
 
   export let apiUrl: string
-  export let courseId: string
+  export let courseId: string | null = null
+  export let taskId: string | null = null
   export let getMembers: boolean = true
   export let getAdmins: boolean = false
   export let pageNumber: number = 1
@@ -21,7 +22,13 @@
   $: query = ''
 
   export const queryWrapper = () => {
-    loadCallback = client.queryCourseUsers(courseId, query, getMembers, getAdmins, pageNumber)
+    if (courseId != null) {
+      loadCallback = client.queryCourseUsers(courseId, query, getMembers, getAdmins, pageNumber)
+    } else if (taskId != null) {
+      loadCallback = client.queryCourseUsersByTask(taskId, query, getMembers, getAdmins, pageNumber)
+    } else {
+      loadCallback = null
+    }
   }
 
   let loadCallback: Promise<PageWrapper<Array<UserDetails>> | null> | null = null
