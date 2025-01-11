@@ -135,13 +135,14 @@ postDeploymentsR = do
                             })
                           sendStatusJSON status200 $ object ["id" .= deploymentId]
 
+-- local functions for access check
+isCourseAdmin' (TokenAuth {}) _                  = True
+isCourseAdmin' (UserAuth (UserDetails { .. })) f = f getUserRoles
+isDeploymentOwner' _ (TokenAuth {}) = False
+isDeploymentOwner' ownerId (UserAuth (UserDetails { getUserDetailsId = uId })) = ownerId == uId
+
 deleteDeploymentR :: String -> Handler Value
-deleteDeploymentR deploymentId' = let
-  isCourseAdmin' (TokenAuth {}) _                  = True
-  isCourseAdmin' (UserAuth (UserDetails { .. })) f = f getUserRoles
-  isDeploymentOwner' _ (TokenAuth {}) = False
-  isDeploymentOwner' ownerId (UserAuth (UserDetails { getUserDetailsId = uId })) = ownerId == uId
-  in do
+deleteDeploymentR deploymentId' = do
   authSrc <- requireApiAuth
   let deploymentId = MachineDeploymentKey deploymentId'
   deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
@@ -187,11 +188,15 @@ getDeploymentR deploymentId' = let
   deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
   case deployment' of
     Nothing -> sendStatusJSON status404 $ object [ "error" .= T.pack "Deployment not found" ]
-    (Just e@(Entity _ (MachineDeployment {}))) -> do
-      case toMachineDeploymentRead showHiddenVM e of
-        (Left e') -> sendStatusJSON status400 $ object [ "error" .= e']
-        (Right payload) -> do
-          sendStatusJSON status200 payload
+    (Just e@(Entity _ (MachineDeployment { .. }))) -> do
+      let isCourseAdmin = isCourseAdmin' authSrc (isUserCourseAdmin machineDeploymentCourseId)
+      let isDeploymentOwner = isDeploymentOwner' machineDeploymentUserId authSrc
+      if isCourseAdmin || isDeploymentOwner then do
+        case toMachineDeploymentRead showHiddenVM e of
+          (Left e') -> sendStatusJSON status400 $ object [ "error" .= e']
+          (Right payload) -> do
+            sendStatusJSON status200 payload
+      else sendStatusJSON status403 $ object [ "error" .= String "Unauthorized" ]
 
 deploymentQueryToOpts :: DeploymentQuery -> ([SelectOpt MachineDeployment], [Filter MachineDeployment])
 deploymentQueryToOpts q = let
