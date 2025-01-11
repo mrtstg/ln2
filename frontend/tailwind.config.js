@@ -6,6 +6,9 @@ module.exports = {
     "./components/**/*.svelte", 
     "../main-site/*.hs", 
   ],
+  safelist: [
+    'h-screen'
+  ],
   theme: {
     extend: {},
   },

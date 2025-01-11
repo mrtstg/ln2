@@ -54,6 +54,7 @@ library
       Handlers.CourseTask
       Handlers.CourseTaskEdit
       Handlers.Deployments
+      Handlers.DeploymentView
       Handlers.DeployTask
       Handlers.ImportUser
       Handlers.Index

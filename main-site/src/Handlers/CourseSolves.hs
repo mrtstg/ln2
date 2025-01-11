@@ -24,6 +24,7 @@ import           Data.Models.Deployment
 import           Data.Models.Deployment.Api
 import           Data.Models.StandCheckResult
 import           Data.Models.User
+import           Data.Text                     (pack)
 import           Data.Text.Encoding            (decodeUtf8)
 import           Database.Persist
 import           Database.Persist.Postgresql   (fromSqlKey)
@@ -218,10 +219,8 @@ getUserTaskSolvesR ctId uId = let
           <script>
             setTimeout(() => window.location.reload(), 5000)
         $of (Just (Deployment { .. }))
-          <h2 .subtitle> Доступные для подключения VM
-          <div .buttons>
-            $forall (k, v) <- M.toList getDeploymentVMMap
-              <a href=@{VMConsoleR v} target=_blank .button.is-link> #{k}
+          <div .flex.flex-col.w-full.h-screen>
+            <iframe .grow.overflow-hidden frameborder=0 allowtransparency=true scrolling=no src=@{DeploymentViewR (pack getDeploymentId)} seamless>
 |]
                   _anyError -> redirect $ CourseSolvesR cId
 
