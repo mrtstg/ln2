@@ -178,12 +178,11 @@ deleteDeploymentR deploymentId' = do
 -- TODO: seems, users do not use this endpoint, but need to ensure that nothing is not hidden from admin, for example
 getDeploymentR :: String -> Handler Value
 getDeploymentR deploymentId' = let
-  f :: AuthSource -> Bool
-  f (TokenAuth {}) = True
-  f (UserAuth {})  = False
+  f :: (UserDetails -> Bool) -> AuthSource -> Bool
+  f _ (TokenAuth {}) = True
+  f f' (UserAuth d)  = f' d
   in do
   authSrc <- requireApiAuth
-  let showHiddenVM = f authSrc
   let deploymentId = MachineDeploymentKey deploymentId'
   deployment' <- runDB $ selectFirst [ MachineDeploymentId ==. deploymentId ] []
   case deployment' of
@@ -192,6 +191,7 @@ getDeploymentR deploymentId' = let
       let isCourseAdmin = isCourseAdmin' authSrc (isUserCourseAdmin machineDeploymentCourseId)
       let isDeploymentOwner = isDeploymentOwner' machineDeploymentUserId authSrc
       if isCourseAdmin || isDeploymentOwner then do
+        let showHiddenVM = f (const isCourseAdmin) authSrc
         case toMachineDeploymentRead showHiddenVM e of
           (Left e') -> sendStatusJSON status400 $ object [ "error" .= e']
           (Right payload) -> do
