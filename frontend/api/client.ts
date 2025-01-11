@@ -397,6 +397,21 @@ export class ApiClient {
     }
   }
 
+  async getDeployment(deploymentId: string): Promise<DeploymentRead | string> {
+    try {
+      const { data } = await this.client.get<DeploymentRead>("/api/deployment/" + deploymentId)
+      return data
+    } catch (error) {
+      if (error.response) {
+        if (error.response.data.error) {
+          return error.response.data.error
+        }
+      }
+
+      return 'unknown'
+    }
+  }
+
   async getCourseTaskDeployment(taskId: number): Promise<TaskDeploymentWrapper | string> {
     try {
       const { data } = await this.client.get<TaskDeploymentWrapper>("/api/task/" + taskId + "/deploy")
