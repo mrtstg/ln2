@@ -82,4 +82,4 @@
 {/if}
 {#if deploymentPromise != null && typeof currentState != 'string' && currentState != null}
   <DeploymentView showDesktopName={true} wsHost={wsUrl} wsProto={wsProto} deploymentData={currentState} apiUrl={url} showTaskName={false}/>
-{/if}
+{/if}
