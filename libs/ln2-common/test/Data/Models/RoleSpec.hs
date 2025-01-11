@@ -15,4 +15,9 @@ spec = do
       adminRoleGranted [RoleDetails "Admins" ""] `shouldBe` False
       adminRoleGranted [RoleDetails "users" "", RoleDetails "???" ""] `shouldBe` False
       adminRoleGranted [RoleDetails "users" "admins"] `shouldBe` False
+      adminRoleGranted [RoleDetails "admins-123" ""] `shouldBe` False
+  describe "Course id extraction test" $ do
+    it "Positive tests" $ do
+      getUserAdminCourses' [RoleDetails "admins-123" ""] `shouldBe` ["123"]
+      getUserAdminCourses' [RoleDetails "members-123" ""] `shouldBe` []
 
