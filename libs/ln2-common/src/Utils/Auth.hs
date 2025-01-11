@@ -17,7 +17,7 @@ import qualified Data.Text             as T
 
 getUserAdminCourses' :: [RoleDetails] -> [String]
 getUserAdminCourses' roles = map (\(RoleDetails name _) -> (unpack . T.drop 7) name) $
-  filter (\(RoleDetails name _ ) -> T.take 8 name == "admins-") roles
+  filter (\(RoleDetails name _ ) -> T.take 7 name == "admins-") roles
 
 getUserMemberCourses' :: [RoleDetails] -> [String]
 getUserMemberCourses' roles = map (\(RoleDetails name _) -> (unpack . T.drop 8) name) $
