@@ -17,6 +17,7 @@ import           Handlers.Auth
 import           Handlers.Utils
 import           Network.HTTP.Types
 import           Redis
+import           Utils.Auth
 import           Utils.IO
 import           Yesod.Core
 
@@ -32,7 +33,8 @@ findDeploymentByPort' vmPort = let
 
   deploymentFilter :: AuthSource -> [Filter MachineDeployment]
   deploymentFilter (TokenAuth {}) = []
-  deploymentFilter (UserAuth UserDetails { getUserDetailsId = uid }) = [MachineDeploymentUserId ==. uid]
+  deploymentFilter (UserAuth UserDetails { getUserDetailsId = uid, getUserRoles = roles }) = if adminRoleGranted roles then [] else
+    [MachineDeploymentUserId ==. uid] ||. [MachineDeploymentCourseId <-. getUserAdminCourses' roles]
   in do
   let displayNumber = portToDisplayNumber vmPort
   authSrc <- requireApiAuthFH (f displayNumber)
