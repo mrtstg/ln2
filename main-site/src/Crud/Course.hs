@@ -108,6 +108,11 @@ deleteCourse courseUUID = do
   if courseExists then do
     _ <- liftIO $ deleteRole' roleName
     _ <- liftIO $ deleteRole' adminsRoleName
-    runDB $ delete (CourseKey courseUUID)
+    runDB $ do
+      courseTasks <- selectKeysList [ CourseTaskCourse ==. CourseKey courseUUID ] []
+      deleteWhere [ CourseSolvesTaskId <-. courseTasks ]
+      deleteWhere [ CourseSolveAcceptionTaskId <-. courseTasks ]
+      deleteWhere [ CourseTaskCourse ==. CourseKey courseUUID ]
+      delete (CourseKey courseUUID)
     return True
   else return False
