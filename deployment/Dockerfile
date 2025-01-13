@@ -1,4 +1,5 @@
 FROM haskell:9.4.7-buster AS builder
+RUN stack update
 RUN apt-get update && apt-get install make -y
 WORKDIR /ln2
 COPY . .
