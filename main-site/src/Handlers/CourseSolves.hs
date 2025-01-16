@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
 module Handlers.CourseSolves
   ( getCourseSolvesR
   , getCourseUserTasksR
@@ -123,7 +124,9 @@ getUserTaskSolvesR ctId uId = let
       if not $ isUserCourseAdmin cId' roles then permissionDenied "У вас нет доступа к курсу!" else do
         course' <- runDB $ get cId
         case courseTaskTypeFromString taskType' of
-          Nothing -> redirect $ CourseTaskSolvesR ctId
+          Nothing -> do
+            $logError $ pack ("Failed to parse task type: " <> taskType')
+            permissionDenied "Некорректная конфигурация задания!"
           (Just taskType) -> do
             case course' of
               Nothing                -> notFound
