@@ -18,7 +18,7 @@ import           Data.Text                          (Text)
 data CourseTaskType = ContainerTask | VMTask deriving (Eq, Enum)
 
 instance Show CourseTaskType where
-  show ContainerTask = "contaner"
+  show ContainerTask = "container"
   show VMTask        = "vm"
 
 courseTaskTypeFromString :: String -> Maybe CourseTaskType
