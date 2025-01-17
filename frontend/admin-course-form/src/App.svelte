@@ -6,7 +6,7 @@
   import DangerMessage from "../../components/DangerMessage.svelte"
   import CheckStageWidget from "../../components/CheckStage.svelte"
   import SuccessMessage from "../../components/SuccessMessage.svelte"
-  import { processStageData, countStages, type StageData, stageTypeList, StageType, type CheckStage, defaultCheckStageData } from "../../api/checkStage" 
+  import { processStageData, countStages, stageTypeList, StageType, type CheckStage, defaultCheckStageData } from "../../api/checkStage" 
   import { courseErrorsToString, courseTaskErrorToString, deleteCourseErrorToString } from "../../api/utils"
   import { courseTaskTypeToString } from "../../api/utils/courseTask"
   import * as VM from "../../api/types/vm"
@@ -202,7 +202,9 @@
       stages = []
       standVMs = []
       standNetworks = []
-      updateAvailableNetworks()
+      if (updateAvailableNetworks != undefined) {
+        updateAvailableNetworks()
+      }
       if (exit) {
         window.location.replace("/course/" + courseID)
         return
@@ -355,7 +357,6 @@
     {/await}
   {:else if taskType == 'vm'}
     <StandForm apiUrl={url} bind:standVMs={standVMs} bind:standNetworks={standNetworks} bind:updateAvailableNetworks={updateAvailableNetworks}/>
-    <!-- TODO: stand form -->
   {/if}
   <div class="columns is-multiline">
     {#if taskType == 'container'}
