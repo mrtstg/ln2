@@ -53,17 +53,18 @@ pub async fn execute_docker_command(
     docker: &Docker,
     container: &Container,
     command: Vec<&str>,
+    workdir: Option<String>,
 ) -> Result<(String, String, Option<isize>), String> {
-    let exec_instance_res = Exec::create(
-        docker.clone(),
-        container.id(),
-        &ExecCreateOpts::builder()
-            .command(command)
-            .attach_stdout(true)
-            .attach_stderr(true)
-            .build(),
-    )
-    .await;
+    let mut opts_builder = ExecCreateOpts::builder()
+        .command(command)
+        .attach_stdout(true)
+        .attach_stderr(true);
+    if let Some(workdir_v) = workdir {
+        opts_builder = opts_builder.working_dir(workdir_v);
+    }
+
+    let exec_instance_res =
+        Exec::create(docker.clone(), container.id(), &opts_builder.build()).await;
     match exec_instance_res {
         Err(e) => return Err(e.to_string()),
         Ok(exec_instance) => match exec_instance.start(&ExecStartOpts::default()).await {
@@ -128,6 +129,7 @@ pub async fn execute_stand_check(
                         &docker.clone(),
                         container,
                         payload.command.split(" ").collect(),
+                        payload.workdir,
                     )
                     .await
                     {

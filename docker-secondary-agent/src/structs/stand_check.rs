@@ -49,6 +49,7 @@ pub struct ExecuteCommandStage {
     pub record_into: Option<String>,
     #[serde(rename = "reportError")]
     pub report_error: bool,
+    pub workdir: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]

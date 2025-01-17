@@ -91,7 +91,13 @@
     <div class="field">
       <label class="label"> Команда для выполнения </label>
       <div class="control">
-        <input class="input" type="text" placeholder="Команда, например psql -f /a.sql" bind:value={data.data.command} on:change={updateCallbackWrapper }>
+        <input class="input" type="text" placeholder="Команда, например psql -f /a.sql" bind:value={data.data.command} on:change={updateCallbackWrapper}>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label"> Директория выполнения </label>
+      <div class="control">
+        <input class="input" type="text" placeholder="Файловый путь, например /folder" bind:value={data.data.workdir} on:change={updateCallbackWrapper}>
       </div>
     </div>
     <div class="field">

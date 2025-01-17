@@ -19,6 +19,7 @@ data StandCheckStage = CopyFile
   , getStageFormatOutput   :: !Bool
   , getStageRecordVariable :: !(Maybe T.Text)
   , getStageReportError    :: !Bool
+  , getStageWorkDir        :: !(Maybe FilePath)
   }
   | AddPoints
   { getStagePointsAmount :: !Int
@@ -69,6 +70,7 @@ instance ToJSON StandCheckStage where
     , "formatOutput" .= getStageFormatOutput
     , "recordInto" .= getStageRecordVariable
     , "reportError" .= getStageReportError
+    , "workdir" .= getStageWorkDir
     ]
   toJSON (AddPoints { .. }) = object
     [ "action" .= String "points"
@@ -127,6 +129,7 @@ instance FromJSON StandCheckStage where
       <*> v .: "formatOutput"
       <*> v .: "recordInto"
       <*> v .: "reportError"
+      <*> v .:? "workdir"
     (Just (String "points")) -> AddPoints
       <$> v .: "amount"
     (Just (String "compareVars")) -> CompareVariables
