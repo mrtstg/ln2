@@ -17,6 +17,7 @@ use docker_api::opts::ExecCreateOpts;
 use docker_api::opts::ExecStartOpts;
 use docker_api::opts::NetworkCreateOpts;
 use docker_api::opts::PullOpts;
+use docker_api::opts::{ImageFilter, ImageListOpts};
 use docker_api::Exec;
 use docker_api::Images;
 use futures_util::StreamExt;
@@ -393,18 +394,37 @@ pub async fn pull_container_image(
     }
     tag = tag_parts.last().unwrap();
     image = tag_parts.first().unwrap(); // strange, cus image name should not contain :
-
-    debug!("Pulling image {}:{}", image, tag);
-    let mut pull = images.pull(&PullOpts::builder().image(image).tag(tag).build());
-    while let Some(data) = pull.next().await {
-        match data {
-            Ok(pull_chunk) => {
-                debug!("{:?}", pull_chunk);
-                if let ImageBuildChunk::Error { error, .. } = pull_chunk {
-                    return Err(error);
+    let all_images = images
+        .list(
+            &ImageListOpts::builder()
+                .filter([ImageFilter::Reference(
+                    image.to_string(),
+                    Some(tag.to_string()),
+                )])
+                .build(),
+        )
+        .await;
+    match all_images {
+        Err(image_error) => return Err(image_error.to_string()),
+        Ok(images_list) => {
+            let image_amount = images_list.len();
+            if image_amount > 0 {
+                debug!("Found image for {}:{}", image, tag);
+            } else {
+                debug!("Pulling image {}:{}", image, tag);
+                let mut pull = images.pull(&PullOpts::builder().image(image).tag(tag).build());
+                while let Some(data) = pull.next().await {
+                    match data {
+                        Ok(pull_chunk) => {
+                            debug!("{:?}", pull_chunk);
+                            if let ImageBuildChunk::Error { error, .. } = pull_chunk {
+                                return Err(error);
+                            }
+                        }
+                        Err(e) => return Err(e.to_string()),
+                    }
                 }
             }
-            Err(e) => return Err(e.to_string()),
         }
     }
 
