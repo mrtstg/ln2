@@ -18,6 +18,7 @@ import           Crud.CourseTask               (getCourseTasks)
 import           Crud.Task
 import           Crud.TaskSolves               (getAvailableCourseSolveUserIds,
                                                 getTaskSolves)
+import qualified Data.Aeson.KeyMap             as K
 import qualified Data.Map                      as M
 import           Data.Maybe                    (isJust)
 import           Data.Models.CourseTaskPayload
@@ -271,6 +272,11 @@ getUserSolveR csId@(CourseSolvesKey csId') = do
           <p> Баллов: #{getCheckScore} / #{getCheckScoreGate}
           $forall message <- getCheckMessages
             ^{generateCheckMessage message}
+          <h2 .subtitle> Стек переменных
+          $forall (variableName, variableValue) <- K.toList getCheckValues
+            <p> #{show variableName}
+            <pre>
+              #{variableValue}
     $of anyError
       <article .message.is-warning>
         <div .message-header>
