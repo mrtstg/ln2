@@ -28,6 +28,7 @@ data StandCheckStage
   , getStageRecordVariable :: !(Maybe T.Text)
   , getStageReportError    :: !Bool
   , getStageWorkDir        :: !(Maybe FilePath)
+  , getStageStdin          :: !(Maybe T.Text)
   }
   | AddPoints
   { getStagePointsAmount :: !Int
@@ -117,6 +118,7 @@ instance ToJSON StandCheckStage where
     , "recordInto" .= getStageRecordVariable
     , "reportError" .= getStageReportError
     , "workdir" .= getStageWorkDir
+    , "stdin" .= getStageStdin
     ]
   toJSON (AddPoints { .. }) = object
     [ "action" .= String "points"
@@ -222,6 +224,7 @@ instance FromJSON StandCheckStage where
       <*> v .: "recordInto"
       <*> v .: "reportError"
       <*> v .:? "workdir"
+      <*> v .:? "stdin"
     (Just (String "points")) -> AddPoints
       <$> v .: "amount"
     (Just (String "compareVars")) -> CompareVariables
@@ -304,7 +307,7 @@ convertStandCheckList endpoints answer stages = let
               , getStageCommand = "psql -f " <> T.pack path
               , getStageFormatOutput = True
               , getStageRecordVariable = Just "GENERATED_DATABASE_RESULT"
-              , getStageReportError = False, getStageWorkDir = Nothing
+                             , getStageReportError = False, getStageWorkDir = Nothing, getStageStdin = Nothing
               }
             ]
       (DBApiError err) -> return $ Left ("Ошибка проверки БД: " <> T.unpack err)
@@ -331,6 +334,7 @@ convertStandCheckList endpoints answer stages = let
           , getStageRecordVariable = (Just . T.pack) name
           , getStageReportError = False
           , getStageWorkDir = Nothing
+          , getStageStdin = Nothing
           }
         , DeclareVariable (T.pack $ path <> "-correct") "1"
         , CompareVariables
@@ -354,6 +358,7 @@ convertStandCheckList endpoints answer stages = let
           , getStageRecordVariable = (Just . T.pack) name
           , getStageReportError = False
           , getStageWorkDir = Nothing
+          , getStageStdin = Nothing
           }
         , DeclareVariable (T.pack $ path <> "-correct") "1"
         , CompareVariables
@@ -378,6 +383,7 @@ convertStandCheckList endpoints answer stages = let
           , getStageRecordVariable = (Just . T.pack) name
           , getStageReportError = False
           , getStageWorkDir = Nothing
+          , getStageStdin = Nothing
           }
         , DeclareVariable (T.pack $ path <> "-correct") "1"
         , CompareVariables
@@ -400,6 +406,7 @@ convertStandCheckList endpoints answer stages = let
           , getStageRecordVariable = getStageRecordVariable
           , getStageReportError = False
           , getStageWorkDir = Nothing
+          , getStageStdin = Nothing
           }
         ]
   f (PSQLAnswerQuery { .. }) = do
@@ -415,6 +422,7 @@ convertStandCheckList endpoints answer stages = let
           , getStageRecordVariable = getStageRecordVariable
           , getStageReportError = True
           , getStageWorkDir = Nothing
+          , getStageStdin = Nothing
           }
         ]
   f other = return $ return [other]

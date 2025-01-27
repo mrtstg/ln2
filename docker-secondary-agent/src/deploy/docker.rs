@@ -5,6 +5,8 @@ use crate::structs::stand_check::StandCheckStage;
 use crate::structs::stand_data::StandContainerData;
 use crate::structs::stand_data::StandData;
 use async_recursion::async_recursion;
+use async_std::io::WriteExt;
+use async_std::task;
 use containers_api::conn::tty::TtyChunk;
 use docker_api::api::container::*;
 use docker_api::api::network::*;
@@ -55,6 +57,7 @@ pub async fn execute_docker_command(
     container: &Container,
     command: Vec<&str>,
     workdir: Option<String>,
+    stdin: Option<String>,
 ) -> Result<(String, String, Option<isize>), String> {
     let mut opts_builder = ExecCreateOpts::builder()
         .command(command)
@@ -62,6 +65,9 @@ pub async fn execute_docker_command(
         .attach_stderr(true);
     if let Some(workdir_v) = workdir {
         opts_builder = opts_builder.working_dir(workdir_v);
+    }
+    if stdin.is_some() {
+        opts_builder = opts_builder.attach_stdin(true);
     }
 
     let exec_instance_res =
@@ -73,6 +79,20 @@ pub async fn execute_docker_command(
             Ok(mut command_res) => {
                 let mut stdout: Vec<u8> = Vec::new();
                 let mut stderr: Vec<u8> = Vec::new();
+                if let Some(stdin_v) = stdin {
+                    task::sleep(Duration::from_millis(500)).await;
+                    let input_lines = stdin_v.split("\n").collect::<Vec<&str>>();
+                    for line in input_lines {
+                        let buf = format!("{}\n", line);
+                        debug!("Writing: {:?}", buf);
+                        let write_res = command_res.write(buf.as_bytes()).await;
+                        if let Err(error) = write_res {
+                            error!("Write error ({}): {:?}", buf, error)
+                        }
+                        task::sleep(Duration::from_millis(500)).await;
+                    }
+                }
+
                 while let Some(data_chunk) = command_res.next().await {
                     match data_chunk {
                         Ok(d) => match d {
@@ -131,6 +151,7 @@ pub async fn execute_stand_check(
                         container,
                         payload.command.split(" ").collect(),
                         payload.workdir,
+                        payload.stdin,
                     )
                     .await
                     {

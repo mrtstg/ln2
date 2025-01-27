@@ -113,6 +113,12 @@
       </label>
     </div>
     <div class="field">
+      <label class="label"> Передаваемый ввод (<i>опционально</i>)</label>
+      <div class="control">
+        <CodemirrorField bind:doc={data.data.stdin} onChange={async (v) => await updateCallbackWrapper()}/>
+      </div>
+    </div>
+    <div class="field">
       <label class="label"> Записать в переменную (<i>опционально</i>)</label>
       <div class="control">
         <input class="input" type="text" placeholder="Название переменной, например result" maxlength="25" bind:value={data.data.recordInto} on:change={updateCallbackWrapper}>

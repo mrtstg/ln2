@@ -116,6 +116,9 @@ export const processStageData = (stageData: StageData): StageData => {
   if ((["command"].includes(ndata.action) && ndata.workdir != undefined && ndata.workdir != null) && ndata.workdir.length == 0) {
     ndata.workdir = null
   }
+  if ((["command"].includes(ndata.action) && ndata.stdin != undefined && ndata.stdin != null) && ndata.stdin.length == 0) {
+    ndata.stdin = null
+  }
   if (ndata.positiveActions != undefined) {
     ndata.positiveActions = ndata.positiveActions.map(el => processStageData(el.data))
   }
@@ -158,7 +161,8 @@ export const defaultCheckStageData = (stType: StageType): object => {
         recordInto: "",
         formatOutput: true,
         reportError: true,
-        workdir: null
+        workdir: null,
+        stdin: null
       };
     case StageType.AddPoints:
       return { action: "points", amount: 0 };
