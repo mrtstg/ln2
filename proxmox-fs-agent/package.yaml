@@ -30,6 +30,7 @@ dependencies:
 - http-types == 0.12.3
 - bytestring == 0.11.5.2
 - strict == 0.5
+- containers == 0.6.7
 
 ghc-options:
 - -Wall
@@ -66,3 +67,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - proxmox-fs-agent
+    - hspec >= 2.0.0
+    - hspec-discover
