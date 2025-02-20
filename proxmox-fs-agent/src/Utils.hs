@@ -11,12 +11,13 @@ import           Data.Bifunctor   (second)
 import           Data.List        (isPrefixOf)
 import qualified Data.List        as L
 import qualified Data.Map         as M
+import           Data.Maybe       (isJust, isNothing)
 import           Parser
 import qualified System.IO.Strict as S
 
 constructVMArgs :: [VMArgs] -> String
-constructVMArgs args = if head result == ' ' then drop 1 result else result  where
-  result = helper [] args
+constructVMArgs args' = if head result == ' ' then drop 1 result else result  where
+  result = helper [] args'
   helper :: String -> [VMArgs] -> String
   helper acc ((OtherArgs v):args)     = helper (acc ++ " " ++ v) args
   helper acc ((VNCArgs address):args) = helper (acc ++ " -vnc " ++ address) args
@@ -48,8 +49,24 @@ getVMArgs opts = M.fromList $ map (second f) (M.toList opts) where
     []       -> Nothing
     (line:_) -> Just line
 
-dumpSettings :: FilePath -> [String] -> IO ()
-dumpSettings path opts = writeFile path (L.intercalate "\n" opts <> "\n")
+dumpSettings :: M.Map (Maybe String) [String] -> String
+dumpSettings paramsMap = helper (L.intercalate "\n" (coreSnapshotParams paramsList)) (filter (isJust . fst) paramsList) where
+  paramsList = M.toList paramsMap
+
+  headOr :: [[String]] -> [String] -> [String]
+  headOr [] d    = d
+  headOr (l:_) _ = l
+
+  coreSnapshotParams :: [(Maybe String, [String])] -> [String]
+  coreSnapshotParams = flip headOr [] . map snd . filter (isNothing . fst)
+
+  helper ::  String -> [(Maybe String, [String])] -> String
+  helper acc ((Just snapName, paramsLines):ls) = helper (acc ++ (if (not . null) acc then "\n" else "") ++ "[" ++ snapName ++ "]\n" ++ L.intercalate "\n" paramsLines) ls
+  helper _ ((Nothing, _):_) = error "Found core snapshot params!"
+  helper acc [] = acc
+
+--dumpSettings :: FilePath -> [String] -> IO ()
+--dumpSettings path opts = writeFile path (L.intercalate "\n" opts <> "\n")
 
 replaceVMArgs :: String -> [String] -> [String]
 replaceVMArgs newArgs opts = newArgs:filter (not . isPrefixOf "args: ") opts
