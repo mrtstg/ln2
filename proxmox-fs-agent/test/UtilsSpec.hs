@@ -1,6 +1,7 @@
 module UtilsSpec (spec) where
 
 import qualified Data.Map   as M
+import           Parser
 import           Test.Hspec
 import           Utils
 
@@ -24,3 +25,10 @@ spec = do
           (Just "init", ["name: vm-start", "agent: 0"]),
           (Just "finish", ["name: vm-finish"])
         ]
+  describe "Args build test" $ do
+    it "VNCless build" $ do
+      constructVMArgs [OtherArgs "123", OtherArgs "--key=value", OtherArgs "@"] `shouldBe` "123 --key=value @"
+    it "VNC build" $ do
+      constructVMArgs [VNCArgs "127.0.0.1:5001"] `shouldBe` "-vnc 127.0.0.1:5001"
+    it "Dual setup" $ do
+      constructVMArgs [OtherArgs "--key=value", VNCArgs "127.0.0.1:1", OtherArgs "build", OtherArgs "123"] `shouldBe` "--key=value -vnc 127.0.0.1:1 build 123"

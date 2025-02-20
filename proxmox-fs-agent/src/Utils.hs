@@ -4,12 +4,23 @@ module Utils
   , dumpSettings
   , replaceVMArgs
   , getVMOptions
+  , constructVMArgs
   ) where
 
+import           Data.Bifunctor   (second)
 import           Data.List        (isPrefixOf)
 import qualified Data.List        as L
 import qualified Data.Map         as M
+import           Parser
 import qualified System.IO.Strict as S
+
+constructVMArgs :: [VMArgs] -> String
+constructVMArgs args = if head result == ' ' then drop 1 result else result  where
+  result = helper [] args
+  helper :: String -> [VMArgs] -> String
+  helper acc ((OtherArgs v):args)     = helper (acc ++ " " ++ v) args
+  helper acc ((VNCArgs address):args) = helper (acc ++ " -vnc " ++ address) args
+  helper acc []                       = acc
 
 getVMOptionsFromFile :: FilePath -> IO (M.Map (Maybe String) [String])
 getVMOptionsFromFile p = do
@@ -30,10 +41,12 @@ getVMOptions = f M.empty Nothing . L.lines where
           (Just oldValues) -> f (M.insert snapName (oldValues ++ [line]) m) snapName ls
       else f m snapName ls
 
-getVMArgs :: [String] -> Maybe String
-getVMArgs opts = if null results then Nothing else Just $ head results where
-  results :: [String]
-  results = filter ("args: " `isPrefixOf`) opts
+getVMArgs :: M.Map (Maybe String) [String] -> M.Map (Maybe String) (Maybe String)
+getVMArgs opts = M.fromList $ map (second f) (M.toList opts) where
+  f :: [String] -> Maybe String
+  f opts' = case filter ("args: " `isPrefixOf`) opts' of
+    []       -> Nothing
+    (line:_) -> Just line
 
 dumpSettings :: FilePath -> [String] -> IO ()
 dumpSettings path opts = writeFile path (L.intercalate "\n" opts <> "\n")
