@@ -11,7 +11,7 @@ parseVNCArgs :: String -> Either String [VMArgs]
 parseVNCArgs = parseOnly vncArgsParser . pack
 
 vncArgsParser :: Parser [VMArgs]
-vncArgsParser = manyTill argsParser endOfInput
+vncArgsParser = optional (string "args:") *> many space *> manyTill argsParser endOfInput
 
 argsParser :: Parser VMArgs
 argsParser = choice [try f, f'] where
