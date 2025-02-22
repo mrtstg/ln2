@@ -2,9 +2,10 @@ module Utils
   ( getVMOptionsFromFile
   , getVMArgs
   , dumpSettings
-  , replaceVMArgs
+  , setVNCSettings
   , getVMOptions
   , constructVMArgs
+  , dumpSettingsFile
   ) where
 
 import           Data.Bifunctor   (second)
@@ -61,12 +62,25 @@ dumpSettings paramsMap = helper (L.intercalate "\n" (coreSnapshotParams paramsLi
   coreSnapshotParams = flip headOr [] . map snd . filter (isNothing . fst)
 
   helper ::  String -> [(Maybe String, [String])] -> String
-  helper acc ((Just snapName, paramsLines):ls) = helper (acc ++ (if (not . null) acc then "\n" else "") ++ "[" ++ snapName ++ "]\n" ++ L.intercalate "\n" paramsLines) ls
+  helper acc ((Just snapName, paramsLines):ls) = helper (acc ++ (if (not . null) acc then "\n\n" else "") ++ "[" ++ snapName ++ "]\n" ++ L.intercalate "\n" paramsLines) ls
   helper _ ((Nothing, _):_) = error "Found core snapshot params!"
   helper acc [] = acc
 
---dumpSettings :: FilePath -> [String] -> IO ()
---dumpSettings path opts = writeFile path (L.intercalate "\n" opts <> "\n")
+dumpSettingsFile :: FilePath -> M.Map (Maybe String) [String] -> IO ()
+dumpSettingsFile path = writeFile path . dumpSettings
 
-replaceVMArgs :: String -> [String] -> [String]
-replaceVMArgs newArgs opts = newArgs:filter (not . isPrefixOf "args: ") opts
+setVNCSettings :: VMArgs -> M.Map (Maybe String) [String] -> Either String (M.Map (Maybe String) [String])
+setVNCSettings vncArg = helper M.empty . M.toList where
+  f :: VMArgs -> Bool
+  f (VNCArgs {})   = False
+  f (OtherArgs {}) = True
+
+  helper :: M.Map (Maybe String) [String] -> [(Maybe String, [String])] -> Either String (M.Map (Maybe String) [String])
+  helper acc [] = Right acc
+  helper acc ((snapName, params):snaps) = case filter ("args:" `isPrefixOf`) params of
+    [] -> helper (M.insert snapName (("args: " ++ constructVMArgs [vncArg]):params) acc) snaps
+    (oldArgs:_) -> case parseVNCArgs oldArgs of
+      (Left parseError) -> Left parseError
+      (Right oldVMArgs) -> helper
+        (M.insert snapName (("args: " ++ constructVMArgs (vncArg:filter f oldVMArgs)):filter (\x -> not $ "args:" `isPrefixOf` x) params) acc)
+        snaps

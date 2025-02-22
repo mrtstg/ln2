@@ -44,4 +44,15 @@ spec = do
           (Nothing, ["name: start_state", "agent: 1", "vnc: -vnc 0.0.0.0:1"]),
           (Just "snap_1", ["name: vm-1", "agent: 0", "args: -vnc 127.0.0.1:50"]),
           (Just "snap_2", ["name: last-snap"])
-        ]) `shouldBe` "name: start_state\nagent: 1\nvnc: -vnc 0.0.0.0:1\n[snap_1]\nname: vm-1\nagent: 0\nargs: -vnc 127.0.0.1:50\n[snap_2]\nname: last-snap"
+        ]) `shouldBe` "name: start_state\nagent: 1\nvnc: -vnc 0.0.0.0:1\n\n[snap_1]\nname: vm-1\nagent: 0\nargs: -vnc 127.0.0.1:50\n\n[snap_2]\nname: last-snap"
+  describe "VNC settings update test" $ do
+    it "No VNC root template set test" $ do
+      setVNCSettings (VNCArgs "0.0.0.0:50") (M.fromList [(Nothing, ["name: server"])])
+        `shouldBe` (Right . M.fromList) [(Nothing, ["args: -vnc 0.0.0.0:50", "name: server"])]
+    it "VNC root template update (no args params)" $ do
+      setVNCSettings (VNCArgs "0.0.0.0:100") (M.fromList [(Nothing, ["name: server", "args: -vnc 127.0.0.1:1"])])
+        `shouldBe` (Right . M.fromList) [(Nothing, ["args: -vnc 0.0.0.0:100", "name: server"])]
+    it "VNC multiple modifications" $ do
+      setVNCSettings (VNCArgs "0.0.0.0:2")
+        (M.fromList [(Nothing, ["name: server1", "args: --value=key -vnc 127.0.0.1:2"]), (Just "init", []), (Just "last", ["name: last", "agent: 0", "args: -vnc 172.0.0.1:5"])])
+          `shouldBe` (Right . M.fromList) [(Nothing, ["args: -vnc 0.0.0.0:2 --value=key", "name: server1"]), (Just "init", ["args: -vnc 0.0.0.0:2"]), (Just "last", ["args: -vnc 0.0.0.0:2", "name: last", "agent: 0"])]
