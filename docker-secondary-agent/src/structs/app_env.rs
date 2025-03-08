@@ -9,6 +9,7 @@ pub struct AppEnvironment {
     pub agent_debug: bool,
     pub docker_url: String,
     pub threads_amount: usize,
+    pub cleanup_delay: Option<u64>,
 }
 
 pub fn get_app_environment() -> AppEnvironment {
@@ -29,6 +30,19 @@ pub fn get_app_environment() -> AppEnvironment {
         .unwrap_or(String::from("4"))
         .parse::<usize>()
         .expect("Failed to parse threads amount!");
+    let cleanup_delay = {
+        let var = env::var("AGENT_CLEANUP_DELAY").unwrap_or(String::from("0"));
+        match var.parse::<u64>() {
+            Ok(v) => {
+                if v == 0 {
+                    None
+                } else {
+                    Some(v)
+                }
+            }
+            Err(_) => None,
+        }
+    };
     AppEnvironment {
         rabbit_user,
         rabbit_pass,
@@ -37,5 +51,6 @@ pub fn get_app_environment() -> AppEnvironment {
         agent_debug,
         docker_url,
         threads_amount,
+        cleanup_delay,
     }
 }

@@ -160,6 +160,13 @@ impl RabbitConsumer {
                                         .await;
                                     }
                                 }
+                                if let Some(delay_sec) = self.app_env.cleanup_delay {
+                                    debug!(
+                                        "[DEBUG] Waiting {} seconds before destroying stand!",
+                                        delay_sec
+                                    );
+                                    async_std::task::sleep(Duration::from_secs(delay_sec)).await;
+                                }
                                 destroy_stand(network, containers.values().map(|v| v).collect())
                                     .await;
                             }
