@@ -1,7 +1,6 @@
 **/.stack-work
 **/deployment
 !./deployment
-ca/ca-key.pem
 pgdata
 Procfile
 .env
