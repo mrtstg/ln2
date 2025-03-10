@@ -2,6 +2,7 @@
 *~
 deployment/proxmox-fs-agent
 deployment/proxmox-fs-agent.service
+deployment/*.pem
 
 # test dir for qemu configs
 configs
