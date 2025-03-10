@@ -16,6 +16,9 @@ CA_DOMAIN=ln2.mrtstg.local
 $(CA_PATH):
 	mkdir -p $(CA_PATH)
 
+issue-crt: ./deployment/ssl/Dockerfile $(CA_PATH) scripts/issue-crt.sh
+	bash scripts/issue-crt.sh
+
 build-ca: ./deployment/ssl/Dockerfile $(CA_PATH)
 	docker build --no-cache --build-arg domain="$(CA_DOMAIN)" -f ./deployment/ssl/Dockerfile --output=$(CA_PATH) .
 

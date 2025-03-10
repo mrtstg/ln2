@@ -1,0 +1,18 @@
+FROM alpine/openssl AS builder
+ARG domain=example.com
+WORKDIR /ca
+COPY ca /ca
+RUN openssl req -newkey rsa:2048 -nodes -days 365000 \
+    -subj "/CN=$domain" \
+    -keyout $domain-key.pem \
+    -out $domain-req.pem
+RUN openssl x509 -req -days 365000 -set_serial "0x`openssl rand -hex 8`" \
+    -in $domain-req.pem \
+    -out $domain-crt.pem \
+    -CA ca-crt.pem \
+    -CAkey ca-key.pem
+
+FROM scratch
+ARG domain=example.com
+COPY --from=builder /ca/$domain-key.pem /ca/$domain-crt.pem /
+ENTRYPOINT ["/"]
