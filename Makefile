@@ -17,7 +17,7 @@ $(CA_PATH):
 	mkdir -p $(CA_PATH)
 
 build-ca: ./deployment/ssl/Dockerfile $(CA_PATH)
-	docker build --build-arg domain="$(CA_DOMAIN)" -f ./deployment/ssl/Dockerfile --output=$(CA_PATH) .
+	docker build --no-cache --build-arg domain="$(CA_DOMAIN)" -f ./deployment/ssl/Dockerfile --output=$(CA_PATH) .
 
 build-nginx: ./deployment/nginx/Dockerfile
 	docker build -t ln2-nginx -f ./deployment/nginx/Dockerfile .
