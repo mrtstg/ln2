@@ -14,4 +14,6 @@ appParser = AppOpts <$>
   strOption (long "configs" <> short 'c' <> value "/etc/pve/local/qemu-server/" <> metavar "PATH" <> help "Folder with VM configs") <*>
   subparser (
     command "run" (info runServerParser (progDesc "Run server"))
-    )
+    ) <*>
+  optional (strOption (long "crt" <> metavar "PATH" <> help "Path to agent certificate")) <*>
+  optional (strOption (long "crt-key" <> metavar "PATH" <> help "Path to agent certificate key"))

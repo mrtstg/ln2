@@ -32,6 +32,8 @@ dependencies:
 - strict == 0.5
 - containers == 0.6.7
 - attoparsec == 0.14.4
+- warp == 3.3.25
+- warp-tls == 3.3.6
 
 ghc-options:
 - -Wall

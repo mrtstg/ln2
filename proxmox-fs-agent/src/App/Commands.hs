@@ -10,10 +10,13 @@ module App.Commands (
   ) where
 
 import           App.Types
-import qualified Data.Text          as T
+import           Data.Maybe
+import qualified Data.Text                   as T
 import           Foundation
 import           Handlers.VMArgs
 import           Handlers.VMID
+import           Network.Wai.Handler.Warp
+import           Network.Wai.Handler.WarpTLS
 import           System.Environment
 import           System.Exit
 import           Yesod.Core
@@ -29,7 +32,14 @@ runServerCommand (AppOpts { .. }) = do
       exitWith $ ExitFailure 1
     (Just v) -> do
       let app = App configsPath (T.pack v)
-      warp serverPort app
+      case (certPath, certKeyPath) of
+        (Just crt, Just crtKey) -> do
+          putStrLn "Starting in TLS mode..."
+          waiApp <- toWaiApp app
+          runTLS (tlsSettings crt crtKey) (setPort serverPort defaultSettings) waiApp
+        _anyOther -> do
+          putStrLn "Did not found certificate/its key, starting HTTP..."
+          warp serverPort app
 
 runCommand :: AppOpts -> IO ()
-runCommand opts@(AppOpts _ _ RunServer) = runServerCommand opts
+runCommand opts@(AppOpts { appCommand = RunServer }) = runServerCommand opts
