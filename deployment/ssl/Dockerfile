@@ -10,7 +10,7 @@ RUN openssl req -newkey rsa:2048 -nodes -days 365000 \
     -subj "/CN=$domain" \
     -keyout server-key.pem \
     -out server-req.pem
-RUN openssl x509 -req -days 365000 -set_serial 01 \
+RUN openssl x509 -req -days 365000 -set_serial "0x`openssl rand -hex 8`" \
     -in server-req.pem \
     -out server-crt.pem \
     -CA ca-crt.pem \
